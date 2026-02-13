@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Images
+*.png
+
 # C extensions
 *.so
 
@@ -138,4 +141,11 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# Claude Code
+.claude/
+
+# Project-specific
+clock_alignment_plots/
+
 

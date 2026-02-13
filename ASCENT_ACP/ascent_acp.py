@@ -9,7 +9,7 @@ def run_ascent_acp_merge(
     pickle_filename='merged_LAS-SMPS-Optical_outfile',
     prefix_instr_name=True,
     mode_input='Merge_Beside',
-    master_timeline=['2020-02-14 00:00:00', '2020-02-16 00:00:00', 5]
+    master_timeline=['2020-02-14 00:00:00', '2020-02-16 00:00:00', 1]
 ):
     """
     Run the ASCENT-ACP ICARTT merge operation.
