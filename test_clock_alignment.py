@@ -176,6 +176,133 @@ def calculate_cross_correlation(las_sum, smps_sum, max_shift=15):
     return shifts, correlations, dot_products, n_valid_points
 
 
+def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_label=''):
+    """
+    Plot time series of LAS sum, SMPS sum, and optionally Sc550 with multiple y-axes.
+
+    Parameters:
+    -----------
+    date : datetime.date
+        Date being plotted
+    las_sum : pd.Series
+        Time series of LAS bin sum
+    smps_sum : pd.Series
+        Time series of SMPS bin sum
+    sc550 : pd.Series, optional
+        Time series of aerosol scattering at 550nm
+    output_dir : str, optional
+        Directory to save plot
+    zoom_label : str, optional
+        Additional label for zoomed plots (e.g., '_zoom')
+    """
+    fig, ax1 = plt.subplots(figsize=(14, 6))
+
+    # Left y-axis: LAS sum
+    color1 = 'tab:blue'
+    ax1.set_xlabel('Time (UTC)', fontsize=12)
+    ax1.set_ylabel('LAS Sum (#/cm³)', color=color1, fontsize=12)
+    line1 = ax1.plot(las_sum.index, las_sum.values, '-', color=color1,
+                     linewidth=1.5, alpha=0.7, label='LAS Sum')
+    ax1.tick_params(axis='y', labelcolor=color1)
+    ax1.grid(True, alpha=0.3)
+
+    # Right y-axis: SMPS sum
+    ax2 = ax1.twinx()
+    color2 = 'tab:orange'
+    ax2.set_ylabel('SMPS Sum (#/cm³)', color=color2, fontsize=12)
+    line2 = ax2.plot(smps_sum.index, smps_sum.values, '-', color=color2,
+                     linewidth=1.5, alpha=0.7, label='SMPS Sum')
+    ax2.tick_params(axis='y', labelcolor=color2)
+
+    lines = line1 + line2
+
+    # Third y-axis: Sc550 (if provided)
+    if sc550 is not None:
+        ax3 = ax1.twinx()
+        # Offset the third axis to the right
+        ax3.spines['right'].set_position(('axes', 1.15))
+        color3 = 'tab:green'
+        ax3.set_ylabel('Sc550 Total (Mm⁻¹)', color=color3, fontsize=12)
+        line3 = ax3.plot(sc550.index, sc550.values, '-', color=color3,
+                         linewidth=1.5, alpha=0.7, label='Sc550 Total')
+        ax3.tick_params(axis='y', labelcolor=color3)
+        lines = lines + line3
+
+    # Title
+    title = f'LAS, SMPS, and Sc550 Time Series: {date}'
+    if zoom_label:
+        title += ' (Zoomed)'
+    ax1.set_title(title, fontsize=14, fontweight='bold')
+
+    # Combined legend
+    labels = [l.get_label() for l in lines]
+    ax1.legend(lines, labels, loc='upper left')
+
+    # Format x-axis for time
+    fig.autofmt_xdate()
+
+    # Adjust layout to accommodate third axis
+    if sc550 is not None:
+        plt.subplots_adjust(right=0.85)
+    else:
+        plt.tight_layout()
+
+    # Save the plot
+    if output_dir is None:
+        output_dir = 'clock_alignment_plots'
+    os.makedirs(output_dir, exist_ok=True)
+    date_str = date.strftime('%Y%m%d')
+    filename = os.path.join(output_dir, f'time_series{zoom_label}_{date_str}.png')
+    plt.savefig(filename, dpi=150, bbox_inches='tight')
+    print(f"  Saved time series plot to {filename}")
+
+    plt.close()  # Close the figure to free memory
+
+
+def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
+    """
+    Plot zoomed time series around the time of maximum Sc550 value (±1 minute).
+
+    Parameters:
+    -----------
+    date : datetime.date
+        Date being plotted
+    las_sum : pd.Series
+        Time series of LAS bin sum
+    smps_sum : pd.Series
+        Time series of SMPS bin sum
+    sc550 : pd.Series
+        Time series of aerosol scattering at 550nm
+    output_dir : str, optional
+        Directory to save plot
+    """
+    # Find time of maximum Sc550
+    if sc550.notna().sum() == 0:
+        print(f"  Warning: No valid Sc550 data for {date}, skipping zoom plot")
+        return
+
+    max_time = sc550.idxmax()
+    print(f"  Maximum Sc550 at: {max_time} (value: {sc550[max_time]:.2f} Mm⁻¹)")
+
+    # Define zoom window: ±1 minute
+    window = pd.Timedelta(minutes=1)
+    start_time = max_time - window
+    end_time = max_time + window
+
+    # Filter data to zoom window
+    las_zoom = las_sum[(las_sum.index >= start_time) & (las_sum.index <= end_time)]
+    smps_zoom = smps_sum[(smps_sum.index >= start_time) & (smps_sum.index <= end_time)]
+    sc550_zoom = sc550[(sc550.index >= start_time) & (sc550.index <= end_time)]
+
+    if len(las_zoom) == 0 and len(smps_zoom) == 0 and len(sc550_zoom) == 0:
+        print(f"  Warning: No data in zoom window for {date}")
+        return
+
+    # Plot using the same function with zoom_label
+    plot_time_series(date, las_zoom, smps_zoom, sc550_zoom,
+                     output_dir=output_dir, zoom_label='_zoom')
+
+
 def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_points=None, output_dir=None):
     """
     Plot cross-correlation and dot product as a function of shift for a given date.
@@ -312,13 +439,16 @@ def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_poi
 
 def main():
     """Main function to run clock alignment test."""
+    
+    
     print("=" * 70)
     print("Instrument Clock Alignment Test")
     print("=" * 70)
     
     # Load merged data
     print("\nLoading merged ICARTT data...")
-    df, meta = run_ascent_acp_merge(prefix_instr_name=False, output_directory=None)
+#     df, meta = run_ascent_acp_merge(prefix_instr_name=False, output_directory=None)
+    df, meta = run_ascent_acp_merge(mode_input='Load_Pickle', pickle_directory='/Users/wrespino/Downloads/ACTIVATE_TEST', pickle_filename='merged1sec_LAS-SMPS-Optical_2020-2-14_V1')
     print(f"Loaded dataframe with shape: {df.shape}")
     print(f"Time range: {df.index.min()} to {df.index.max()}")
     
@@ -346,9 +476,36 @@ def main():
     print("\nCalculating bin sums...")
     las_sum = df[las_bins].sum(axis=1)
     smps_sum = df[smps_bins].sum(axis=1)
-    
+
     print(f"  LAS sum: {las_sum.notna().sum()} valid points")
     print(f"  SMPS sum: {smps_sum.notna().sum()} valid points")
+
+    # Find Sc550 column
+    print("\nIdentifying Sc550 aerosol scattering column...")
+    sc550_col = None
+    pattern = 'Sc550_total'
+
+    # Find all matching columns
+    matching_cols = [col for col in df.columns if pattern in col or pattern.lower() in col.lower()]
+
+    if matching_cols:
+        print(f"  Found {len(matching_cols)} matching column(s): {matching_cols}")
+
+        # If multiple matches, prefer the one that ends with the pattern
+        exact_matches = [col for col in matching_cols if col.endswith(pattern) or col.lower().endswith(pattern.lower())]
+
+        if exact_matches:
+            sc550_col = exact_matches[0]
+            print(f"  Selected column ending with '{pattern}': {sc550_col}")
+        else:
+            sc550_col = matching_cols[0]
+            print(f"  Selected first match: {sc550_col}")
+
+        sc550 = df[sc550_col]
+        print(f"  Sc550: {sc550.notna().sum()} valid points")
+    else:
+        print("  WARNING: No Sc550 column found!")
+        sc550 = None
     
     # Group by date
     print("\nGrouping data by date...")
@@ -366,9 +523,10 @@ def main():
         print(f"\nProcessing date: {date}")
         date_mask = df['date'] == date
         df_date = df[date_mask]
-        
+
         las_sum_date = las_sum[date_mask]
         smps_sum_date = smps_sum[date_mask]
+        sc550_date = sc550[date_mask] if sc550 is not None else None
         
         # Check if we have enough data
         valid_las = las_sum_date.notna().sum()
@@ -426,8 +584,15 @@ def main():
             optimal_shift = None
             max_corr = np.nan
         
-        # Plot
-        plot_cross_correlation(date, shifts, correlations, dot_products, 
+        # Plot full time series (with Sc550 if available)
+        plot_time_series(date, las_sum_date, smps_sum_date, sc550_date, output_dir=output_dir)
+
+        # Plot zoomed time series around max Sc550 (if Sc550 available)
+        if sc550_date is not None:
+            plot_time_series_zoom(date, las_sum_date, smps_sum_date, sc550_date, output_dir=output_dir)
+
+        # Plot cross-correlation
+        plot_cross_correlation(date, shifts, correlations, dot_products,
                               n_valid_points=n_valid_points, output_dir=output_dir)
     
     print("\n" + "=" * 70)
