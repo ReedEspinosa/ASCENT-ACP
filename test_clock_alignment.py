@@ -42,19 +42,21 @@ def identify_bin_columns(df):
     return las_bins, smps_bins
 
 
-def calculate_cross_correlation(las_sum, smps_sum, max_shift=15):
+def calculate_cross_correlation(las_sum, sc550, max_shift=30):
     """
-    Calculate cross-correlation between LAS sum and SMPS sum with time shifts.
-    
+    Calculate cross-correlation between LAS sum and Sc550 scattering with time shifts.
+
+    Uses a consistent window for all shifts to avoid edge effects.
+
     Parameters:
     -----------
     las_sum : pd.Series
         Sum of LAS bins
-    smps_sum : pd.Series
-        Sum of SMPS bins
+    sc550 : pd.Series
+        Sc550 aerosol scattering at 550nm
     max_shift : int
-        Maximum shift in time steps (default: 15)
-    
+        Maximum shift in time steps (default: 30)
+
     Returns:
     --------
     shifts : np.array
@@ -62,117 +64,67 @@ def calculate_cross_correlation(las_sum, smps_sum, max_shift=15):
     correlations : np.array
         Array of correlation coefficients for each shift
     dot_products : np.array
-        Array of dot products (sum of element-wise products) for each shift
+        Array of normalized dot products for each shift
     n_valid_points : np.array
         Array of number of valid data points used for each correlation
-    
+
     Notes:
     ------
-    NaN handling:
-    - For each shift, we align the two series and only use time points where
-      BOTH LAS and SMPS have valid (non-NaN) data
-    - np.corrcoef() automatically handles NaN by only using valid pairs
-    - The correlation coefficient is NOT normalized by the number of valid points;
-      it's the standard Pearson correlation coefficient, which is normalized by
-      the standard deviations of the two series
-    - However, fewer valid points means less statistical power, so we track
-      n_valid_points to assess reliability
+    Edge effect handling:
+    - To ensure fair comparison, we exclude the first and last max_shift points
+      from ALL calculations, so every shift uses the same middle portion
+    - This prevents artificial correlation improvements at non-zero shifts
     """
     # Align indices (use intersection of valid data)
-    common_idx = las_sum.index.intersection(smps_sum.index)
-    las_aligned = las_sum.loc[common_idx]
-    smps_aligned = smps_sum.loc[common_idx]
-    
-    if len(las_aligned) < max_shift * 2 + 1:
-        print(f"  Warning: Not enough data points ({len(las_aligned)}) for max_shift={max_shift}")
+    common_idx = las_sum.index.intersection(sc550.index)
+    las_full = las_sum.loc[common_idx].values
+    sc550_full = sc550.loc[common_idx].values
+    n_total = len(las_full)
+
+    if n_total < max_shift * 3:
+        print(f"  Warning: Not enough data points ({n_total}) for max_shift={max_shift}")
         return np.array([]), np.array([]), np.array([])
-    
+
+    # LAS reference window: always the same middle portion
+    las_ref = las_full[max_shift : n_total - max_shift]
+    window_size = len(las_ref)
+    print(f"  Fixed LAS window: {window_size} points (indices {max_shift} to {n_total - max_shift})")
+
     shifts = np.arange(-max_shift, max_shift + 1)
     correlations = np.zeros(len(shifts))
     dot_products = np.zeros(len(shifts))
     n_valid_points = np.zeros(len(shifts), dtype=int)
-    
+
     for i, shift in enumerate(shifts):
-        if shift == 0:
-            # No shift - direct correlation
-            # Find points where both have valid data
-            both_valid_mask = las_aligned.notna() & smps_aligned.notna()
-            las_vals = las_aligned[both_valid_mask].values
-            smps_vals = smps_aligned[both_valid_mask].values
-            
-            n_valid_points[i] = len(las_vals)
-            
-            if len(las_vals) > 1:
-                # Check for constant values (would cause NaN correlation)
-                if np.std(las_vals) == 0 or np.std(smps_vals) == 0:
-                    corr = np.nan
-                else:
-                    corr = np.corrcoef(las_vals, smps_vals)[0, 1]
-                # Calculate dot product - zeros are fine, they contribute 0
-                dot_prod = np.dot(las_vals, smps_vals)
-            else:
+        # Sc550 window slides: positive shift means Sc550 taken from later in time
+        sc550_window = sc550_full[max_shift + shift : n_total - max_shift + shift]
+
+        # Both windows are always the same length
+        both_valid = ~np.isnan(las_ref) & ~np.isnan(sc550_window)
+        las_vals = las_ref[both_valid]
+        sc550_vals = sc550_window[both_valid]
+
+        n_valid_points[i] = len(las_vals)
+
+        if len(las_vals) > 1:
+            if np.std(las_vals) == 0 or np.std(sc550_vals) == 0:
                 corr = np.nan
-                dot_prod = np.nan
-        elif shift > 0:
-            # Shift SMPS forward (SMPS values appear later)
-            # Align: LAS[0:-shift] with SMPS[shift:]
-            if len(las_aligned) > shift:
-                las_subset = las_aligned.iloc[:-shift]
-                smps_subset = smps_aligned.iloc[shift:]
-                
-                # Find points where both have valid data after alignment
-                both_valid_mask = las_subset.notna() & smps_subset.notna()
-                las_vals = las_subset[both_valid_mask].values
-                smps_vals = smps_subset[both_valid_mask].values
-                
-                n_valid_points[i] = len(las_vals)
-                
-                if len(las_vals) > 1:
-                    # Check for constant values
-                    if np.std(las_vals) == 0 or np.std(smps_vals) == 0:
-                        corr = np.nan
-                    else:
-                        corr = np.corrcoef(las_vals, smps_vals)[0, 1]
-                    dot_prod = np.dot(las_vals, smps_vals)
-                else:
-                    corr = np.nan
-                    dot_prod = np.nan
             else:
-                corr = np.nan
-                dot_prod = np.nan
-                n_valid_points[i] = 0
-        else:  # shift < 0
-            # Shift SMPS backward (SMPS values appear earlier)
-            shift_abs = abs(shift)
-            if len(las_aligned) > shift_abs:
-                las_subset = las_aligned.iloc[shift_abs:]
-                smps_subset = smps_aligned.iloc[:-shift_abs]
-                
-                # Find points where both have valid data after alignment
-                both_valid_mask = las_subset.notna() & smps_subset.notna()
-                las_vals = las_subset[both_valid_mask].values
-                smps_vals = smps_subset[both_valid_mask].values
-                
-                n_valid_points[i] = len(las_vals)
-                
-                if len(las_vals) > 1:
-                    # Check for constant values
-                    if np.std(las_vals) == 0 or np.std(smps_vals) == 0:
-                        corr = np.nan
-                    else:
-                        corr = np.corrcoef(las_vals, smps_vals)[0, 1]
-                    dot_prod = np.dot(las_vals, smps_vals)
-                else:
-                    corr = np.nan
-                    dot_prod = np.nan
-            else:
-                corr = np.nan
-                dot_prod = np.nan
-                n_valid_points[i] = 0
-        
+                corr = np.corrcoef(las_vals, sc550_vals)[0, 1]
+            dot_prod = np.dot(las_vals, sc550_vals) / len(las_vals)
+        else:
+            corr = np.nan
+            dot_prod = np.nan
+
         correlations[i] = corr
         dot_products[i] = dot_prod
-    
+
+    # Print summary
+    print(f"  Correlation range: {np.nanmin(correlations):.6f} to {np.nanmax(correlations):.6f}")
+    print(f"  Shift at max correlation: {shifts[np.nanargmax(correlations)]}")
+    print(f"  Shift at max dot product: {shifts[np.nanargmax(dot_products)]}")
+    print(f"  n_valid range: {n_valid_points.min()} to {n_valid_points.max()}")
+
     return shifts, correlations, dot_products, n_valid_points
 
 
@@ -205,6 +157,9 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
                      linewidth=1.5, alpha=0.7, label='LAS Sum')
     ax1.tick_params(axis='y', labelcolor=color1)
     ax1.grid(True, alpha=0.3)
+    # Set minimum to ~5% below zero for visual spacing
+    las_max = las_sum.max() if las_sum.notna().any() else 1
+    ax1.set_ylim(bottom=-0.05 * las_max, top=las_max * 1.05)
 
     # Right y-axis: SMPS sum
     ax2 = ax1.twinx()
@@ -213,6 +168,9 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
     line2 = ax2.plot(smps_sum.index, smps_sum.values, '-', color=color2,
                      linewidth=1.5, alpha=0.7, label='SMPS Sum')
     ax2.tick_params(axis='y', labelcolor=color2)
+    # Set minimum to ~5% below zero for visual spacing
+    smps_max = smps_sum.max() if smps_sum.notna().any() else 1
+    ax2.set_ylim(bottom=-0.05 * smps_max, top=smps_max * 1.05)
 
     lines = line1 + line2
 
@@ -226,6 +184,9 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
         line3 = ax3.plot(sc550.index, sc550.values, '-', color=color3,
                          linewidth=1.5, alpha=0.7, label='Sc550 Total')
         ax3.tick_params(axis='y', labelcolor=color3)
+        # Set minimum to ~5% below zero for visual spacing
+        sc550_max = sc550.max() if sc550.notna().any() else 1
+        ax3.set_ylim(bottom=-0.05 * sc550_max, top=sc550_max * 1.05)
         lines = lines + line3
 
     # Title
@@ -261,7 +222,12 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
 
 def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
     """
-    Plot zoomed time series around the time of maximum Sc550 value (±1 minute).
+    Plot zoomed time series around a high-quality ±60 second window with complete data.
+
+    Selection priority:
+    1. Window with no NaNs in LAS, SMPS, and Sc550, midpoint Sc550 > 50th percentile
+    2. Window with no NaNs in LAS and Sc550 (drop SMPS requirement), midpoint Sc550 > 50th percentile
+    3. Window with no NaNs in Sc550 (drop LAS requirement), midpoint Sc550 > 50th percentile
 
     Parameters:
     -----------
@@ -276,27 +242,97 @@ def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
     output_dir : str, optional
         Directory to save plot
     """
-    # Find time of maximum Sc550
     if sc550.notna().sum() == 0:
         print(f"  Warning: No valid Sc550 data for {date}, skipping zoom plot")
         return
 
-    max_time = sc550.idxmax()
-    print(f"  Maximum Sc550 at: {max_time} (value: {sc550[max_time]:.2f} Mm⁻¹)")
+    # Calculate 50th percentile of Sc550 for the day
+    sc550_median = sc550.quantile(0.5)
+    print(f"  Sc550 50th percentile: {sc550_median:.2f} Mm⁻¹")
 
-    # Define zoom window: ±1 minute
-    window = pd.Timedelta(minutes=1)
-    start_time = max_time - window
-    end_time = max_time + window
+    # Window half-width
+    window = pd.Timedelta(seconds=60)
 
-    # Filter data to zoom window
+    def check_window(center_time, require_las=True, require_smps=True):
+        """Check if a window centered at center_time has complete data."""
+        start_time = center_time - window
+        end_time = center_time + window
+
+        # Get window data
+        sc550_window = sc550[(sc550.index >= start_time) & (sc550.index <= end_time)]
+        las_window = las_sum[(las_sum.index >= start_time) & (las_sum.index <= end_time)]
+        smps_window = smps_sum[(smps_sum.index >= start_time) & (smps_sum.index <= end_time)]
+
+        # Check if window has data and no NaNs
+        sc550_complete = len(sc550_window) > 0 and sc550_window.notna().all()
+
+        if require_las:
+            las_complete = len(las_window) > 0 and las_window.notna().all()
+        else:
+            las_complete = True
+
+        if require_smps:
+            smps_complete = len(smps_window) > 0 and smps_window.notna().all()
+        else:
+            smps_complete = True
+
+        return sc550_complete and las_complete and smps_complete
+
+    def find_best_window(require_las=True, require_smps=True):
+        """Find the window with highest Sc550 at midpoint meeting criteria."""
+        valid_centers = []
+
+        for center_time in sc550.index:
+            # Skip if center point has NaN
+            if pd.isna(sc550[center_time]):
+                continue
+
+            # Skip if below 50th percentile
+            if sc550[center_time] < sc550_median:
+                continue
+
+            # Check if window meets criteria
+            if check_window(center_time, require_las, require_smps):
+                valid_centers.append((center_time, sc550[center_time]))
+
+        if valid_centers:
+            # Return center with maximum Sc550
+            best_center = max(valid_centers, key=lambda x: x[1])
+            return best_center[0], best_center[1]
+        else:
+            return None, None
+
+    # Try each priority level
+    print(f"  Searching for optimal zoom window...")
+
+    # Priority 1: All three instruments
+    center_time, center_sc550 = find_best_window(require_las=True, require_smps=True)
+    if center_time is not None:
+        print(f"  Found window with complete LAS, SMPS, and Sc550 data")
+        print(f"  Center time: {center_time}, Sc550: {center_sc550:.2f} Mm⁻¹")
+    else:
+        # Priority 2: LAS and Sc550 only
+        center_time, center_sc550 = find_best_window(require_las=True, require_smps=False)
+        if center_time is not None:
+            print(f"  Found window with complete LAS and Sc550 data (SMPS has gaps)")
+            print(f"  Center time: {center_time}, Sc550: {center_sc550:.2f} Mm⁻¹")
+        else:
+            # Priority 3: Sc550 only
+            center_time, center_sc550 = find_best_window(require_las=False, require_smps=False)
+            if center_time is not None:
+                print(f"  Found window with complete Sc550 data (LAS and SMPS have gaps)")
+                print(f"  Center time: {center_time}, Sc550: {center_sc550:.2f} Mm⁻¹")
+            else:
+                print(f"  Warning: No suitable zoom window found above 50th percentile")
+                return
+
+    # Extract zoom window data
+    start_time = center_time - window
+    end_time = center_time + window
+
     las_zoom = las_sum[(las_sum.index >= start_time) & (las_sum.index <= end_time)]
     smps_zoom = smps_sum[(smps_sum.index >= start_time) & (smps_sum.index <= end_time)]
     sc550_zoom = sc550[(sc550.index >= start_time) & (sc550.index <= end_time)]
-
-    if len(las_zoom) == 0 and len(smps_zoom) == 0 and len(sc550_zoom) == 0:
-        print(f"  Warning: No data in zoom window for {date}")
-        return
 
     # Plot using the same function with zoom_label
     plot_time_series(date, las_zoom, smps_zoom, sc550_zoom,
@@ -305,9 +341,9 @@ def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
 
 def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_points=None, output_dir=None):
     """
-    Plot cross-correlation and dot product as a function of shift for a given date.
-    Uses two y-axes: left for correlation coefficient, right for dot product.
-    
+    Plot cross-correlation and normalized dot product as a function of shift for a given date.
+    Uses two y-axes: left for correlation coefficient, right for normalized dot product.
+
     Parameters:
     -----------
     date : datetime.date
@@ -317,31 +353,42 @@ def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_poi
     correlations : np.array
         Array of correlation coefficients
     dot_products : np.array
-        Array of dot products
+        Array of normalized dot products (divided by number of valid points)
     n_valid_points : np.array, optional
         Array of number of valid points used for each correlation
     output_dir : str, optional
         Directory to save plot
     """
-    fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
-    
-    ax1 = axes[0]  # Correlation and dot product plot (2 y-axes)
-    ax2 = axes[1]  # Valid points plot
+    fig, ax1 = plt.subplots(figsize=(12, 6))
     
     # Left y-axis: Correlation coefficient
     color1 = 'tab:blue'
     ax1.set_ylabel('Pearson Correlation Coefficient', color=color1, fontsize=12)
-    line1 = ax1.plot(shifts, correlations, 'o-', color=color1, linewidth=2, 
+    line1 = ax1.plot(shifts, correlations, 'o-', color=color1, linewidth=2,
                      markersize=4, label='Correlation')
     ax1.tick_params(axis='y', labelcolor=color1)
     ax1.axvline(x=0, color='r', linestyle='--', alpha=0.5)
     ax1.axhline(y=0, color='k', linestyle='-', alpha=0.3)
     ax1.grid(True, alpha=0.3)
+
+    # Auto-scale correlation axis to show variation
+    valid_corr_mask = ~np.isnan(correlations)
+    if valid_corr_mask.any():
+        corr_min = np.nanmin(correlations)
+        corr_max = np.nanmax(correlations)
+        corr_range = corr_max - corr_min
+        if corr_range > 0:
+            # Set y-axis limits with some padding to show variation
+            ax1.set_ylim(corr_min - 0.05*corr_range, corr_max + 0.05*corr_range)
+        else:
+            # If range is zero (all identical), use a small range around the value
+            center_val = corr_min
+            ax1.set_ylim(center_val - 0.01, center_val + 0.01)
     
-    # Right y-axis: Dot product
+    # Right y-axis: Normalized dot product
     ax1_twin = ax1.twinx()
     color2 = 'tab:orange'
-    ax1_twin.set_ylabel('Dot Product', color=color2, fontsize=12)
+    ax1_twin.set_ylabel('Normalized Dot Product (Mean)', color=color2, fontsize=12)
     
     # Filter out NaN values for plotting
     valid_dot_mask = ~np.isnan(dot_products)
@@ -397,7 +444,7 @@ def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_poi
     else:
         textstr = 'No valid correlations'
     
-    ax1.set_title(f'LAS-SMPS Cross-Correlation and Dot Product: {date}', 
+    ax1.set_title(f'LAS-Sc550 Cross-Correlation and Normalized Dot Product: {date}',
                  fontsize=14, fontweight='bold')
     
     # Combine legends (handle case where line2 might be empty)
@@ -410,19 +457,10 @@ def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_poi
     
     ax1.text(0.02, 0.98, textstr, transform=ax1.transAxes, fontsize=10,
             verticalalignment='top', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
-    
-    # Plot number of valid points
-    if n_valid_points is not None:
-        ax2.plot(shifts, n_valid_points, 'g-', linewidth=2, marker='o', markersize=3)
-        ax2.set_ylabel('Number of Valid Data Points', fontsize=12)
-        ax2.set_xlabel('Time Shift (steps)', fontsize=12)
-        ax2.grid(True, alpha=0.3)
-        ax2.set_title('Number of Valid Points Used in Correlation', fontsize=11)
-    else:
-        ax2.set_xlabel('Time Shift (steps)', fontsize=12)
-        ax2.text(0.5, 0.5, 'Valid point counts not available', 
-                transform=ax2.transAxes, ha='center', va='center')
-    
+
+    # Set x-axis label
+    ax1.set_xlabel('Time Shift (steps)', fontsize=12)
+
     plt.tight_layout()
     
     # Always save the plot, never display it
@@ -468,14 +506,18 @@ def main():
     else:
         print("    WARNING: No SMPS bin columns found!")
     
-    if not las_bins or not smps_bins:
-        print("\nERROR: Cannot proceed without both LAS and SMPS bin columns.")
+    if not las_bins:
+        print("\nERROR: Cannot proceed without LAS bin columns.")
         return
+
+    if not smps_bins:
+        print("\nWARNING: No SMPS bin columns found. SMPS data will not be available for time series plots.")
     
     # Sum bins
     print("\nCalculating bin sums...")
-    las_sum = df[las_bins].sum(axis=1)
-    smps_sum = df[smps_bins].sum(axis=1)
+    # Use min_count=1 to preserve NaNs (otherwise all-NaN rows sum to 0)
+    las_sum = df[las_bins].sum(axis=1, min_count=1)
+    smps_sum = df[smps_bins].sum(axis=1, min_count=1)
 
     print(f"  LAS sum: {las_sum.notna().sum()} valid points")
     print(f"  SMPS sum: {smps_sum.notna().sum()} valid points")
@@ -527,20 +569,22 @@ def main():
         las_sum_date = las_sum[date_mask]
         smps_sum_date = smps_sum[date_mask]
         sc550_date = sc550[date_mask] if sc550 is not None else None
-        
+
         # Check if we have enough data
         valid_las = las_sum_date.notna().sum()
         valid_smps = smps_sum_date.notna().sum()
+        valid_sc550 = sc550_date.notna().sum() if sc550_date is not None else 0
         print(f"  Valid LAS points: {valid_las}")
         print(f"  Valid SMPS points: {valid_smps}")
-        
-        if valid_las < 30 or valid_smps < 30:  # Need at least 30 points for ±15 shift
-            print(f"  Skipping {date}: insufficient data (need at least 30 points)")
+        print(f"  Valid Sc550 points: {valid_sc550}")
+
+        if valid_las < 90 or valid_sc550 < 90:  # Need at least 90 points for ±30 shift with trimming
+            print(f"  Skipping {date}: insufficient LAS or Sc550 data (need at least 90 points)")
             continue
-        
-        # Calculate cross-correlation
+
+        # Calculate cross-correlation between LAS and Sc550
         shifts, correlations, dot_products, n_valid_points = calculate_cross_correlation(
-            las_sum_date, smps_sum_date, max_shift=15
+            las_sum_date, sc550_date, max_shift=30
         )
         
         if len(shifts) == 0:
