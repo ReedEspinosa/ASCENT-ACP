@@ -128,7 +128,7 @@ def calculate_cross_correlation(las_sum, sc550, max_shift=30):
     return shifts, correlations, dot_products, n_valid_points
 
 
-def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_label=''):
+def plot_time_series(date, las_sum, smps_sum, sc550=None, sc550_label='Sc550', output_dir=None, zoom_label=''):
     """
     Plot time series of LAS sum, SMPS sum, and optionally Sc550 with multiple y-axes.
 
@@ -142,6 +142,8 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
         Time series of SMPS bin sum
     sc550 : pd.Series, optional
         Time series of aerosol scattering at 550nm
+    sc550_label : str, optional
+        Label for Sc550 data (e.g., 'Sc550_total', 'Sc550_submicron')
     output_dir : str, optional
         Directory to save plot
     zoom_label : str, optional
@@ -180,9 +182,9 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
         # Offset the third axis to the right
         ax3.spines['right'].set_position(('axes', 1.15))
         color3 = 'tab:green'
-        ax3.set_ylabel('Sc550 Total (Mm⁻¹)', color=color3, fontsize=12)
+        ax3.set_ylabel(f'{sc550_label} (Mm⁻¹)', color=color3, fontsize=12)
         line3 = ax3.plot(sc550.index, sc550.values, '-', color=color3,
-                         linewidth=1.5, alpha=0.7, label='Sc550 Total')
+                         linewidth=1.5, alpha=0.7, label=sc550_label)
         ax3.tick_params(axis='y', labelcolor=color3)
         # Set minimum to ~5% below zero for visual spacing
         sc550_max = sc550.max() if sc550.notna().any() else 1
@@ -190,7 +192,7 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
         lines = lines + line3
 
     # Title
-    title = f'LAS, SMPS, and Sc550 Time Series: {date}'
+    title = f'LAS, SMPS, and {sc550_label} Time Series: {date}'
     if zoom_label:
         title += ' (Zoomed)'
     ax1.set_title(title, fontsize=14, fontweight='bold')
@@ -220,7 +222,7 @@ def plot_time_series(date, las_sum, smps_sum, sc550=None, output_dir=None, zoom_
     plt.close()  # Close the figure to free memory
 
 
-def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
+def plot_time_series_zoom(date, las_sum, smps_sum, sc550, sc550_label='Sc550', output_dir=None):
     """
     Plot zoomed time series around a high-quality ±60 second window with complete data.
 
@@ -239,6 +241,8 @@ def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
         Time series of SMPS bin sum
     sc550 : pd.Series
         Time series of aerosol scattering at 550nm
+    sc550_label : str, optional
+        Label for Sc550 data (e.g., 'Sc550_total', 'Sc550_submicron')
     output_dir : str, optional
         Directory to save plot
     """
@@ -335,11 +339,11 @@ def plot_time_series_zoom(date, las_sum, smps_sum, sc550, output_dir=None):
     sc550_zoom = sc550[(sc550.index >= start_time) & (sc550.index <= end_time)]
 
     # Plot using the same function with zoom_label
-    plot_time_series(date, las_zoom, smps_zoom, sc550_zoom,
+    plot_time_series(date, las_zoom, smps_zoom, sc550_zoom, sc550_label=sc550_label,
                      output_dir=output_dir, zoom_label='_zoom')
 
 
-def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_points=None, output_dir=None):
+def plot_cross_correlation(date, shifts, correlations, dot_products, sc550_label='Sc550', n_valid_points=None, output_dir=None):
     """
     Plot cross-correlation and normalized dot product as a function of shift for a given date.
     Uses two y-axes: left for correlation coefficient, right for normalized dot product.
@@ -354,6 +358,8 @@ def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_poi
         Array of correlation coefficients
     dot_products : np.array
         Array of normalized dot products (divided by number of valid points)
+    sc550_label : str, optional
+        Label for Sc550 data (e.g., 'Sc550_total', 'Sc550_submicron')
     n_valid_points : np.array, optional
         Array of number of valid points used for each correlation
     output_dir : str, optional
@@ -444,7 +450,7 @@ def plot_cross_correlation(date, shifts, correlations, dot_products, n_valid_poi
     else:
         textstr = 'No valid correlations'
     
-    ax1.set_title(f'LAS-Sc550 Cross-Correlation and Normalized Dot Product: {date}',
+    ax1.set_title(f'LAS-{sc550_label} Cross-Correlation and Normalized Dot Product: {date}',
                  fontsize=14, fontweight='bold')
     
     # Combine legends (handle case where line2 might be empty)
@@ -486,7 +492,7 @@ def main():
     # Load merged data
     print("\nLoading merged ICARTT data...")
 #     df, meta = run_ascent_acp_merge(prefix_instr_name=False, output_directory=None)
-    df, meta = run_ascent_acp_merge(mode_input='Load_Pickle', pickle_directory='/Users/wrespino/Downloads/ACTIVATE_TEST', pickle_filename='merged1sec_LAS-SMPS-Optical_2020-2-14_V1')
+    df, meta = run_ascent_acp_merge(mode_input='Load_Pickle', pickle_directory='/Users/wrespino/Downloads/ACTIVATE_TEST', pickle_filename='merged1sec_LAS-SMPS-Optical_2021_V1')
     print(f"Loaded dataframe with shape: {df.shape}")
     print(f"Time range: {df.index.min()} to {df.index.max()}")
     
@@ -525,29 +531,59 @@ def main():
     # Find Sc550 column
     print("\nIdentifying Sc550 aerosol scattering column...")
     sc550_col = None
-    pattern = 'Sc550_total'
 
-    # Find all matching columns
-    matching_cols = [col for col in df.columns if pattern in col or pattern.lower() in col.lower()]
+    # Find all columns containing 'Sc550' (case-insensitive)
+    all_sc550_cols = [col for col in df.columns if 'sc550' in col.lower()]
 
-    if matching_cols:
-        print(f"  Found {len(matching_cols)} matching column(s): {matching_cols}")
+    if all_sc550_cols:
+        print(f"  Found {len(all_sc550_cols)} Sc550-related column(s):")
+        for col in all_sc550_cols:
+            print(f"    - {col}")
 
-        # If multiple matches, prefer the one that ends with the pattern
-        exact_matches = [col for col in matching_cols if col.endswith(pattern) or col.lower().endswith(pattern.lower())]
+        # Preference order:
+        # 1. Sc550_total (non-submicron total)
+        # 2. Sc550 without "submicron" or "amb"
+        # 3. Sc550_submicron (non-ambient)
+        # 4. Sc550_submicron_amb (ambient)
 
-        if exact_matches:
-            sc550_col = exact_matches[0]
-            print(f"  Selected column ending with '{pattern}': {sc550_col}")
+        # Try to find total scattering (not submicron)
+        total_cols = [col for col in all_sc550_cols if 'total' in col.lower() and 'submicron' not in col.lower()]
+        if total_cols:
+            # Prefer non-ambient
+            non_amb = [col for col in total_cols if 'amb' not in col.lower()]
+            sc550_col = non_amb[0] if non_amb else total_cols[0]
+            print(f"  Selected Sc550_total: {sc550_col}")
         else:
-            sc550_col = matching_cols[0]
-            print(f"  Selected first match: {sc550_col}")
+            # Fall back to submicron if total not available
+            submicron_cols = [col for col in all_sc550_cols if 'submicron' in col.lower()]
+            if submicron_cols:
+                # Prefer non-ambient submicron
+                non_amb = [col for col in submicron_cols if 'amb' not in col.lower()]
+                sc550_col = non_amb[0] if non_amb else submicron_cols[0]
+                print(f"  Selected Sc550_submicron (total Sc550 not found): {sc550_col}")
+            else:
+                # Last resort: any Sc550 column
+                sc550_col = all_sc550_cols[0]
+                print(f"  Selected first Sc550 column: {sc550_col}")
 
         sc550 = df[sc550_col]
         print(f"  Sc550: {sc550.notna().sum()} valid points")
+
+        # Extract a clean short label for plotting
+        if 'total' in sc550_col.lower() and 'submicron' not in sc550_col.lower():
+            sc550_label = 'Sc550_total'
+        elif 'submicron' in sc550_col.lower():
+            if 'amb' in sc550_col.lower():
+                sc550_label = 'Sc550_submicron_amb'
+            else:
+                sc550_label = 'Sc550_submicron'
+        else:
+            sc550_label = 'Sc550'
+        print(f"  Using label for plots: {sc550_label}")
     else:
         print("  WARNING: No Sc550 column found!")
         sc550 = None
+        sc550_label = 'Sc550'
     
     # Group by date
     print("\nGrouping data by date...")
@@ -629,15 +665,18 @@ def main():
             max_corr = np.nan
         
         # Plot full time series (with Sc550 if available)
-        plot_time_series(date, las_sum_date, smps_sum_date, sc550_date, output_dir=output_dir)
+        plot_time_series(date, las_sum_date, smps_sum_date, sc550_date,
+                        sc550_label=sc550_label, output_dir=output_dir)
 
         # Plot zoomed time series around max Sc550 (if Sc550 available)
         if sc550_date is not None:
-            plot_time_series_zoom(date, las_sum_date, smps_sum_date, sc550_date, output_dir=output_dir)
+            plot_time_series_zoom(date, las_sum_date, smps_sum_date, sc550_date,
+                                 sc550_label=sc550_label, output_dir=output_dir)
 
         # Plot cross-correlation
         plot_cross_correlation(date, shifts, correlations, dot_products,
-                              n_valid_points=n_valid_points, output_dir=output_dir)
+                              sc550_label=sc550_label, n_valid_points=n_valid_points,
+                              output_dir=output_dir)
     
     print("\n" + "=" * 70)
     print("Clock alignment test complete!")
