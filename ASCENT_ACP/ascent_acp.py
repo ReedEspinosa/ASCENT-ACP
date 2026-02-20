@@ -9,7 +9,8 @@ def run_ascent_acp_merge(
     pickle_filename='merged_LAS-SMPS-Optical_outfile',
     prefix_instr_name=True,
     mode_input='Merge_Beside',
-    master_timeline=['2020-02-14 00:00:00', '2020-02-16 00:00:00', 1]
+    master_timeline=['2020-02-14 00:00:00', '2020-02-16 00:00:00', 1],
+    n_workers=1
 ):
     """
     Run the ASCENT-ACP ICARTT merge operation.
@@ -39,6 +40,9 @@ def run_ascent_acp_merge(
         Master timeline specification [start_date, end_date, time_step_seconds].
         Required for 'Merge_Beside' mode, optional for others.
         Default: ['2020-02-14 00:00:00', '2020-02-16 00:00:00', 5]
+    n_workers : int, optional
+        Number of parallel workers for processing ICARTT files.
+        1 = sequential (default), >1 = multiprocessing.Pool with N workers.
 
     Returns
     -------
@@ -53,7 +57,8 @@ def run_ascent_acp_merge(
         master_timeline=master_timeline,
         pickle_directory=pickle_directory,
         pickle_filename=pickle_filename,
-        prefix_instr_name=prefix_instr_name
+        prefix_instr_name=prefix_instr_name,
+        n_workers=n_workers
     )
 
     return df, meta
