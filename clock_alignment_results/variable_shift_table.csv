@@ -1,0 +1,242 @@
+variable,apply_time_shift,shift_group,instrument,rationale,in_2020,in_2021
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_Chl_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_Chl_frac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_Duration_CVI_secs,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_NH4_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_NH4_frac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_NO3_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_NO3_frac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_Org_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_Org_frac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz42_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz42_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz43_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz43_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz44_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz44_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz55_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz55_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz57_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz57_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz58_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz58_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz60_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz60_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz79_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz79_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz91_Ave_IsoK_STP,YES,AMS,AMS,"Aerosol mass spectrometer - composition-dependent, own ICARTT file clock",Y,
+Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_mz91_ORGfrac_CVI,YES,AMS-CVI,AMS,"AMS behind CVI inlet - composition-dependent, own ICARTT file clock",Y,
+Differential_UV_Absorption_Measurements_of_Ozone_O3_ppbv,YES,TraceGas-O3,TraceGas-O3,Trace gas O3 - own ICARTT file clock,Y,
+Diode_Laser_Hygrometer_measurements_of_H2O_v__H2O_DLH,NO,,DLH,Water vapor hygrometer - not aerosol composition dependent,Y,Y
+Diode_Laser_Hygrometer_measurements_of_H2O_v__RHi_DLH,NO,,DLH,Water vapor hygrometer - not aerosol composition dependent,Y,Y
+Diode_Laser_Hygrometer_measurements_of_H2O_v__RHw_DLH,NO,,DLH,Water vapor hygrometer - not aerosol composition dependent,Y,Y
+In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_CCN_SS,YES,CCN,CCN,"Cloud condensation nuclei - composition-dependent, own ICARTT file clock",Y,Y
+In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,YES,CCN,CCN,"Cloud condensation nuclei - composition-dependent, own ICARTT file clock",Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin00,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin01,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin02,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin03,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin04,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin05,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin06,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin07,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin08,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin09,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin10,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin11,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin12,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin13,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin14,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin15,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin16,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin17,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin18,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin19,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin20,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin21,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin22,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin23,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin24,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin25,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin26,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin27,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin28,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_CDP_Bin29,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_LWC_CDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_N_CDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_Reff_CDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon_Veff_CDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin00,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin01,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin02,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin03,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin04,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin05,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin06,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin07,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin08,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin09,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin10,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin11,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin12,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin13,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin14,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin15,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin16,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin17,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin18,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin19,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin20,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin21,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin22,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin23,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin24,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin25,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin26,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin27,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin28,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_CAS_Bin29,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_LWC_CAS,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_N_CAS,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_Reff_CAS,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon_Veff_CAS,NO,,CAS,"Cloud/aerosol spectrometer - ambient cloud probe, not composition-dependent",Y,
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_ED_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_LWC_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_MVD_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_N_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_003_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_004_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_005_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_006_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_007_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_008_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_009_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_010_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_011_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_012_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_013_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_014_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_015_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_016_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_017_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_018_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_019_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25_dNdlogD_020_FCDP,NO,,CDP,Cloud droplet probe - ambient cloud measurement,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin01,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin02,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin03,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin04,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin05,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin06,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin07,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin08,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin09,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin10,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin11,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin12,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin13,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin14,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin15,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin16,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin17,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin18,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin19,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin20,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin21,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin22,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin23,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin24,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin25,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_LAS_Bin26,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_nLAS_AmmSO4,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_sLAS_AmmSO4,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_stdPT,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25_vLAS_AmmSO4,NO,,LAS,Reference instrument - all other data shifted to match LAS timestamps,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin01,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin02,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin03,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin04,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin05,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin06,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin07,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin08,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin09,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin10,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin11,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin12,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin13,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin14,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin15,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin16,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin17,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin18,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin19,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin20,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin21,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin22,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin23,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin24,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin25,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin26,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin27,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin28,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin29,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_SMPS_Bin30,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_nSMPS,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_sSMPS,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_stdPT,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25_vSMPS,NO,,SMPS,Insufficient time resolution for reliable shift correction,Y,Y
+In-situ_microphysical_aerosol_measurements_from_the_NASA_HU-25_InletFlag_LARGE,NO,,InletFlag,Inlet status flag - not a measurement,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_AEabsDRY_470to660nm,YES,Optical_Absorption,Optical,Absorption measurement (PSAP/CLAP) - shift independently from scattering,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_AEscatAMB_450to700nm,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_AEscat_450to700nm,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Abs470_total,YES,Optical_Absorption,Optical,Absorption measurement (PSAP/CLAP) - shift independently from scattering,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Abs532_total,YES,Optical_Absorption,Optical,Absorption measurement (PSAP/CLAP) - shift independently from scattering,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Abs660_total,YES,Optical_Absorption,Optical,Absorption measurement (PSAP/CLAP) - shift independently from scattering,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Ext532_submicron,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Ext532_submicron_amb,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Ext532_total,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Ext532_total_amb,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_RH_Sc_submicron,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_RH_Sc_total,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_SSA_450nm,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_SSA_550nm,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_SSA_700nm,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_SSA_amb_550nm,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc450_submicron,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc450_total,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_submicron,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_submicron_amb,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total_amb,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc700_submicron,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc700_total,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_fRH550_RH20to80,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_gamma550,YES,Optical_Scattering,Optical,Scattering/extinction measurement (nephelometer/CAPS) - shift independently from absorption,Y,Y
+In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_stdPT,YES,Optical_Shared,Optical,Standard P/T for optical system - shared across optical instruments,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_GPS_altitude,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_IR_Surf_Temp,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Latitude,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Longitude,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Pitch,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Pressure_Altitude,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Roll,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Static_Air_Temp,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Static_Pressure,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_True_Air_Speed,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_True_Heading,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Wind_Direction,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25_Wind_Speed,NO,,SUMMARY,Aircraft state/navigation data - not composition dependent,Y,Y
+In_Situ_Infrared_Cavity_Ringdown_Absorption_Measurements_of_CH4_CH4_ppm,YES,TraceGas-CH4,TraceGas-CH4,Trace gas CH4 - own ICARTT file clock,Y,
+In_Situ_Infrared_Cavity_Ringdown_Absorption_Measurements_of_CO2_CO2_ppm,YES,TraceGas-CO2,TraceGas-CO2,Trace gas CO2 - own ICARTT file clock,Y,
+In_Situ_Infrared_Cavity_Ringdown_Absorption_Measurements_of_CO_CO_ppm,YES,TraceGas-CO,TraceGas-CO,Trace gas CO - own ICARTT file clock,Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Calcium,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Chloride,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Magnesium,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Nitrate,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Oxalate,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Potassium,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Sodium,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,
+Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography_Sulfate,YES,PILS,PILS,"PILS ion chromatography - composition-dependent, own ICARTT file clock",Y,

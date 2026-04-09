@@ -637,6 +637,10 @@ def plot_time_series(date, las_sum, smps_sum, sc_data=None,
 
     # SSA panel: Single Scattering Albedo
     if ssa_dict is not None and len(ssa_dict) > 0 and ax_ssa is not None:
+        # Apply smoothing for full time series (not zoomed)
+        # Use ~1% of time series length for rolling window
+        apply_smoothing = (zoom_label == '')
+
         # Plot SSA for each wavelength with both methods
         for wavelength in sorted(ssa_dict.keys()):
             color = wavelength_to_rgb(wavelength)
@@ -645,14 +649,24 @@ def plot_time_series(date, las_sum, smps_sum, sc_data=None,
             if 'method1' in ssa_dict[wavelength]:
                 ssa_method1 = ssa_dict[wavelength]['method1']
                 if isinstance(ssa_method1, pd.Series) and ssa_method1.notna().sum() > 0:
-                    ax_ssa.plot(ssa_method1.index, ssa_method1.values, '--', color=color,
+                    if apply_smoothing:
+                        window_size = max(1, int(len(ssa_method1) * 0.01))
+                        ssa_plot = ssa_method1.rolling(window=window_size, center=True, min_periods=1).mean()
+                    else:
+                        ssa_plot = ssa_method1
+                    ax_ssa.plot(ssa_plot.index, ssa_plot.values, '--', color=color,
                                linewidth=1.5, alpha=0.7, label=f'SSA₁ @ {wavelength} nm')
 
             # Method 2: scattering / (absorption + scattering) (solid)
             if 'method2' in ssa_dict[wavelength]:
                 ssa_method2 = ssa_dict[wavelength]['method2']
                 if isinstance(ssa_method2, pd.Series) and ssa_method2.notna().sum() > 0:
-                    ax_ssa.plot(ssa_method2.index, ssa_method2.values, '-', color=color,
+                    if apply_smoothing:
+                        window_size = max(1, int(len(ssa_method2) * 0.01))
+                        ssa_plot = ssa_method2.rolling(window=window_size, center=True, min_periods=1).mean()
+                    else:
+                        ssa_plot = ssa_method2
+                    ax_ssa.plot(ssa_plot.index, ssa_plot.values, '-', color=color,
                                linewidth=1.5, alpha=0.7, label=f'SSA₂ @ {wavelength} nm')
 
         ax_ssa.set_ylabel('Single Scattering Albedo', fontsize=12)
@@ -664,13 +678,22 @@ def plot_time_series(date, las_sum, smps_sum, sc_data=None,
 
     # Bottom panel: Absorption
     if abs_data is not None and len(abs_data) > 0 and ax_abs is not None:
+        # Apply smoothing for full time series (not zoomed)
+        # Use ~1% of time series length for rolling window
+        apply_smoothing = (zoom_label == '')
+
         # Plot absorption for each wavelength with wavelength-based colors
         for wavelength in sorted(abs_data.keys()):
             abs_series = abs_data[wavelength]
             color = wavelength_to_rgb(wavelength)
 
             if isinstance(abs_series, pd.Series) and abs_series.notna().sum() > 0:
-                ax_abs.plot(abs_series.index, abs_series.values, '-', color=color,
+                if apply_smoothing:
+                    window_size = max(1, int(len(abs_series) * 0.01))
+                    abs_plot = abs_series.rolling(window=window_size, center=True, min_periods=1).mean()
+                else:
+                    abs_plot = abs_series
+                ax_abs.plot(abs_plot.index, abs_plot.values, '-', color=color,
                            linewidth=1.5, alpha=0.7, label=f'Abs{wavelength}')
 
         ax_abs.set_ylabel('Absorption (Mm⁻¹)', fontsize=12)
@@ -1022,7 +1045,7 @@ def main():
     # Load merged data
     print("\nLoading merged ICARTT data...")
 #     df, meta = run_ascent_acp_merge(prefix_instr_name=False, output_directory=None)
-    df, meta = run_ascent_acp_merge(mode_input='Load_Pickle', pickle_directory='/Users/wrespino/Downloads/ACTIVATE_TEST', pickle_filename='merged1sec_LAS-SMPS-Optical_2020Feb_V1')
+    df, meta = run_ascent_acp_merge(mode_input='Load_Pickle', pickle_directory='/Users/wrespino/Downloads/ACTIVATE_TEST', pickle_filename='merged1sec_LAS-SMPS-Optical_2021_V1')
     print(f"Loaded dataframe with shape: {df.shape}")
     print(f"Time range: {df.index.min()} to {df.index.max()}")
     
