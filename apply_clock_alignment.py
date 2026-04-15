@@ -188,15 +188,26 @@ def decide(diag, n_valid):
 
 
 def load_shift_table(csv_path):
+    """alignment_variable may be a '|'-separated list of fallbacks."""
     tbl = pd.read_csv(csv_path)
     yes = tbl[tbl['apply_time_shift'] == 'YES']
     groups = {}
     for g, sub in yes.groupby('shift_group'):
+        raw = str(sub['alignment_variable'].iloc[0])
         groups[str(g)] = {
-            'alignment_variable': str(sub['alignment_variable'].iloc[0]),
+            'alignment_candidates': [s.strip() for s in raw.split('|') if s.strip()],
             'variables': sub['variable'].tolist(),
         }
     return groups
+
+
+def pick_alignment_variable(candidates, columns):
+    """Return first candidate present in columns, else None."""
+    colset = set(columns)
+    for c in candidates:
+        if c in colset:
+            return c
+    return None
 
 
 def plot_date(date_str, group_results, plot_path):
@@ -284,7 +295,7 @@ def apply_clock_alignment(input_pkl, shift_table_csv, output_pkl, diagnostics_cs
         group_results = {}
 
         for g, info in sorted(groups.items()):
-            align_var = info['alignment_variable']
+            align_var = pick_alignment_variable(info['alignment_candidates'], date_slice.columns)
             row = {
                 'date': date_str,
                 'shift_group': g,
@@ -305,8 +316,9 @@ def apply_clock_alignment(input_pkl, shift_table_csv, output_pkl, diagnostics_cs
                 'n_vars_shifted': 0,
             }
 
-            if align_var not in date_slice.columns:
-                row['reason'] = 'alignment_variable not in DataFrame'
+            if align_var is None:
+                row['alignment_variable'] = '|'.join(info['alignment_candidates'])
+                row['reason'] = 'no alignment_variable candidate present in DataFrame'
                 rows.append(row)
                 print(f"  {g:<12s} SKIP (alignment_variable missing)")
                 continue
