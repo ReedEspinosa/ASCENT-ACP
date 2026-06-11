@@ -4,7 +4,7 @@ import icartt_read_and_merge as ict
 
 
 def run_ascent_acp_merge(
-    icartt_directory="/Users/wrespino/Downloads/ACTIVATE_TEST",
+    icartt_directory="/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_TEST",
     pickle_directory=None,
     pickle_filename='merged_LAS-SMPS-Optical_outfile',
     prefix_instr_name=True,

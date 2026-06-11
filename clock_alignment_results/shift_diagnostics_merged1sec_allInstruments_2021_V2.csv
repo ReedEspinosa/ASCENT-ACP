@@ -1,0 +1,13 @@
+date,shift_group,alignment_variable,n_valid,optimal_shift_s,peak_r,peak_r_raw,zero_lag_r,peak_margin,second_peak_r,monotonic_halfwidth_s,left_halfwidth_s,right_halfwidth_s,concavity_fraction,decision,reason,n_vars_shifted
+2021-03-04,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,0,,,,,,,,,,,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2021-03-04,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,0,,,,,,,,,,,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2021-03-04,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,4191,16.0,0.9242,0.9281,0.8774,0.0096,0.9146,14.0,46.0,14.0,0.8095,SHIFT,,2
+2021-03-04,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_submicron,10183,4.0,0.7997,0.802,0.7958,0.0068,0.7929,26.0,34.0,26.0,0.9048,SHIFT,,20
+2021-03-05,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,0,,,,,,,,,,,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2021-03-05,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,0,,,,,,,,,,,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2021-03-05,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,11887,16.0,0.8113,0.8224,0.7331,0.023,0.7882,14.0,46.0,14.0,0.619,SHIFT,,2
+2021-03-05,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_submicron,27964,2.0,0.6499,0.6537,0.6486,0.0121,0.6378,28.0,32.0,28.0,0.9048,SHIFT,,20
+2021-05-13,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,9130,18.0,0.8071,0.8076,0.7891,0.0017,0.8054,12.0,48.0,12.0,0.8571,SHIFT,,14
+2021-05-13,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,0,-30.0,-0.0505,-0.0842,,0.1887,-0.2392,0.0,0.0,7.0,0.5455,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2021-05-13,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,10426,18.0,0.8183,0.8217,0.7675,0.0084,0.8099,12.0,48.0,12.0,0.619,SHIFT,,2
+2021-05-13,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_submicron,10435,5.0,0.7985,0.8015,0.7914,0.0102,0.7883,25.0,35.0,25.0,0.9524,SHIFT,,20

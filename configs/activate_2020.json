@@ -1,0 +1,68 @@
+{
+  "campaign": "ACTIVATE",
+  "year": "2020Feb",
+  "paths": {
+    "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_TEST/merged1sec_allInstruments_2020Feb_V2_timeShifted.pkl",
+    "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_TEST/merged1sec_allInstruments_2020Feb_V2_meta.pickle",
+    "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_TEST/isara_output",
+    "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
+    "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
+    "optical_dataset_dir": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/",
+    "scratch_dir": "/tmp/ascent_acp_scratch"
+  },
+  "channels": {
+    "sca_suffixes": {"450": "Sc450_total", "550": "Sc550_total", "700": "Sc700_total"},
+    "abs_suffixes": {"470": "Abs470_total", "532": "Abs532_total", "660": "Abs660_total"},
+    "ssa_suffixes": {"450": "SSA_450nm", "550": "SSA_550nm", "700": "SSA_700nm"},
+    "rh_sc_suffix": "RH_Sc_total",
+    "gamma_suffix": "gamma550",
+    "frh_suffix": "fRH550_RH20to80",
+    "ae_suffix": "AEscat_450to700nm",
+    "inlet_flag_suffix": "InletFlag_LARGE",
+    "n_cdp_suffix": "N_CDP",
+    "lwc_cdp_suffix": "LWC_CDP",
+    "n_fcdp_suffix": "N_FCDP",
+    "lwc_fcdp_suffix": "LWC_FCDP",
+    "lat_suffix": "Latitude",
+    "lon_suffix": "Longitude",
+    "alt_suffix": "GPS_altitude",
+    "dry_wvl_sca": [450, 550, 700],
+    "dry_wvl_abs": [470, 532, 660],
+    "wet_wvl_sca": [550],
+    "val_wvl": [532]
+  },
+  "filters": {
+    "cloud_n_max_cm3": 1.0,
+    "cloud_lwc_max_gm3": 0.001,
+    "use_fcdp": true,
+    "cloud_pad_s": 5,
+    "require_inlet_flag_zero": true,
+    "min_dry_sc450_Mm": 10.0,
+    "min_ssa": 0.7,
+    "ssa_filter_wvl": "550",
+    "dry_ref_rh": 40.0,
+    "wet_rh": 80.0
+  },
+  "window": {
+    "window_s": 60,
+    "min_valid_points": 20,
+    "ae_max_relstd": 0.30,
+    "ae_std_mode": "relative",
+    "min_valid_points_per_bin": 10
+  },
+  "psd": {
+    "variant_name": "total",
+    "psd_max_um": 5.0,
+    "inlet_cutoff_um": 5.0,
+    "smps_min_dp_um": 0.0
+  },
+  "isara": {
+    "size_equ": "cs",
+    "shape": "sphere",
+    "nonabs_fraction": 0.0,
+    "rho_dry": 1.0,
+    "rho_wet": 1.0,
+    "num_theta": 2,
+    "n_workers": 8
+  }
+}

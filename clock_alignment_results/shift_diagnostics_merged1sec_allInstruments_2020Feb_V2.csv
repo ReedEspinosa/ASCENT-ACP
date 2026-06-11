@@ -1,0 +1,37 @@
+date,shift_group,alignment_variable,n_valid,optimal_shift_s,peak_r,peak_r_raw,zero_lag_r,peak_margin,second_peak_r,monotonic_halfwidth_s,left_halfwidth_s,right_halfwidth_s,concavity_fraction,decision,reason,n_vars_shifted
+2020-02-14,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,10235,4.0,0.69,0.6907,0.689,0.0023,0.6877,26.0,34.0,26.0,1.0,SHIFT,,14
+2020-02-14,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,0,,,,,,,,,,,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2020-02-14,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,4167,11.0,0.7411,0.7543,0.6656,0.0328,0.7084,13.0,18.0,13.0,0.5714,SHIFT,,2
+2020-02-14,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,10034,3.0,0.758,0.7629,0.753,0.0153,0.7427,27.0,33.0,27.0,0.9524,SHIFT,,20
+2020-02-15,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,8622,3.0,0.8632,0.8648,0.8614,0.0042,0.859,27.0,33.0,27.0,1.0,SHIFT,,14
+2020-02-15,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,383,5.0,-0.2351,-0.2216,-0.2588,0.0109,-0.246,10.0,35.0,10.0,0.4762,SKIP,peak_r<0.2,0
+2020-02-15,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,4574,30.0,0.4324,0.4319,0.4039,0.0047,0.4276,0.0,10.0,0.0,0.5455,SKIP,monotonic_halfwidth_s<5,0
+2020-02-15,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,11299,1.0,0.5583,0.5708,0.5576,0.042,0.5164,29.0,31.0,29.0,0.8571,SHIFT,,20
+2020-02-17,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,11352,7.0,0.8527,0.8531,0.8505,0.0016,0.8511,23.0,37.0,23.0,1.0,SHIFT,,14
+2020-02-17,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,20,-2.0,0.8758,0.8843,0.8611,0.0102,0.8656,10.0,13.0,10.0,0.6667,SKIP,n_valid=20<300,0
+2020-02-17,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,3812,10.0,0.5203,0.5204,0.5175,0.0007,0.5196,20.0,40.0,20.0,1.0,SHIFT,,2
+2020-02-17,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,11586,5.0,0.9227,0.9229,0.9215,0.0015,0.9211,25.0,35.0,25.0,1.0,SHIFT,,20
+2020-02-21,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,6740,-11.0,0.6854,0.6859,0.6819,0.0011,0.6843,19.0,19.0,41.0,1.0,SHIFT,,14
+2020-02-21,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,136,21.0,0.0976,0.114,-0.2655,0.0261,0.0715,9.0,37.0,9.0,0.75,SKIP,n_valid=136<300; peak_r<0.2,0
+2020-02-21,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,4313,0.0,0.6043,0.6091,0.6043,0.0112,0.5931,14.0,30.0,14.0,0.619,SHIFT,,0
+2020-02-21,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,10325,-4.0,0.6445,0.7071,0.5858,0.1155,0.529,26.0,26.0,34.0,0.4762,SHIFT,,20
+2020-02-22,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,18876,2.0,0.608,0.6105,0.6072,0.0055,0.6025,28.0,32.0,28.0,0.8571,SHIFT,,14
+2020-02-22,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,177,-30.0,-0.1663,-0.1616,-0.3368,0.0167,-0.1829,0.0,0.0,12.0,0.7273,SKIP,n_valid=177<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2020-02-22,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,16288,13.0,0.5751,0.5824,0.5167,0.0196,0.5555,17.0,43.0,17.0,0.7619,SHIFT,,2
+2020-02-22,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,23378,-1.0,0.336,0.3399,0.3357,0.0122,0.3238,29.0,29.0,31.0,0.9048,SHIFT,,20
+2020-02-23,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,18666,4.0,0.1673,0.1675,0.1669,0.001,0.1663,26.0,34.0,26.0,1.0,SKIP,peak_r<0.2,0
+2020-02-23,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,39,-7.0,-0.0339,0.1014,-0.3581,0.1223,-0.1561,9.0,23.0,9.0,0.4286,SKIP,n_valid=39<300; peak_r<0.2,0
+2020-02-23,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,7597,-30.0,0.6144,0.6184,0.5412,0.0198,0.5946,0.0,0.0,25.0,0.7273,SKIP,monotonic_halfwidth_s<5,0
+2020-02-23,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,21005,2.0,0.575,0.5774,0.5733,0.0076,0.5674,28.0,32.0,28.0,1.0,SHIFT,,20
+2020-02-27,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,9583,2.0,0.8704,0.8714,0.87,0.0027,0.8677,28.0,32.0,28.0,1.0,SHIFT,,14
+2020-02-27,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,278,6.0,0.1842,0.2041,0.1085,0.0603,0.1239,17.0,22.0,17.0,0.6667,SKIP,n_valid=278<300; peak_r<0.2,0
+2020-02-27,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,4430,6.0,0.4252,0.445,0.3743,0.0444,0.3808,24.0,36.0,24.0,0.5714,SHIFT,,2
+2020-02-27,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,12498,-5.0,0.3779,0.3866,0.3601,0.0256,0.3522,15.0,15.0,22.0,0.7143,SHIFT,,20
+2020-02-28,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,17798,9.0,0.7892,0.7894,0.7851,0.0009,0.7883,21.0,39.0,21.0,1.0,SHIFT,,14
+2020-02-28,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,60,-11.0,0.2089,0.248,-0.1032,0.114,0.0949,19.0,19.0,41.0,0.7143,SKIP,n_valid=60<300,0
+2020-02-28,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,8572,-13.0,0.2625,0.2628,0.2467,0.0021,0.2604,17.0,17.0,43.0,0.9524,SHIFT,,2
+2020-02-28,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,29405,0.0,0.6105,0.6137,0.6105,0.011,0.5995,30.0,30.0,30.0,1.0,SHIFT,,0
+2020-02-29,AMS,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_Ave_IsoK_STP,9581,8.0,0.7123,0.7151,0.6923,0.0103,0.7021,22.0,38.0,22.0,1.0,SHIFT,,14
+2020-02-29,AMS-CVI,Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer_SO4_frac_CVI,517,8.0,0.373,0.3831,0.3252,0.0311,0.3419,22.0,38.0,22.0,0.8095,SHIFT,,15
+2020-02-29,CCN,In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon_N_CCN_stdPT,0,,,,,,,,,,,SKIP,n_valid=0<300; peak_r<0.2; monotonic_halfwidth_s<5,0
+2020-02-29,Optical,In-situ_optical_aerosol_measurements_from_the_NASA_HU-25_Sc550_total,12788,-2.0,0.2448,0.2471,0.2431,0.01,0.2347,25.0,28.0,25.0,0.9048,SHIFT,,20

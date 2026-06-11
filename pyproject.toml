@@ -29,6 +29,11 @@ classifiers = [
 
 dependencies = [
     "icartt-read-and-merge>=0.1.0",
+    "numpy",
+    "pandas",
+    "scipy",
+    "xarray",
+    "netCDF4",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +41,9 @@ dev = [
     "pytest>=7.0",
     "black",
     "flake8",
+]
+plots = [
+    "matplotlib",
 ]
 
 [project.urls]
@@ -48,5 +56,6 @@ packages = ["ASCENT_ACP"]
 
 [tool.setuptools.package-data]
 "*" = ["*.md", "LICENSE"]
+"ASCENT_ACP" = ["data/*.csv"]
 
 
