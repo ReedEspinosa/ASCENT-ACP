@@ -36,6 +36,19 @@ truncation variant (`psd.psd_max_um`).
 LAS and SMPS size-bin definitions (transcribed from the ICARTT headers) ship in
 `ASCENT_ACP/data/*.csv`.
 
+### Precomputed-optics LUT
+
+By default (`isara.use_lut: true`) the pipeline precomputes MOPSMAP optics
+kernels per (CRI candidate, wavelength, size bin) for each common PSD
+bin-availability pattern, turning the per-window refractive-index grid search
+into dot products (ISARA's `optics_lut.py`). MOPSMAP integrates the size
+distribution linearly in dN/dlogDp, so LUT results are identical to the
+per-candidate subprocess path (verified to float precision). LUTs are cached
+under `<output_dir>/lut_cache/` keyed by a fingerprint of bins, wavelengths,
+CRI grid and particle assumptions; windows with rare bin patterns
+(`isara.lut_min_pattern_count`) transparently fall back to subprocess calls.
+The humidified (kappa) search still runs MOPSMAP per candidate.
+
 ## Tests
 
 ```bash
