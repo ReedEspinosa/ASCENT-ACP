@@ -27,6 +27,7 @@ class PathsConfig:
         "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/"
     )
     scratch_dir: str = "/tmp/ascent_acp_scratch"  # cwd for MOPSMAP temp files
+    lut_cache_dir: str = ""  # optics LUT cache; "" -> <output_dir>/lut_cache
 
 
 @dataclass
@@ -119,6 +120,8 @@ class IsaraConfig:
     rho_wet: float = 1.0
     num_theta: int = 2
     n_workers: int = 8
+    use_lut: bool = True  # precomputed-optics CRI search (falls back per window)
+    lut_min_pattern_count: int = 5  # build a LUT only for bin patterns this common
 
 
 @dataclass

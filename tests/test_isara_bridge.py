@@ -31,6 +31,7 @@ def fake_isara(monkeypatch, tmp_path):
     mod.Retr_PSD = fake_retr_psd
     monkeypatch.setitem(sys.modules, "ISARA", mod)
     monkeypatch.setattr(isara_bridge, "_ISARA", None)
+    monkeypatch.setattr(isara_bridge, "_LUTS", {})
     return calls
 
 
@@ -42,10 +43,16 @@ def make_windows(cfg):
     return windows.aggregate(df, opt, masks, grid, cfg), grid
 
 
-def test_kwargs_units_and_shapes(fake_isara, tmp_path):
+def make_cfg(tmp_path):
     cfg = PipelineConfig()
     cfg.isara.n_workers = 1
+    cfg.isara.use_lut = False  # LUT plumbing tested separately
     cfg.paths.scratch_dir = str(tmp_path)
+    return cfg
+
+
+def test_kwargs_units_and_shapes(fake_isara, tmp_path):
+    cfg = make_cfg(tmp_path)
     wdf, grid = make_windows(cfg)
     res = isara_bridge.run_all_windows(wdf, grid, cfg, progress=False)
 
@@ -64,9 +71,7 @@ def test_kwargs_units_and_shapes(fake_isara, tmp_path):
 
 
 def test_nan_psd_bins_passed_through(fake_isara, tmp_path):
-    cfg = PipelineConfig()
-    cfg.isara.n_workers = 1
-    cfg.paths.scratch_dir = str(tmp_path)
+    cfg = make_cfg(tmp_path)
     wdf, grid = make_windows(cfg)
     col = windows.psd_col_name(grid.dpg_um[3])
     wdf[col] = np.nan
@@ -76,13 +81,65 @@ def test_nan_psd_bins_passed_through(fake_isara, tmp_path):
 
 
 def test_flagged_windows_skipped(fake_isara, tmp_path):
-    cfg = PipelineConfig()
-    cfg.isara.n_workers = 1
-    cfg.paths.scratch_dir = str(tmp_path)
+    cfg = make_cfg(tmp_path)
     wdf, grid = make_windows(cfg)
     wdf.loc[wdf.index[0], "window_qc_flag"] = windows.FLAG_AE_UNSTABLE
     res = isara_bridge.run_all_windows(wdf, grid, cfg, progress=False)
     assert len(res) == 1 and len(fake_isara) == 1
+
+
+def test_lut_built_per_pattern_and_passed(monkeypatch, tmp_path):
+    """With use_lut on, common bin patterns get a LUT routed into Retr_PSD."""
+    received = []
+
+    def fake_retr_psd(lut=None, **kwargs):
+        received.append(lut)
+        return {"attempt_flag_CRI_unitless": 2, "attempt_flag_kappa_unitless": 0}
+
+    builds = []
+
+    class FakeLUT:
+        def __init__(self, **state):
+            self.state = state
+            for k, v in state.items():
+                setattr(self, k, v)
+
+    def fake_build(wvl, cri_grid, dpg_um, *a, **k):
+        builds.append(np.asarray(dpg_um))
+        n = (len(cri_grid), len(wvl), len(dpg_um))
+        return FakeLUT(
+            wvl_nm=np.asarray(wvl), cri_grid=np.asarray(cri_grid),
+            dpg_um=np.asarray(dpg_um), K_ext=np.zeros(n), K_sca=np.zeros(n),
+            size_equ="cs", nonabs_fraction=0.0, shape="sphere", rho=1.0,
+            num_theta=2,
+        )
+
+    isara_mod = types.ModuleType("ISARA")
+    isara_mod.Retr_PSD = fake_retr_psd
+    isara_mod.default_CRI_grid = lambda: np.array([[1.52, 0.001], [1.53, 0.002]])
+    lut_mod = types.ModuleType("optics_lut")
+    lut_mod.build = fake_build
+    lut_mod.OpticsLUT = FakeLUT
+    monkeypatch.setitem(sys.modules, "ISARA", isara_mod)
+    monkeypatch.setitem(sys.modules, "optics_lut", lut_mod)
+    monkeypatch.setattr(isara_bridge, "_ISARA", None)
+    monkeypatch.setattr(isara_bridge, "_LUTS", {})
+
+    cfg = make_cfg(tmp_path)
+    cfg.isara.use_lut = True
+    cfg.isara.lut_min_pattern_count = 1
+    cfg.paths.output_dir = str(tmp_path)
+    wdf, grid = make_windows(cfg)
+    # knock one bin out of the SECOND window only -> two patterns, two LUTs
+    col = windows.psd_col_name(grid.dpg_um[3])
+    wdf.loc[wdf.index[1], col] = np.nan
+
+    res = isara_bridge.run_all_windows(wdf, grid, cfg, progress=False)
+    assert len(res) == 2
+    assert len(builds) == 2  # full pattern + one-bin-missing pattern
+    assert all(isinstance(lut, FakeLUT) for lut in received)
+    sizes = sorted(lut.state["dpg_um"].size for lut in received)
+    assert sizes == [len(grid) - 1, len(grid)]
 
 
 def test_value_error_becomes_flag_zero(monkeypatch, tmp_path):
@@ -94,9 +151,7 @@ def test_value_error_becomes_flag_zero(monkeypatch, tmp_path):
     monkeypatch.setitem(sys.modules, "ISARA", mod)
     monkeypatch.setattr(isara_bridge, "_ISARA", None)
 
-    cfg = PipelineConfig()
-    cfg.isara.n_workers = 1
-    cfg.paths.scratch_dir = str(tmp_path)
+    cfg = make_cfg(tmp_path)
     wdf, grid = make_windows(cfg)
     res = isara_bridge.run_all_windows(wdf, grid, cfg, progress=False)
     assert (res["attempt_flag_CRI_unitless"] == 0).all()
