@@ -73,9 +73,9 @@ def run_pipeline(cfg, dates=None, max_windows=None, write_nc=True, make_plots=Fa
     paths["checkpoint"] = results.save_checkpoint(res, grid, cfg, out_dir / f"{stem}.pkl")
 
     if write_nc:
-        print("[5/5] Writing netCDF")
-        ds = netcdf_export.to_dataset(res, grid, cfg, meta)
-        paths["netcdf"] = netcdf_export.write(ds, out_dir / f"{stem}.nc")
+        print("[5/5] Writing grouped netCDF")
+        dt = netcdf_export.build_datatree(df, masks, res, grid, cfg, meta=meta)
+        paths["netcdf"] = netcdf_export.write(dt, out_dir / f"{stem}.nc", cfg)
         print(f"      {paths['netcdf']}")
     if make_plots:
         from . import plots

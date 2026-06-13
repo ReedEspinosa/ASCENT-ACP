@@ -28,6 +28,11 @@ class PathsConfig:
     )
     scratch_dir: str = "/tmp/ascent_acp_scratch"  # cwd for MOPSMAP temp files
     lut_cache_dir: str = ""  # optics LUT cache; "" -> <output_dir>/lut_cache
+    # Clock-alignment provenance (the /clock_alignment netCDF group). Empty
+    # diagnostics path -> derive "shift_diagnostics_<input_pkl_basename>.csv".
+    shift_table_csv: str = ""       # variable -> shift_group table
+    shift_diagnostics_csv: str = ""  # per (date x shift_group) applied shifts
+    family_map_json: str = ""       # "" -> data/<campaign>_instrument_families.json
 
 
 @dataclass
@@ -125,6 +130,39 @@ class IsaraConfig:
 
 
 @dataclass
+class MergeConfig:
+    """Drives the campaign-agnostic ICARTT->pickle merge stage (ASCENT_ACP.merge).
+
+    Generalizes the formerly ACTIVATE-hardcoded wrapper; the merge engine
+    (icartt_read_and_merge.icartt_merger) is called unchanged.
+    """
+
+    icartt_dir: str = ""            # directory of source .ict files
+    instruments: list = field(default_factory=list)  # instrument tokens to include
+    # Regex matching the source filenames; must expose named groups 'instr'
+    # (validated against `instruments`) and 'date' (parsed with `date_format`).
+    filename_regex: str = r"^(?P<instr>[A-Za-z0-9\-]+)_HU25_(?P<date>\d{8})_R\d+(_L\d)?\.ict$"
+    date_format: str = "%Y%m%d"
+    merge_mode: str = "Merge_Beside"
+    master_timeline_step_s: int = 1  # grid spacing (s) of the per-date timeline
+    prefix_instr_name: bool = True
+    exclude_regexes: list = field(default_factory=list)  # columns to drop post-merge
+    n_workers: int = 6
+    staging_dir: str = ""           # "" -> /tmp/<campaign>_merge_staging
+
+
+@dataclass
+class OutputConfig:
+    """Controls the grouped netCDF v2 export (ASCENT_ACP.netcdf_export)."""
+
+    version: str = "V2"             # filename version tag
+    emit_observations: bool = True  # /observations native-cadence passthrough
+    emit_windowed_raw: bool = True  # /windowed/raw 60 s means of every raw column
+    float32: bool = True            # store float vars as float32
+    compression_level: int = 4      # zlib complevel (0 = off)
+
+
+@dataclass
 class PipelineConfig:
     campaign: str = "ACTIVATE"
     year: str = ""
@@ -134,6 +172,8 @@ class PipelineConfig:
     window: WindowConfig = field(default_factory=WindowConfig)
     psd: PSDConfig = field(default_factory=PSDConfig)
     isara: IsaraConfig = field(default_factory=IsaraConfig)
+    merge: MergeConfig = field(default_factory=MergeConfig)
+    output: OutputConfig = field(default_factory=OutputConfig)
 
     def to_json(self, path=None):
         txt = json.dumps(dataclasses.asdict(self), indent=2)
@@ -160,6 +200,8 @@ class PipelineConfig:
                 "window": WindowConfig,
                 "psd": PSDConfig,
                 "isara": IsaraConfig,
+                "merge": MergeConfig,
+                "output": OutputConfig,
             }.get(f.name)
             kwargs[f.name] = sub(**val) if sub else val
         unknown = set(raw) - {f.name for f in dataclasses.fields(cls)}
