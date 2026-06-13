@@ -8,7 +8,9 @@
     "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
     "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
     "optical_dataset_dir": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/",
-    "scratch_dir": "/tmp/ascent_acp_scratch"
+    "scratch_dir": "/tmp/ascent_acp_scratch",
+    "shift_table_csv": "clock_alignment_results/variable_shift_table.csv",
+    "shift_diagnostics_csv": "clock_alignment_results/shift_diagnostics_merged1sec_allInstruments_2021_V2.csv"
   },
   "channels": {
     "sca_suffixes": {
@@ -88,5 +90,17 @@
     "rho_wet": 1.0,
     "num_theta": 2,
     "n_workers": 8
+  },
+  "merge": {
+    "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE",
+    "instruments": [
+      "ACTIVATE-DLH-H2O", "ACTIVATE-FCDP", "ACTIVATE-LARGE-AMS", "ACTIVATE-LARGE-AMS-CVI",
+      "ACTIVATE-LARGE-CAS", "ACTIVATE-LARGE-CCN", "ACTIVATE-LARGE-CDP", "ACTIVATE-LARGE-InletFlag",
+      "ACTIVATE-LARGE-INLETFLAG", "ACTIVATE-LARGE-LAS", "ACTIVATE-LARGE-OPTICAL", "ACTIVATE-LARGE-PILS",
+      "ACTIVATE-LARGE-SMPS", "ACTIVATE-SUMMARY", "ACTIVATE-TraceGas-CH4", "ACTIVATE-TraceGas-CO",
+      "ACTIVATE-TraceGas-CO2", "ACTIVATE-TraceGas-O3", "ACTIVATE-TRACEGAS-CH4", "ACTIVATE-TRACEGAS-CO",
+      "ACTIVATE-TRACEGAS-CO2", "ACTIVATE-TRACEGAS-O3"
+    ],
+    "n_workers": 6
   }
 }

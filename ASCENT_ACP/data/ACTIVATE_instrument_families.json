@@ -1,0 +1,42 @@
+{
+  "_comment": "Maps merged-pickle column instrument-title prefixes to logical netCDF observation families for the ACTIVATE campaign. Family assignment is by longest-prefix match of a column name against the keys of title_to_family, so this file alone is sufficient (the meta pickle is only used for group-level provenance attrs). Titles not listed here fall into the 'other' family.",
+  "family_order": [
+    "optical",
+    "microphysical",
+    "aerosol_size_dist",
+    "composition",
+    "ccn",
+    "cloud_probes",
+    "trace_gas",
+    "state_nav"
+  ],
+  "family_long_name": {
+    "optical": "In-situ aerosol optical measurements (TSI-3563 nephelometer, PSAP)",
+    "microphysical": "In-situ microphysical aerosol measurements",
+    "aerosol_size_dist": "In-situ dry aerosol size distributions (SMPS, TSI-3340 LAS)",
+    "composition": "In-situ aerosol composition (Aerodyne HR-ToF-AMS, PILS-IC)",
+    "ccn": "Cloud condensation nuclei concentrations (DMT CCN counter)",
+    "cloud_probes": "Cloud and aerosol size distributions (DMT CDP, DMT CAS, SPEC FCDP)",
+    "trace_gas": "Trace-gas and water-vapor measurements (CO2, CH4, CO, O3, DLH H2O)",
+    "state_nav": "Aircraft state and navigation",
+    "other": "Unclassified instruments"
+  },
+  "title_to_family": {
+    "In-situ_optical_aerosol_measurements_from_the_NASA_HU-25": "optical",
+    "In-situ_microphysical_aerosol_measurements_from_the_NASA_HU-25": "microphysical",
+    "In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25": "aerosol_size_dist",
+    "In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25": "aerosol_size_dist",
+    "Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer": "composition",
+    "Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography": "composition",
+    "In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon": "ccn",
+    "In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe_on_the_NASA_HU-25_Falcon": "cloud_probes",
+    "In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_and_Aerosol_Spectrometer_on_the_NASA_HU-25_Falcon": "cloud_probes",
+    "In-situ_Cloud_Size_Distributions_from_the_SPEC_Cloud_Droplet_Probe_FCDP_on_NASA_Falcon_HU25": "cloud_probes",
+    "In_Situ_Infrared_Cavity_Ringdown_Absorption_Measurements_of_CO2": "trace_gas",
+    "In_Situ_Infrared_Cavity_Ringdown_Absorption_Measurements_of_CH4": "trace_gas",
+    "In_Situ_Infrared_Cavity_Ringdown_Absorption_Measurements_of_CO": "trace_gas",
+    "Differential_UV_Absorption_Measurements_of_Ozone": "trace_gas",
+    "Diode_Laser_Hygrometer_measurements_of_H2O_v_": "trace_gas",
+    "In-situ_state_and_aircraft_measurements_from_the_NASA_HU-25": "state_nav"
+  }
+}
