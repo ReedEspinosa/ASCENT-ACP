@@ -419,7 +419,9 @@ def _clock_alignment_ds(cfg):
         if pd.isna(r["date"]) or pd.isna(r["shift_group"]):
             continue
         i, j = di[r["date"]], gi[r["shift_group"]]
-        is_apply = str(r.get("decision", "")).upper() == "APPLY"
+        # apply_clock_alignment records an applied shift as decision "SHIFT"
+        # (non-applied dates are "SKIP"); accept either "SHIFT" or "APPLY".
+        is_apply = str(r.get("decision", "")).upper() in ("SHIFT", "APPLY")
         dcode[i, j] = 1 if is_apply else 0
         opt = r.get("optimal_shift_s")
         applied[i, j] = float(opt) if (is_apply and pd.notna(opt)) else 0.0
@@ -441,8 +443,8 @@ def _clock_alignment_ds(cfg):
         units="s", long_name="clock shift applied to this group on this date (0 if not applied)")
     ds["decision_code"] = (dims, dcode)
     ds["decision_code"].attrs.update(
-        long_name="alignment decision", flag_values=np.array([0, 1], np.int8),
-        flag_meanings="skip apply")
+        long_name="alignment decision (1 = clock shift applied)",
+        flag_values=np.array([0, 1], np.int8), flag_meanings="skip shift")
     ds["peak_r"] = (dims, peak_r)
     ds["peak_r"].attrs.update(units="1", long_name="smoothed cross-correlation peak vs LAS reference")
     ds["n_valid"] = (dims, n_valid)

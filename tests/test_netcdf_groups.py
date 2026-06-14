@@ -92,6 +92,26 @@ def test_roundtrip_and_units(tmp_path):
     assert np.nanmax(sca.values) < 1e-3  # ~50 Mm-1 -> 5e-5 m-1
 
 
+def test_clock_alignment_group_shift_decision(tmp_path):
+    # apply_clock_alignment records applied shifts as decision "SHIFT"
+    csv = tmp_path / "diag.csv"
+    csv.write_text(
+        "date,shift_group,n_valid,optimal_shift_s,peak_r,monotonic_halfwidth_s,decision,reason\n"
+        "2021-01-29,Optical,5000,10.0,0.8,12,SHIFT,\n"
+        "2021-01-29,AMS,0,,,,SKIP,n_valid=0<300\n"
+    )
+    cfg = PipelineConfig()
+    cfg.paths.shift_diagnostics_csv = str(csv)
+    ds = netcdf_export._clock_alignment_ds(cfg)
+    import numpy as np
+    gi = list(ds.shift_group.values).index("Optical")
+    aj = list(ds.shift_group.values).index("AMS")
+    assert ds.applied_shift_s.values[0, gi] == 10.0
+    assert ds.decision_code.values[0, gi] == 1
+    assert ds.applied_shift_s.values[0, aj] == 0.0  # SKIP -> 0
+    assert ds.decision_code.values[0, aj] == 0
+
+
 def test_row_qc_flag_bitmask():
     dt, df, res, cfg = make_tree()
     obs = dt["/observations"].dataset
