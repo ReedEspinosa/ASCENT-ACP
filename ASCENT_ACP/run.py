@@ -117,8 +117,8 @@ def stage_export(cfg, state=None):
     else:
         res, grid, df, masks, meta = (state[k] for k in ("res", "grid", "df", "masks", "meta"))
 
-    dt = netcdf_export.build_datatree(df, masks, res, grid, cfg, meta=meta)
-    out = netcdf_export.write(dt, _paths(cfg)["netcdf"], cfg)
+    out = netcdf_export.export(df, masks, res, grid, cfg, meta=meta,
+                               path=_paths(cfg)["netcdf"])
     print(f"  wrote {out}", flush=True)
     return out
 
