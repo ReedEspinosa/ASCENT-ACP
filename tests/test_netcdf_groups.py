@@ -36,9 +36,11 @@ def exported(tmp_path_factory):
 def test_group_tree_present(exported):
     o, df, res, grid, cfg = exported
     groups = set(o.groups)
-    for g in ["/observations", "/windowed", "/windowed/retrievals", "/windowed/raw",
-              "/observations/optical", "/windowed/raw/optical"]:
+    for g in ["/observations", "/windowed", "/windowed/retrievals",
+              "/observations/optical"]:
         assert g in groups
+    # raw variables live only in /observations; no 60 s repeat of them
+    assert "/windowed/raw" not in groups
     # default config has no shift-diagnostics CSV -> no clock_alignment group
     assert "/clock_alignment" not in groups
 
@@ -96,10 +98,12 @@ def test_windowed_broadcast_on_fine_grid(exported):
     centers = pd.DatetimeIndex(df.index.floor("60s") + pd.Timedelta(seconds=30))
     exp = res["n_valid"].reindex(centers).to_numpy(float)
     assert np.allclose(nv, exp, equal_nan=True)
-    # 60 s means repeat within each window
-    raw = o["/windowed/raw/optical"].to_dataset()["Sc550_submicron_mean"].values[0]
-    seg = raw[g.row_sec[:60]]
-    assert np.nanstd(seg) == pytest.approx(0.0, abs=1e-6)
+    # a retrieval variable is constant across the seconds of one window
+    ssa = o["/windowed/retrievals"].to_dataset()["ssa_measured"].values[0, :, 0]
+    seg = ssa[g.row_sec[:60]]
+    seg = seg[np.isfinite(seg)]
+    if seg.size > 1:
+        assert np.nanstd(seg) == pytest.approx(0.0, abs=1e-6)
 
 
 def test_retrieval_qc_flag_logic():

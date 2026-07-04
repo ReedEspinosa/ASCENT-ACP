@@ -23,9 +23,9 @@ and several variable families:
    every envelope are **dropped**: the merge engine nearest/linear-fills up to
    ~72 min beyond each instrument's real coverage, so those rows (e.g. the
    hours between two same-day flights) are synthetic, not measurements.
-2. **No coarse time dimension.** All 60 s products (`/windowed`,
-   `/windowed/retrievals`, `/windowed/raw`) are repeated at the native cadence
-   on the same (flight, time) grid (`cell_methods` notes the 60 s window).
+2. **No coarse time dimension.** The 60 s products (`/windowed` QC flag +
+   counts, `/windowed/retrievals`) are repeated at the native cadence on the
+   same (flight, time) grid (`cell_methods` notes the 60 s window).
 3. **Per-bin columns are compacted** into one variable per instrument
    (`dndlogd_smps/las/cdp/cas/fcdp[…_mean/_std]`) with a `size_<tag>` dimension
    and **bin-center radius** coordinate (`radius_<tag>`, µm) plus companion
@@ -40,12 +40,15 @@ and several variable families:
    quantitative aerosol variables are STP** (optical, SMPS/LAS, CCN, AMS,
    PILS); cloud probes (CDP/CAS/FCDP) are ambient as physically appropriate;
    mole fractions / ratios / flags / state-nav are `not_applicable`.
-5. **Wind is vector-averaged** in `/windowed/raw` (u/v decomposition;
-   meteorological FROM convention): `Wind_Speed_mean` and
-   `Wind_Direction_mean` are the resultant-vector values,
-   `Wind_Speed_scalar_mean` keeps the plain mean, `Wind_Direction_std` is the
-   Yamartino (1984) estimator. Column pair set by
-   `channels.wind_speed_suffix`/`wind_dir_suffix`.
+5. **No 60 s means of the raw variables.** The `/windowed/raw` group of the
+   v2 design (decision B below) is **removed**: a 60 s window mean of a raw
+   variable, repeated back at the native cadence, is redundant against the same
+   variable already carried at native cadence in `/observations`. Only the
+   ISARA retrieval inputs/outputs — which genuinely need a windowed form —
+   remain under `/windowed`. (Consequence: the vector-averaged 60 s wind that
+   briefly lived in `/windowed/raw/state_nav` is gone with it; instantaneous
+   `Wind_Speed`/`Wind_Direction` remain in `/observations/state_nav`. Restoring
+   a windowed vector-mean wind, if wanted, is a small dedicated add-back.)
 6. The `composition` family is renamed **`aerosol_composition`** (avoids
    confusion with trace-gas composition).
 7. Written by a streaming netCDF4 writer (one variable at a time, per-bin
@@ -74,8 +77,8 @@ and several variable families:
 | # | Decision | Choice |
 |---|---|---|
 | A | Raw-variable time resolution | **Native cadence** (detected at runtime, never assume 1 Hz) |
-| B | Also emit 60 s averages of **all** raw vars | **Yes** → `/windowed/raw` group |
-| C | Output filename | bump `…_V1.nc` → **`…_V2.nc`** |
+| B | Also emit 60 s averages of **all** raw vars | ~~Yes → `/windowed/raw`~~ **Reversed in v3** (addendum §5): redundant against native `/observations`; group removed |
+| C | Output filename | bump `…_V1.nc` → **`…_V2.nc`** → **`…_V3.nc`** |
 | D | Fill for skipped retrievals | **NaN** (CF `_FillValue`) |
 
 ## 3. Grounding facts (verified against 2021 data)
@@ -130,9 +133,8 @@ under a common `/windowed` parent (DataTree children inherit parent coords).
 │   │   ├── attempt_flag_cri, attempt_flag_kappa
 │   │   └── retrieval_qc_flag      ← NEW: why a retrieval is fill (§7)
 │   │
-│   └── raw/                       60 s mean+std of EVERY raw column (all-rows), by family
-│       ├── optical/  …  state_nav/   (same 8 families as observations)
-│       └── each var -> <name>_mean, <name>_std ; + n_points per window
+│   └── raw/  ── REMOVED in v3 (addendum §5): raw vars live only in
+│              /observations at native cadence; no 60 s repeat of them.
 │
 └── clock_alignment/              dims: flight_date (~43), shift_group (4+)
     ├── flight_date, shift_group       (coords)

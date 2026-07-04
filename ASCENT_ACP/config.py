@@ -165,7 +165,6 @@ class OutputConfig:
 
     version: str = "V3"             # filename version tag
     emit_observations: bool = True  # /observations native-cadence passthrough
-    emit_windowed_raw: bool = True  # /windowed/raw 60 s means of every raw column
     float32: bool = True            # store float vars as float32
     compression_level: int = 4      # zlib complevel (0 = off)
 

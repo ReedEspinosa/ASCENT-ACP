@@ -7,8 +7,13 @@ NETCDF_OUTPUT_SPEC.md):
                            split into instrument families, + row_qc_flag
   /windowed                60 s window QC flag + reject counts
   /windowed/retrievals     ISARA retrievals and QC-valid-only measured means
-  /windowed/raw/<family>   unconditional 60 s mean/std of every raw column
   /clock_alignment         per (flight_date x shift_group) applied clock shifts
+
+Raw variables are carried only in /observations (native cadence). We do NOT
+emit 60 s window means of them: that would just be each observation re-averaged
+and written back at the native cadence, redundant against /observations. Only
+the ISARA retrieval inputs/outputs (which genuinely need a windowed form) live
+under /windowed.
 
 v3 layout changes vs v2:
 
@@ -43,7 +48,7 @@ import pandas as pd
 import xarray as xr
 
 from . import families, flights, icartt_headers, varmap
-from . import results as results_mod, windows as windows_mod, windowing_raw
+from . import results as results_mod, windows as windows_mod
 from .windows import psd_col_name
 
 _M_PER_MM = 1.0e-6  # Mm-1 -> m-1
@@ -710,82 +715,6 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                           + (" and kappa" if m.group("state") == "wet" else ""))})
 
 
-_STAT_SUFFIXES = ("_scalar_mean", "_mean", "_std")
-
-
-def _split_stat(name):
-    for suf in _STAT_SUFFIXES:
-        if name.endswith(suf):
-            return name[:-len(suf)], suf[1:]
-    return None, None
-
-
-def _write_windowed_raw(w, raw_windowed, df, cfg, meta, colmeta, fammap,
-                        bin_tables, win_idx, window_index):
-    cm = _WINDOW_CM.format(w=cfg.window.window_s)
-    rw = raw_windowed.reindex(window_index)
-    gp0 = "/windowed/raw"
-    w.group_attrs(gp0, {
-        "long_name": ("unconditional 60 s statistics of every raw column "
-                      "(all rows, no QC), repeated at native cadence")})
-    if "n_points" in rw:
-        vals = _broadcast(rw["n_points"].fillna(0).to_numpy(float), win_idx)
-        w.scatter2d(gp0, "n_points", vals, dtype=np.int32, fill=-1,
-                    attrs={"units": "1", "cell_methods": cm,
-                           "long_name": "number of native rows in window (all rows)"})
-
-    ws_col, wd_col = windowing_raw.find_wind_pair(df.columns, cfg.channels)
-    by_family = _family_split(df.columns, fammap, _meta_titles(meta))
-
-    for fam in families.family_order(fammap, by_family):
-        gpath = f"{gp0}/{fam}"
-        bins, scalars = _split_bin_columns(by_family[fam])
-
-        for col, title, short, name in _dedupe_shorts(scalars):
-            for stat in ("mean", "std", "scalar_mean"):
-                src = f"{col}_{stat}"
-                if src not in rw:
-                    continue
-                attrs = colmeta.attrs(col, title, fam, short)
-                attrs["long_name"] = f"60 s window {stat} of {short} (all rows)"
-                attrs["cell_methods"] = cm
-                attrs["source_column"] = col
-                if col in (ws_col, wd_col) and stat == "mean":
-                    attrs["cell_methods"] = cm.replace("mean", "vector mean")
-                    attrs["comment"] = "vector-averaged from u/v wind components"
-                if col == wd_col and stat == "std":
-                    attrs["comment"] = "Yamartino (1984) circular standard deviation"
-                vals = _broadcast(rw[src].to_numpy(float), win_idx)
-                w.scatter2d(gpath, f"{name}_{stat}", vals, attrs=attrs)
-
-        for tag, entries in bins.items():
-            cols = [c for c, _, _ in entries]
-            shorts = [s for _, s, _ in entries]
-            bt = bin_tables.get(tag)
-            bt = bt[0] if isinstance(bt, tuple) else bt
-            order = _match_bin_table(bt, shorts)
-            if order is None:
-                bt2 = _fallback_bin_table(tag, df, cfg)
-                order = _match_bin_table(bt2, shorts)
-                bt = bt2 if order is not None else None
-            if order is None:
-                bt, order = None, np.arange(len(shorts))
-            dim = _write_size_coords(w, gpath, tag, bt, order)
-            for stat in ("mean", "std"):
-                srcs = [f"{c}_{stat}" for c in cols]
-                if not all(s in rw for s in srcs):
-                    continue
-                w.scatter3d(gpath, f"dndlogd_{tag}_{stat}",
-                            (_broadcast(rw[s].to_numpy(float), win_idx) for s in srcs),
-                            dim, attrs={
-                    "long_name": f"60 s window {stat} of {tag.upper()} dN/dlogDp (all rows)",
-                    "cell_methods": cm})
-
-        ln = families.family_long_name(fammap, fam)
-        if ln:
-            w.group_attrs(gpath, {"long_name": f"{ln} - 60 s window statistics"})
-
-
 # --------------------------------------------------------------------------- #
 # /clock_alignment  (date x shift_group) - unchanged small group via xarray
 # --------------------------------------------------------------------------- #
@@ -859,8 +788,7 @@ def _clock_alignment_ds(cfg):
 # --------------------------------------------------------------------------- #
 # assembly
 # --------------------------------------------------------------------------- #
-def export(df, masks, results_df, grid, cfg, meta=None, raw_windowed=None,
-           path=None):
+def export(df, masks, results_df, grid, cfg, meta=None, path=None):
     """Write the full grouped v3 netCDF; returns the output Path."""
     if path is None:
         path = Path(cfg.paths.output_dir) / output_filename(cfg)
@@ -889,11 +817,6 @@ def export(df, masks, results_df, grid, cfg, meta=None, raw_windowed=None,
             _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables)
         _write_windowed_parent(w, results_df, grid, cfg, win_idx)
         _write_retrievals(w, results_df, grid, cfg, win_idx)
-        if cfg.output.emit_windowed_raw:
-            if raw_windowed is None:
-                raw_windowed = windowing_raw.aggregate_raw(df, cfg)
-            _write_windowed_raw(w, raw_windowed, df, cfg, meta, colmeta, fammap,
-                                bin_tables, win_idx, results_df.index)
     finally:
         w.close()
 
