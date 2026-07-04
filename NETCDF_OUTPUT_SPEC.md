@@ -1,9 +1,56 @@
-# ASCENT-ACP netCDF Output v2 + Single-Pass Driver — Design Spec
+# ASCENT-ACP netCDF Output v2/v3 + Single-Pass Driver — Design Spec
 
-Status: **implemented**. Supersedes the flat single-group v1 file formerly
+Status: **implemented (v3)**. Supersedes the flat single-group v1 file formerly
 produced by `netcdf_export.py`, and adds a campaign-agnostic ICARTT→netCDF
 driver (`ASCENT_ACP.run`). All decisions in §2 are as-built; run
 `python -m ASCENT_ACP.run --config configs/activate_2021_full.json`.
+
+## v3 addendum (2026-07) — layout changes on top of the v2 design below
+
+The group tree of §4 is unchanged, but v3 (`…_V3.nc`) restructures the axes
+and several variable families:
+
+1. **(flight × time) grid replaces the epoch time axes.** `flight` is the
+   flight number in takeoff order within the campaign year (same-day `_L1/_L2`
+   ICARTT files are separate flights); `time` is **seconds since UTC midnight
+   of that flight's takeoff day** (extends past 86 400 if a flight crosses
+   midnight). Root coords: `flight`, `time`, `flight_id`, `flight_date`,
+   `midnight_epoch`, `takeoff_time`, `landing_time`. Absolute time of a sample
+   = `midnight_epoch(flight) + time`.
+   Flight envelopes come from the marker instrument's ICARTT files
+   (`merge.flight_marker_instrument`, e.g. `ACTIVATE-SUMMARY`); without them,
+   data-presence gap detection (`ASCENT_ACP/flights.py`). Merged rows outside
+   every envelope are **dropped**: the merge engine nearest/linear-fills up to
+   ~72 min beyond each instrument's real coverage, so those rows (e.g. the
+   hours between two same-day flights) are synthetic, not measurements.
+2. **No coarse time dimension.** All 60 s products (`/windowed`,
+   `/windowed/retrievals`, `/windowed/raw`) are repeated at the native cadence
+   on the same (flight, time) grid (`cell_methods` notes the 60 s window).
+3. **Per-bin columns are compacted** into one variable per instrument
+   (`dndlogd_smps/las/cdp/cas/fcdp[…_mean/_std]`) with a `size_<tag>` dimension
+   and **bin-center radius** coordinate (`radius_<tag>`, µm) plus companion
+   `diameter_<tag>`, `radius_lower/upper_<tag>`. Bin sizes are parsed from the
+   ICARTT headers (per-variable `bin_center_X um` descriptions, FCDP
+   `OTHER_COMMENTS` edge lists, SMPS/LAS nm bounds lines), falling back to the
+   packaged `data/*_bins.csv`.
+4. **Per-variable metadata from the source ICARTT headers**
+   (`ASCENT_ACP/icartt_headers.py`): `units`, `long_name` (header description),
+   `icartt_standard_name`, and `measurement_conditions` = `STP` | `ambient` |
+   `not_applicable` | `unspecified`. Audited for ACTIVATE 2020+2021: **all
+   quantitative aerosol variables are STP** (optical, SMPS/LAS, CCN, AMS,
+   PILS); cloud probes (CDP/CAS/FCDP) are ambient as physically appropriate;
+   mole fractions / ratios / flags / state-nav are `not_applicable`.
+5. **Wind is vector-averaged** in `/windowed/raw` (u/v decomposition;
+   meteorological FROM convention): `Wind_Speed_mean` and
+   `Wind_Direction_mean` are the resultant-vector values,
+   `Wind_Speed_scalar_mean` keeps the plain mean, `Wind_Direction_std` is the
+   Yamartino (1984) estimator. Column pair set by
+   `channels.wind_speed_suffix`/`wind_dir_suffix`.
+6. The `composition` family is renamed **`aerosol_composition`** (avoids
+   confusion with trace-gas composition).
+7. Written by a streaming netCDF4 writer (one variable at a time, per-bin
+   slices for 3-D) so memory stays flat despite the dense flight×seconds grid;
+   `/clock_alignment` is unchanged (appended via xarray).
 
 ## 1. Goals
 
@@ -63,7 +110,7 @@ under a common `/windowed` parent (DataTree children inherit parent coords).
 │   ├── optical/                   20 vars
 │   ├── microphysical/             1  var
 │   ├── aerosol_size_dist/         64 vars (SMPS 34 + LAS 30) + bin-diameter coords
-│   ├── composition/               38 vars (AMS 29 + PILS 9)
+│   ├── aerosol_composition/       38 vars (AMS 29 + PILS 9)
 │   ├── ccn/                       2  vars
 │   ├── cloud_probes/              90 vars (CDP 34 + CAS 34 + FCDP 22)
 │   ├── trace_gas/                 7  vars
@@ -108,7 +155,7 @@ labelled in their `long_name`/`cell_methods` so they're never confused.
 | `optical` | In-situ_optical_aerosol_measurements | 20 |
 | `microphysical` | In-situ_microphysical_aerosol_measurements | 1 |
 | `aerosol_size_dist` | SMPS (34) + TSI_LAS (30) | 64 |
-| `composition` | Aerodyne_HR-ToF_AMS (29) + PILS_IC (9) | 38 |
+| `aerosol_composition` | Aerodyne_HR-ToF_AMS (29) + PILS_IC (9) | 38 |
 | `ccn` | DMT_CCN_Counter | 2 |
 | `cloud_probes` | DMT_CDP (34) + DMT_CAS (34) + SPEC_FCDP (22) | 90 |
 | `trace_gas` | CO2 + CH4 + CO + UV_Ozone + DLH_H2O | 7 |

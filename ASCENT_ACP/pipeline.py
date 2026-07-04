@@ -74,8 +74,8 @@ def run_pipeline(cfg, dates=None, max_windows=None, write_nc=True, make_plots=Fa
 
     if write_nc:
         print("[5/5] Writing grouped netCDF")
-        dt = netcdf_export.build_datatree(df, masks, res, grid, cfg, meta=meta)
-        paths["netcdf"] = netcdf_export.write(dt, out_dir / f"{stem}.nc", cfg)
+        paths["netcdf"] = netcdf_export.export(df, masks, res, grid, cfg, meta=meta,
+                                               path=out_dir / f"{stem}.nc")
         print(f"      {paths['netcdf']}")
     if make_plots:
         from . import plots

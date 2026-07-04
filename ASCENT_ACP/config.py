@@ -73,6 +73,10 @@ class ChannelConfig:
     lat_suffix: str = "Latitude"
     lon_suffix: str = "Longitude"
     alt_suffix: str = "GPS_altitude"
+    # Wind pair for vector averaging in the 60 s raw statistics; direction is
+    # meteorological (degrees the wind blows FROM, clockwise from north).
+    wind_speed_suffix: str = "Wind_Speed"
+    wind_dir_suffix: str = "Wind_Direction"
     # Wavelengths (nm) fed to ISARA; keys above must cover these
     dry_wvl_sca: list = field(default_factory=lambda: [450, 550, 700])
     dry_wvl_abs: list = field(default_factory=lambda: [470, 532, 660])
@@ -149,13 +153,17 @@ class MergeConfig:
     exclude_regexes: list = field(default_factory=list)  # columns to drop post-merge
     n_workers: int = 6
     staging_dir: str = ""           # "" -> /tmp/<campaign>_merge_staging
+    # Instrument token whose ICARTT files define the flight envelopes (their
+    # first/last data times become takeoff/landing; _L1/_L2 files are separate
+    # flights). "" -> fall back to data-presence gap detection on the frame.
+    flight_marker_instrument: str = ""
 
 
 @dataclass
 class OutputConfig:
-    """Controls the grouped netCDF v2 export (ASCENT_ACP.netcdf_export)."""
+    """Controls the grouped netCDF export (ASCENT_ACP.netcdf_export)."""
 
-    version: str = "V2"             # filename version tag
+    version: str = "V3"             # filename version tag
     emit_observations: bool = True  # /observations native-cadence passthrough
     emit_windowed_raw: bool = True  # /windowed/raw 60 s means of every raw column
     float32: bool = True            # store float vars as float32
