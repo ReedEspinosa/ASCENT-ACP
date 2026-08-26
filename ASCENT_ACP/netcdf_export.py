@@ -1,4 +1,4 @@
-"""Export the ASCENT-ACP pipeline products to a grouped CF-style netCDF (v3).
+"""Export the ASCENT-ACP pipeline products to a grouped CF-style netCDF (v4).
 
 One file per campaign year, organized into netCDF-4 groups (see
 NETCDF_OUTPUT_SPEC.md):
@@ -15,6 +15,19 @@ emit 60 s window means of them: that would just be each observation re-averaged
 and written back at the native cadence, redundant against /observations. Only
 the ISARA retrieval inputs/outputs (which genuinely need a windowed form) live
 under /windowed.
+
+v4 layout changes vs v3:
+
+* One shared root ``wavelength`` dimension (union of all measured/calculated
+  wavelengths). Per-wavelength variable copies (Sc550_submicron, SSA_450nm,
+  dry_cal_sca_coef_550, ...) are merged into single variables on that axis,
+  holding fill at wavelengths they do not cover.
+* Root ``latitude``/``longitude``/``altitude`` coordinates at native cadence;
+  every (flight, time) data variable references them via a CF ``coordinates``
+  attribute so generic tools can georeference variables in any group.
+* /windowed is split into /windowed/observations (window QC + QC-valid
+  measured means) and /windowed/retrievals (ISARA outputs).
+* All optical coefficients in Mm-1.
 
 v3 layout changes vs v2:
 
@@ -51,6 +64,18 @@ from . import families, flights, icartt_headers, varmap
 from . import results as results_mod, windows as windows_mod
 from .windows import psd_col_name
 
+# Names of the root georeferencing coordinate variables; every (flight, time)
+# data variable points at them via a CF "coordinates" attribute so generic
+# tools (Panoply etc.) can georeference variables in any group.
+_COORD_NAMES = ("latitude", "longitude", "altitude")
+
+
+def wavelength_union(ch):
+    """Sorted union of every wavelength (nm) appearing in the output."""
+    return sorted({int(x) for x in
+                   [*ch.dry_wvl_sca, *ch.dry_wvl_abs, *ch.wet_wvl_sca,
+                    *(ch.val_wvl or [])]})
+
 _MM_PER_M = 1.0e6  # m-1 -> Mm-1 (ISARA outputs SI; the file convention is Mm-1)
 
 # Retr_PSD output keys that carry a wavelength, e.g. dry_cal_sca_coef_550_m-1
@@ -82,6 +107,30 @@ _WINDOW_CM = "time: mean within {w} s window (value repeated at native cadence)"
 
 # size-distribution bin columns: '<TAG>_BinNN' or 'dNdlogD_NNN_<TAG>'
 _BIN_SHORT = re.compile(r"(?:^|_)([A-Za-z0-9]+)_Bin(\d+)$|^dNdlogD_0*(\d+)_([A-Za-z0-9]+)$")
+
+# Observation variables that are per-wavelength copies of one quantity
+# (Sc550_submicron, Abs470_total, SSA_450nm, Ext532_submicron_amb, ...);
+# merged onto the shared wavelength dimension at export.
+_WVL_BASES = {"Sc": "scattering", "Abs": "absorption",
+              "Ext": "extinction", "SSA": "ssa"}
+_WVL_SHORT = re.compile(
+    r"^(?P<pre>[A-Za-z]+(?:_[A-Za-z]+)*_?)(?P<wvl>\d{3})(?P<post>nm|_[A-Za-z0-9_]+)?$")
+
+
+def _parse_wvl_short(short):
+    """(merged_variable_name, wavelength_nm) for a per-wavelength column,
+    or None when the name is not one (gamma550, AEscat_450to700nm, ...)."""
+    m = _WVL_SHORT.match(short)
+    if not m:
+        return None
+    tokens = m.group("pre").rstrip("_").split("_")
+    if tokens[0] not in _WVL_BASES:
+        return None
+    parts = [_WVL_BASES[tokens[0]]] + tokens[1:]
+    post = m.group("post") or ""
+    if post and post != "nm":
+        parts.append(post.lstrip("_"))
+    return "_".join(parts), int(m.group("wvl"))
 
 
 # --------------------------------------------------------------------------- #
@@ -283,7 +332,10 @@ class _Writer:
                 kw["chunksizes"] = self._chunk2d + (1,) * (len(dims) - 2)
             v = g.createVariable(name, dtype, dims, **kw)
             v[...] = data
-        for k, val in (attrs or {}).items():
+        attrs = dict(attrs or {})
+        if dims[:2] == ("flight", "time") and name not in _COORD_NAMES:
+            attrs.setdefault("coordinates", "latitude longitude")
+        for k, val in attrs.items():
             v.setncattr(k, val)
         return v
 
@@ -308,8 +360,12 @@ class _Writer:
                              fill_value=fill,
                              chunksizes=self._chunk2d + (1,), **self.comp)
         for k, per_row in enumerate(per_row_slices):
+            if per_row is None:  # wavelength not covered -> leave as fill
+                continue
             v[:, :, k] = flights.scatter(self.fg, per_row, dtype=dtype)
-        for kk, val in (attrs or {}).items():
+        attrs = dict(attrs or {})
+        attrs.setdefault("coordinates", "latitude longitude")
+        for kk, val in attrs.items():
             v.setncattr(kk, val)
         return v
 
@@ -346,9 +402,10 @@ def _broadcast(win_values, win_idx, fill=np.nan):
 # --------------------------------------------------------------------------- #
 # group builders
 # --------------------------------------------------------------------------- #
-def _write_root(w, cfg, fgrid, meta):
+def _write_root(w, df, cfg, fgrid, meta):
     here = Path(__file__).resolve().parent.parent
     fg = fgrid
+    ch = cfg.channels
     w.raw_var("", "flight", ("flight",), fg.flight_number, dtype=np.int32, attrs={
         "long_name": "flight number, takeoff order within the campaign year"})
     w.raw_var("", "time", ("time",), fg.time_axis_s(), dtype=np.float64, attrs={
@@ -370,6 +427,32 @@ def _write_root(w, cfg, fgrid, meta):
     w.raw_var("", "landing_time", ("flight",), fg.landing_sod, dtype=np.float64,
               attrs={"units": "s",
                      "long_name": "last data time, seconds since takeoff-day midnight"})
+
+    # single shared wavelength axis for every optical variable in the file
+    wvls = wavelength_union(ch)
+    w.dim("wavelength", len(wvls))
+    w.raw_var("", "wavelength", ("wavelength",), np.array(wvls, float),
+              dtype=np.float64, attrs={
+        "units": "nm", "long_name": "optical wavelength",
+        "comment": (f"union of all wavelengths in the file; scattering measured at "
+                    f"{ch.dry_wvl_sca} nm, absorption at {ch.dry_wvl_abs} nm, "
+                    f"humidified scattering constraint at {ch.wet_wvl_sca} nm"
+                    + (f", extra calculated output at {ch.val_wvl} nm"
+                       if ch.val_wvl else "")
+                    + "; variables hold fill at wavelengths they do not cover")})
+
+    # root georeferencing coordinates (1 Hz aircraft nav), referenced by the
+    # CF "coordinates" attribute of every (flight, time) data variable
+    for name, suffix, units, std in [
+        ("latitude", ch.lat_suffix, "degrees_north", "latitude"),
+        ("longitude", ch.lon_suffix, "degrees_east", "longitude"),
+        ("altitude", ch.alt_suffix, "m", "altitude"),
+    ]:
+        col = varmap.resolve(df, suffix, required=False)
+        if col is not None:
+            w.scatter2d("", name, df[col].to_numpy(float), attrs={
+                "units": units, "standard_name": std,
+                "long_name": f"aircraft {name} at native cadence"})
 
     pct = 100.0 * fg.n_dropped / max(len(fg.row_flight), 1)
     w.group_attrs("", {
@@ -514,13 +597,45 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
         "_FillValue_meaning": "no merged data at this second",
         "comment": "Kacenelenbogen et al. (2022) A1.1 row screening; see QA_CRITERIA.md"})
 
+    wvl_set = set(wavelength_union(cfg.channels))
     by_family = _family_split(df.columns, fammap, _meta_titles(meta))
     title_meta = meta or {}
     for fam in families.family_order(fammap, by_family):
         gpath = f"/observations/{fam}"
         bins, scalars = _split_bin_columns(by_family[fam])
 
-        for col, title, short, name in _dedupe_shorts(scalars):
+        # pull per-wavelength copies of one quantity onto the wavelength dim
+        wvl_groups, rest = {}, []
+        for col, title, short in scalars:
+            parsed = _parse_wvl_short(short)
+            if parsed and parsed[1] in wvl_set:
+                name, wvl = parsed
+                if wvl in wvl_groups.get(name, {}):  # cross-instrument clash
+                    rest.append((col, title, short))
+                    continue
+                wvl_groups.setdefault(name, {})[wvl] = (col, title, short)
+            else:
+                rest.append((col, title, short))
+
+        for name, members in sorted(wvl_groups.items()):
+            col0, title0, short0 = members[min(members)]
+            attrs = colmeta.attrs(col0, title0, fam, short0)
+            attrs["long_name"] = re.sub(
+                r"\s*(?:at\s*)?\b\d{3}\s?nm\b", "", attrs["long_name"]).strip()
+            if "icartt_standard_name" in attrs:
+                attrs["icartt_standard_name"] = re.sub(
+                    r"_(Blue|Green|Red)(?=_)", "", attrs["icartt_standard_name"])
+            attrs["source_column"] = ", ".join(
+                members[x][0] for x in sorted(members))
+            attrs["shift_group"] = shift_groups.get(col0, "none")
+            attrs["comment"] = (f"values at {sorted(members)} nm of the shared "
+                                "wavelength axis; fill elsewhere")
+            w.scatter3d(gpath, name,
+                        (df[members[x][0]].to_numpy(float) if x in members
+                         else None for x in sorted(wvl_set)),
+                        "wavelength", attrs=attrs)
+
+        for col, title, short, name in _dedupe_shorts(rest):
             attrs = colmeta.attrs(col, title, fam, short)
             attrs["shift_group"] = shift_groups.get(col, "none")
             w.scatter2d(gpath, name, df[col].to_numpy(float), attrs=attrs)
@@ -558,7 +673,6 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
 
 
 def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
-    ch = cfg.channels
     cm = _WINDOW_CM.format(w=cfg.window.window_s)
     w.group_attrs("/windowed", {
         "long_name": "60 s window statistics, repeated at native cadence",
@@ -572,16 +686,8 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
     w.group_attrs("/windowed/retrievals", {
         "long_name": "ISARA retrieval outputs (MOPSMAP grid search)"})
 
-    # shared retrieval coordinates
-    w.dim("wavelength_sca", len(ch.dry_wvl_sca))
-    w.dim("wavelength_abs", len(ch.dry_wvl_abs))
+    # shared retrieval coordinates (wavelength dim lives at root)
     w.dim("psd_bin", len(grid))
-    w.raw_var("/windowed", "wavelength_sca", ("wavelength_sca",),
-              np.array(ch.dry_wvl_sca, float), dtype=np.float64,
-              attrs={"units": "nm", "long_name": "nephelometer scattering wavelengths"})
-    w.raw_var("/windowed", "wavelength_abs", ("wavelength_abs",),
-              np.array(ch.dry_wvl_abs, float), dtype=np.float64,
-              attrs={"units": "nm", "long_name": "PSAP absorption wavelengths"})
     w.raw_var(gp, "dp_mid", ("psd_bin",), grid.dpg_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin center diameter"})
     w.raw_var(gp, "radius_mid", ("psd_bin",), grid.dpg_um / 2.0,
@@ -622,32 +728,38 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
     go = "/windowed/observations"
     gp = "/windowed/retrievals"
 
+    wvls = wavelength_union(ch)
+
     def col_rows(col, scale=1.0):
         return _broadcast(results_df[col].to_numpy(float) * scale, win_idx)
 
-    def add_wvl(name, cols, dim, scale, attrs):
-        w.scatter3d(go, name, (col_rows(c, scale) for c in cols), dim, attrs=attrs)
+    def add_wvl(gpath, name, col_by_wvl, attrs, scale=1.0):
+        """Write (flight, time, wavelength); wavelengths without a column
+        (or with a column absent from the results) stay fill."""
+        w.scatter3d(gpath, name,
+                    (col_rows(col_by_wvl[x], scale)
+                     if col_by_wvl.get(x) in results_df else None
+                     for x in wvls), "wavelength", attrs=attrs)
 
-    add_wvl("scattering_dry_measured",
-            [f"Sc{x}_dry_mean" for x in ch.dry_wvl_sca], "wavelength_sca", 1.0,
+    add_wvl(go, "scattering_dry_measured",
+            {x: f"Sc{x}_dry_mean" for x in ch.dry_wvl_sca},
             {"units": "Mm-1", "cell_methods": cm, "measurement_conditions": "STP",
              "long_name": (f"window-mean dry ({cfg.psd.variant_name}) scattering "
                            f"coefficient, gamma-adjusted to "
                            f"{cfg.filters.dry_ref_rh:.0f}% RH where measured above it")})
-    add_wvl("scattering_dry_measured_std",
-            [f"Sc{x}_dry_std" for x in ch.dry_wvl_sca], "wavelength_sca", 1.0,
+    add_wvl(go, "scattering_dry_measured_std",
+            {x: f"Sc{x}_dry_std" for x in ch.dry_wvl_sca},
             {"units": "Mm-1", "cell_methods": cm,
              "long_name": "within-window standard deviation of dry scattering"})
-    add_wvl("absorption_measured",
-            [f"Abs{x}_mean" for x in ch.dry_wvl_abs], "wavelength_abs", 1.0,
+    add_wvl(go, "absorption_measured",
+            {x: f"Abs{x}_mean" for x in ch.dry_wvl_abs},
             {"units": "Mm-1", "cell_methods": cm, "measurement_conditions": "STP",
              "long_name": "window-mean dry bulk absorption coefficient (PSAP)"})
-    add_wvl("absorption_measured_std",
-            [f"Abs{x}_std" for x in ch.dry_wvl_abs], "wavelength_abs", 1.0,
+    add_wvl(go, "absorption_measured_std",
+            {x: f"Abs{x}_std" for x in ch.dry_wvl_abs},
             {"units": "Mm-1", "cell_methods": cm,
              "long_name": "within-window standard deviation of absorption"})
-    add_wvl("ssa_measured", [f"SSA{x}_mean" for x in ch.dry_wvl_sca],
-            "wavelength_sca", 1.0,
+    add_wvl(go, "ssa_measured", {x: f"SSA{x}_mean" for x in ch.dry_wvl_sca},
             {"units": "1", "cell_methods": cm,
              "long_name": "window-mean single scattering albedo (LARGE-derived)"})
 
@@ -715,18 +827,29 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                                       for k in sorted(results_mod.RETRIEVAL_QC_MEANINGS)),
             "cell_methods": cm})
 
+    # forward-calculated optical properties, one variable per (quantity, state)
+    # on the shared wavelength dimension
+    quant_name = {"sca_coef": "scattering", "abs_coef": "absorption",
+                  "ext_coef": "extinction", "SSA": "ssa"}
+    calc = {}  # (state, quant) -> {wvl: column}
     for col in results_df.columns:
         m = _RETR_KEY.match(str(col))
         if not m or m.group("kind") == "meas":
             continue
-        var = f"{m.group('state')}_calculated_{m.group('quant').lower()}_{m.group('wvl')}nm"
-        is_coef = m.group("unit") == "m-1"
-        w.scatter2d(gp, var, col_rows(col, _MM_PER_M if is_coef else 1.0), attrs={
-            "units": "Mm-1" if is_coef else "1", "cell_methods": cm,
-            "long_name": (f"MOPSMAP-calculated {m.group('state')} "
-                          f"{m.group('quant').replace('_', ' ')} at {m.group('wvl')} nm "
-                          "for the retrieved refractive index"
-                          + (" and kappa" if m.group("state") == "wet" else ""))})
+        calc.setdefault((m.group("state"), m.group("quant")), {})[
+            int(m.group("wvl"))] = str(col)
+    for (state, quant), col_by_wvl in calc.items():
+        is_coef = quant != "SSA"
+        add_wvl(gp, f"{quant_name[quant]}_{state}_calculated", col_by_wvl,
+                {"units": "Mm-1" if is_coef else "1", "cell_methods": cm,
+                 "long_name": (f"MOPSMAP-calculated {state} "
+                               f"{quant_name[quant]}"
+                               + (" coefficient" if is_coef else "")
+                               + " for the retrieved refractive index"
+                               + (" and kappa" if state != "dry" else "")),
+                 "comment": ("values only at wavelengths ISARA computed "
+                             f"({sorted(col_by_wvl)} nm); fill elsewhere")},
+                scale=_MM_PER_M if is_coef else 1.0)
 
 
 # --------------------------------------------------------------------------- #
@@ -826,7 +949,7 @@ def export(df, masks, results_df, grid, cfg, meta=None, path=None):
 
     w = _Writer(path, cfg, fgrid)
     try:
-        _write_root(w, cfg, fgrid, meta)
+        _write_root(w, df, cfg, fgrid, meta)
         if cfg.output.emit_observations:
             _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables)
         _write_windowed_parent(w, results_df, grid, cfg, win_idx)

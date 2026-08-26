@@ -163,7 +163,7 @@ class MergeConfig:
 class OutputConfig:
     """Controls the grouped netCDF export (ASCENT_ACP.netcdf_export)."""
 
-    version: str = "V3"             # filename version tag
+    version: str = "V4"             # filename version tag
     emit_observations: bool = True  # /observations native-cadence passthrough
     float32: bool = True            # store float vars as float32
     compression_level: int = 4      # zlib complevel (0 = off)

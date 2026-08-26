@@ -66,9 +66,14 @@ def test_native_cadence_detected(exported):
 def test_observation_values_land_on_grid(exported):
     o, df, res, grid, cfg = exported
     g = flights.build(df, cfg)
-    got = o["/observations/optical"].to_dataset()["Sc550_submicron"].values[0]
+    ds = o["/observations/optical"].to_dataset()
+    # per-wavelength columns are merged onto the shared wavelength axis
+    wvl = list(o.dataset.wavelength.values)
+    got = ds["scattering_submicron"].values[0, :, wvl.index(550.0)]
     exp = df[P_OPT + "Sc550_submicron"].to_numpy(float)
     assert np.allclose(got[g.row_sec], exp, equal_nan=True, atol=1e-4)
+    # wavelengths the variable does not cover hold fill (470 is absorption-only)
+    assert np.isnan(ds["scattering_submicron"].values[0, :, wvl.index(470.0)]).all()
     # off-flight seconds are fill
     assert np.isnan(got[: int(o.dataset.takeoff_time.values[0]) - 130]).all()
 
@@ -153,7 +158,7 @@ def test_measurement_conditions_attr_present(exported):
     assert ds["Latitude"].attrs["measurement_conditions"] == "not_applicable"
     # no headers available in tests -> optical falls back to 'unspecified'
     opt = o["/observations/optical"].to_dataset()
-    assert opt["Sc550_submicron"].attrs["measurement_conditions"] == "unspecified"
+    assert opt["scattering_submicron"].attrs["measurement_conditions"] == "unspecified"
 
 
 def test_clock_alignment_group_shift_decision(tmp_path):
