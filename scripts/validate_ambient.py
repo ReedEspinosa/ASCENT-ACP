@@ -90,8 +90,15 @@ def main(argv=None):
     qc = np.ma.filled(wo["window_qc_flag"][:].astype(float), np.nan)
     passing = qc == 0
 
-    large_sc = window_mean_of_obs(_fl(opt["scattering_submicron_amb"][..., i550]), wid)
-    large_ext = window_mean_of_obs(_fl(opt["extinction_submicron_amb"][..., i532]), wid)
+    def find(prefix, suffix):
+        hits = [v for v in opt.variables
+                if v.startswith(prefix) and v.endswith(suffix)]
+        if len(hits) != 1:
+            raise SystemExit(f"expected one {prefix}*{suffix} variable, got {hits}")
+        return hits[0]
+
+    large_sc = window_mean_of_obs(_fl(opt[find("scattering_", "_amb")][..., i550]), wid)
+    large_ext = window_mean_of_obs(_fl(opt[find("extinction_", "_amb")][..., i532]), wid)
     large_ssa = window_mean_of_obs(_fl(opt["ssa_amb"][..., i550]), wid)
 
     lines = [f"ambient-state validation vs LARGE: {args.nc}",
