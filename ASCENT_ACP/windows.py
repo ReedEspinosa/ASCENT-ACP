@@ -58,6 +58,16 @@ def aggregate(df, optical, masks, grid, cfg):
     for c in scalar_cols:
         out[f"{c}_mean"] = mean.get(c)
         out[f"{c}_std"] = std.get(c)
+    # Ambient state needs enough in-window RH samples; windows below the
+    # threshold report NaN ambient means (the window itself stays usable)
+    if "RH_amb" in optical.columns:
+        n_amb = count.get("RH_amb")
+        out["n_ambient"] = n_amb.reindex(out.index).fillna(0).astype(int)
+        enough = out["n_ambient"] >= w.min_ambient_points
+        for c in optical.columns:
+            if c == "RH_amb" or c.endswith("_amb"):
+                out[f"{c}_mean"] = out[f"{c}_mean"].where(enough)
+                out[f"{c}_std"] = out[f"{c}_std"].where(enough)
     # PSD bins: window mean, NaN'd where too few samples contributed
     for col, dpg in zip(grid.columns, grid.dpg_um):
         m = mean.get(col)

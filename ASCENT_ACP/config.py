@@ -62,6 +62,7 @@ class ChannelConfig:
         }
     )
     rh_sc_suffix: str = "RH_Sc_submicron"
+    rh_ambient_suffix: str = "RHw_DLH"  # ambient RH over liquid water (DLH)
     gamma_suffix: str = "gamma550"
     frh_suffix: str = "fRH550_RH20to80"
     ae_suffix: str = "AEscat_450to700nm"
@@ -98,6 +99,11 @@ class FilterConfig:
     ssa_filter_wvl: str = "550"  # which SSA channel the min_ssa test uses
     dry_ref_rh: float = 40.0  # gamma-correct Sc to this RH when RH_Sc exceeds it
     wet_rh: float = 80.0  # RH of the synthesized humidified scattering
+    # Ambient-state RH ceiling: rows with RHw above this get NaN ambient values
+    # (no capping). 96% matches the effective ceiling of LARGE's own ambient
+    # products (empirically recovered from Sc550_submicron_amb); gamma and
+    # kappa-Kohler both extrapolate poorly approaching 100% RH.
+    ambient_rh_max: float = 96.0
 
 
 @dataclass
@@ -107,6 +113,7 @@ class WindowConfig:
     ae_max_relstd: float = 0.30  # reject window if std(AE)/|mean(AE)| exceeds
     ae_std_mode: str = "relative"  # "relative" or "absolute"
     min_valid_points_per_bin: int = 10  # PSD bin -> NaN if fewer valid samples
+    min_ambient_points: int = 10  # ambient-RH samples required per window
 
 
 @dataclass

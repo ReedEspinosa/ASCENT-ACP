@@ -23,9 +23,10 @@ def derive_optical_columns(df, cfg):
     """Return a working DataFrame of RH-standardized optical variables.
 
     Columns: ``Sc{wvl}_dry`` (at <= dry_ref_rh), ``Sc550_wet`` (at wet_rh),
-    ``Abs{wvl}``, ``RH_Sc``, ``gamma``, ``AE``, ``SSA``, ``lat/lon/alt``.
-    Done per 1 Hz row, before any averaging, so intra-window RH variability
-    is handled exactly.
+    ``Sc550_amb``/``RH_amb`` (at ambient RH when available and below
+    ambient_rh_max), ``Abs{wvl}``, ``RH_Sc``, ``gamma``, ``AE``, ``SSA``,
+    ``lat/lon/alt``. Done per 1 Hz row, before any averaging, so intra-window
+    RH variability is handled exactly.
     """
     ch, flt = cfg.channels, cfg.filters
     out = pd.DataFrame(index=df.index)
@@ -44,6 +45,14 @@ def derive_optical_columns(df, cfg):
     wet_wvl = str(cfg.channels.wet_wvl_sca[0])
     sc_for_wet = df[varmap.resolve(df, ch.sca_suffixes[wet_wvl])]
     out[f"Sc{wet_wvl}_wet"] = gamma_adjust_scattering(sc_for_wet, gamma, rh, flt.wet_rh)
+    # Ambient-RH state from the DLH RH over liquid water; rows above
+    # ambient_rh_max (or with no DLH data) get NaN rather than a capped value
+    amb_col = varmap.resolve(df, ch.rh_ambient_suffix, required=False)
+    if amb_col is not None:
+        rh_amb = df[amb_col].where(
+            (df[amb_col] > 0) & (df[amb_col] <= flt.ambient_rh_max))
+        out["RH_amb"] = rh_amb
+        out[f"Sc{wet_wvl}_amb"] = gamma_adjust_scattering(sc_for_wet, gamma, rh, rh_amb)
 
     for wvl, suffix in ch.abs_suffixes.items():
         out[f"Abs{wvl}"] = df[varmap.resolve(df, suffix)]

@@ -60,7 +60,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from . import families, flights, icartt_headers, varmap
+from . import families, flights, humidify, icartt_headers, varmap
 from . import results as results_mod, windows as windows_mod
 from .windows import psd_col_name
 
@@ -80,9 +80,15 @@ _MM_PER_M = 1.0e6  # m-1 -> Mm-1 (ISARA outputs SI; the file convention is Mm-1)
 
 # Retr_PSD output keys that carry a wavelength, e.g. dry_cal_sca_coef_550_m-1
 _RETR_KEY = re.compile(
-    r"^(?P<state>dry|wet)_(?P<kind>cal|meas)_(?P<quant>sca_coef|abs_coef|ext_coef|SSA)"
+    r"^(?P<state>dry|wet|amb)_(?P<kind>cal|meas)_(?P<quant>sca_coef|abs_coef|ext_coef|SSA)"
     r"_(?P<wvl>\d+)_(?P<unit>m-1|unitless)$"
 )
+_STATE_NAME = {"dry": "dry", "wet": "wet", "amb": "ambient"}
+_STATE_RH_NOTE = {
+    "dry": "dry state (as measured, growth factor 1)",
+    "wet": "humidified to the fixed wet-state RH (see wet_rh in config_json)",
+    "amb": "humidified to the window-mean ambient RH (see rh_ambient)",
+}
 
 # Row QC bitmask (native cadence), mirroring filtering.row_qc mask columns.
 _ROW_QC_BITS = [("cloudy", 1), ("inlet_bad", 2), ("low_signal", 4), ("low_ssa", 8)]
@@ -715,6 +721,8 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
         ("n_inlet_bad", "samples rejected by inlet flag"),
         ("n_low_signal", "samples rejected by minimum dry Sc450 filter"),
         ("n_low_ssa", "samples rejected by minimum SSA filter"),
+        ("n_ambient", "QC-valid samples with usable ambient RH (DLH present, "
+                      "below the ambient RH ceiling)"),
     ]:
         if col in results_df:
             vals = _broadcast(results_df[col].fillna(0).to_numpy(float), win_idx)
@@ -776,8 +784,25 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                     "wet_calculated scattering matches it within 1% by construction "
                     "wherever kappa succeeded (not an independent validation).")})
 
+    if f"Sc{wet_w}_amb_mean" in results_df:
+        w.scatter2d(go, "scattering_ambient_synthesized",
+                    col_rows(f"Sc{wet_w}_amb_mean"), attrs={
+            "units": "Mm-1", "cell_methods": cm, "measurement_conditions": "STP",
+            "long_name": (f"window-mean scattering at {wet_w} nm gamma-adjusted "
+                          "to ambient RH (synthesized, not directly measured)"),
+            "comment": ("per-second gamma adjustment of the dry scattering to the "
+                        "DLH ambient RH over liquid water, then window-averaged; "
+                        f"seconds with RH above {cfg.filters.ambient_rh_max:.0f}% "
+                        "or without DLH data are excluded (see rh_ambient, "
+                        "n_ambient). Directly comparable to LARGE's "
+                        "Sc550_submicron_amb.")})
+
     for name, col, units, long_name in [
         ("rh_scattering", "RH_Sc_mean", "percent", "window-mean nephelometer sample RH"),
+        ("rh_ambient", "RH_amb_mean", "percent",
+         "window-mean ambient RH over liquid water (DLH) used for the ambient state"),
+        ("rh_ambient_std", "RH_amb_std", "percent",
+         "within-window standard deviation of ambient RH"),
         ("gamma550", "gamma_mean", "1", "window-mean scattering hygroscopic growth exponent"),
         ("f_rh_550", "fRH_mean", "1", "window-mean f(RH) 20->80% at 550 nm (LARGE)"),
         ("angstrom_exponent", "AE_mean", "1", "window-mean scattering Angstrom exponent 450-700 nm"),
@@ -795,13 +820,29 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
         "units": "cm-3", "cell_methods": cm, "measurement_conditions": "STP",
         "long_name": "window-mean dry number size distribution dN/dlogDp (SMPS+LAS)"})
 
+    cri_note = ("the retrieval assumes a spectrally flat refractive index "
+                "(one value fit jointly to all channels)")
+    mix_note = ("volume-weighted mix of the retrieved dry CRI with water "
+                "(1.33+0i) at the kappa-Kohler growth factor; spectrally flat")
     for var, col, long_name in [
         ("refractive_index_real", "dry_RRI_unitless",
-         "ISARA-retrieved real part of the dry complex refractive index"),
+         f"ISARA-retrieved real part of the dry complex refractive index; {cri_note}"),
         ("refractive_index_imag", "dry_IRI_unitless",
-         "ISARA-retrieved imaginary part of the dry complex refractive index"),
+         f"ISARA-retrieved imaginary part of the dry complex refractive index; {cri_note}"),
         ("kappa", "kappa_unitless",
          "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk value)"),
+        ("refractive_index_real_wet", "wet_RRI_unitless",
+         f"real refractive index of the wet state; {mix_note}"),
+        ("refractive_index_imag_wet", "wet_IRI_unitless",
+         f"imaginary refractive index of the wet state; {mix_note}"),
+        ("growth_factor_wet", "wet_gf_unitless",
+         "kappa-Kohler diameter growth factor of the wet state"),
+        ("refractive_index_real_ambient", "amb_RRI_unitless",
+         f"real refractive index of the ambient state; {mix_note}"),
+        ("refractive_index_imag_ambient", "amb_IRI_unitless",
+         f"imaginary refractive index of the ambient state; {mix_note}"),
+        ("growth_factor_ambient", "amb_gf_unitless",
+         "kappa-Kohler diameter growth factor of the ambient state (at rh_ambient)"),
     ]:
         if col in results_df:
             w.scatter2d(gp, var, col_rows(col),
@@ -817,6 +858,43 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                 "flag_values": np.array([0, 1, 2], np.int32),
                 "flag_meanings": "not_attempted attempted_but_failed success",
                 "cell_methods": cm})
+
+    # humidified PSDs, remapped onto the dry bin grid (surface-conserving)
+    if "kappa_unitless" in results_df:
+        kappa = results_df["kappa_unitless"].to_numpy(float)
+        psd = results_df[[psd_col_name(d) for d in grid.dpg_um]].to_numpy(float)
+        psd_states = [("wet", np.full(len(results_df), float(cfg.filters.wet_rh)))]
+        if "RH_amb_mean" in results_df:
+            psd_states.append(("ambient", results_df["RH_amb_mean"].to_numpy(float)))
+        remap_note = (
+            "dry PSD grown by the bulk kappa-Kohler growth factor (uniform log-"
+            "diameter shift; one gf for all sizes) and remapped back onto the "
+            "dry bin grid conserving SURFACE AREA exactly; number and volume "
+            "are conserved only approximately. Surface grown past the last "
+            "bin edge is in the companion surface_beyond_grid variable. NaN "
+            "where kappa (or ambient RH) is unavailable.")
+        for tag, rh_state in psd_states:
+            gf = humidify.growth_factor(kappa, rh_state)
+            dnd = np.full_like(psd, np.nan)
+            spill = np.full(len(results_df), np.nan)
+            for i in range(len(results_df)):
+                if np.isfinite(gf[i]):
+                    dnd[i], spill[i] = humidify.humidified_psd(
+                        psd[i], grid.dpg_um, grid.dpl_um, grid.dpu_um, gf[i])
+            w.scatter3d(gp, f"dndlogdp_{tag}",
+                        (_broadcast(dnd[:, k], win_idx) for k in range(psd.shape[1])),
+                        "psd_bin", attrs={
+                "units": "cm-3", "cell_methods": cm,
+                "long_name": (f"{tag}-state number size distribution dN/dlogDp "
+                              "on the dry bin grid"),
+                "comment": remap_note})
+            w.scatter2d(gp, f"surface_beyond_grid_{tag}",
+                        _broadcast(spill, win_idx), attrs={
+                "units": "um2 cm-3", "cell_methods": cm,
+                "long_name": (f"{tag}-state surface concentration grown past "
+                              "the largest PSD bin edge"),
+                "comment": ("companion to dndlogdp_" + tag + "; 0 when the "
+                            "grown distribution fits the grid")})
 
     if "retrieval_qc_flag" in results_df:
         vals = _broadcast(results_df["retrieval_qc_flag"].to_numpy(float), win_idx)
@@ -840,15 +918,19 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
             int(m.group("wvl"))] = str(col)
     for (state, quant), col_by_wvl in calc.items():
         is_coef = quant != "SSA"
-        add_wvl(gp, f"{quant_name[quant]}_{state}_calculated", col_by_wvl,
+        add_wvl(gp, f"{quant_name[quant]}_{_STATE_NAME[state]}_calculated", col_by_wvl,
                 {"units": "Mm-1" if is_coef else "1", "cell_methods": cm,
-                 "long_name": (f"MOPSMAP-calculated {state} "
+                 "long_name": (f"MOPSMAP-calculated {_STATE_NAME[state]} "
                                f"{quant_name[quant]}"
                                + (" coefficient" if is_coef else "")
                                + " for the retrieved refractive index"
                                + (" and kappa" if state != "dry" else "")),
-                 "comment": ("values only at wavelengths ISARA computed "
-                             f"({sorted(col_by_wvl)} nm); fill elsewhere")},
+                 "comment": (f"{_STATE_RH_NOTE[state]}; values only at wavelengths "
+                             f"ISARA computed ({sorted(col_by_wvl)} nm), fill "
+                             "elsewhere"
+                             + ("; humidified absorption is model-derived "
+                                "(absorption is only measured dry)"
+                                if state != "dry" and quant == "abs_coef" else ""))},
                 scale=_MM_PER_M if is_coef else 1.0)
 
 

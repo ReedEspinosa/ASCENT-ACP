@@ -139,7 +139,12 @@ def build_retr_kwargs(row, grid, cfg):
         * 1e-6,
         "wet_wvl": {"sca": list(ch.wet_wvl_sca)},
         "RH_wet": cfg.filters.wet_rh,
+        # window-mean ambient RH (NaN -> no ambient forward state)
+        "RH_ambient": float(row["RH_amb_mean"]) if "RH_amb_mean" in row else None,
         "val_wvl": np.array(ch.val_wvl) if ch.val_wvl else None,
+        # report every state at the full wavelength union
+        "out_wvl": np.array(sorted({*ch.dry_wvl_sca, *ch.dry_wvl_abs,
+                                    *ch.wet_wvl_sca, *(ch.val_wvl or [])})),
         "size_equ": cfg.isara.size_equ,
         "nonabs_fraction": cfg.isara.nonabs_fraction,
         "shape": cfg.isara.shape,
