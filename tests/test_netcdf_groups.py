@@ -36,8 +36,8 @@ def exported(tmp_path_factory):
 def test_group_tree_present(exported):
     o, df, res, grid, cfg = exported
     groups = set(o.groups)
-    for g in ["/observations", "/windowed", "/windowed/retrievals",
-              "/observations/optical"]:
+    for g in ["/observations", "/windowed", "/windowed/observations",
+              "/windowed/retrievals", "/observations/optical"]:
         assert g in groups
     # raw variables live only in /observations; no 60 s repeat of them
     assert "/windowed/raw" not in groups
@@ -92,14 +92,14 @@ def test_psd_compacted_with_radius(exported):
 def test_windowed_broadcast_on_fine_grid(exported):
     o, df, res, grid, cfg = exported
     g = flights.build(df, cfg)
-    w = o["/windowed"].to_dataset()
+    w = o["/windowed/observations"].to_dataset()
     assert w.window_qc_flag.dims == ("flight", "time")
     nv = w.n_valid.values[0][g.row_sec]
     centers = pd.DatetimeIndex(df.index.floor("60s") + pd.Timedelta(seconds=30))
     exp = res["n_valid"].reindex(centers).to_numpy(float)
     assert np.allclose(nv, exp, equal_nan=True)
-    # a retrieval variable is constant across the seconds of one window
-    ssa = o["/windowed/retrievals"].to_dataset()["ssa_measured"].values[0, :, 0]
+    # a windowed variable is constant across the seconds of one window
+    ssa = w["ssa_measured"].values[0, :, 0]
     seg = ssa[g.row_sec[:60]]
     seg = seg[np.isfinite(seg)]
     if seg.size > 1:
@@ -124,7 +124,7 @@ def test_fill_where_qa_fails(tmp_path):
                                 path=tmp_path / "v3.nc")
     o = xr.open_datatree(path)
     r = o["/windowed/retrievals"].to_dataset()
-    w = o["/windowed"].to_dataset()
+    w = o["/windowed/observations"].to_dataset()
     covered = ~np.isnan(w.window_qc_flag.values)
     bad = covered & (w.window_qc_flag.values != 0)
     assert np.all(np.isnan(r.refractive_index_real.values[bad]))
@@ -134,10 +134,10 @@ def test_fill_where_qa_fails(tmp_path):
 def test_roundtrip_and_units(exported):
     o, *_ = exported
     assert o.attrs["Conventions"] == "CF-1.8"
-    sca = o["/windowed/retrievals"].to_dataset().scattering_dry_measured
-    assert sca.attrs["units"] == "m-1"
+    sca = o["/windowed/observations"].to_dataset().scattering_dry_measured
+    assert sca.attrs["units"] == "Mm-1"
     assert sca.attrs["measurement_conditions"] == "STP"
-    assert np.nanmax(sca.values) < 1e-3  # ~50 Mm-1 -> 5e-5 m-1
+    assert 1.0 < np.nanmax(sca.values) < 1e3  # tens of Mm-1
 
 
 def test_row_qc_flag_bitmask(exported):

@@ -5,8 +5,9 @@ NETCDF_OUTPUT_SPEC.md):
 
   /observations            every raw merged-pickle column at native cadence,
                            split into instrument families, + row_qc_flag
-  /windowed                60 s window QC flag + reject counts
-  /windowed/retrievals     ISARA retrievals and QC-valid-only measured means
+  /windowed                shared window coordinates (wavelengths, PSD bins)
+  /windowed/observations   60 s QC flag/counts and QC-valid measured means
+  /windowed/retrievals     ISARA retrieval outputs
   /clock_alignment         per (flight_date x shift_group) applied clock shifts
 
 Raw variables are carried only in /observations (native cadence). We do NOT
@@ -32,9 +33,8 @@ v3 layout changes vs v2:
 * Per-variable units/descriptions and the STP-vs-ambient measurement basis
   are read from the source ICARTT headers (``measurement_conditions`` attr).
 
-Optical coefficients fed to ISARA are stored in m-1 (converted from the
-Mm-1 of the ICARTT sources). Retrievals are filled (NaN) and flagged where
-window QA failed.
+All optical coefficients are stored in Mm-1, matching the ICARTT sources.
+Retrievals are filled (NaN) and flagged where window QA failed.
 """
 
 import datetime
@@ -51,7 +51,7 @@ from . import families, flights, icartt_headers, varmap
 from . import results as results_mod, windows as windows_mod
 from .windows import psd_col_name
 
-_M_PER_MM = 1.0e-6  # Mm-1 -> m-1
+_MM_PER_M = 1.0e6  # m-1 -> Mm-1 (ISARA outputs SI; the file convention is Mm-1)
 
 # Retr_PSD output keys that carry a wavelength, e.g. dry_cal_sca_coef_550_m-1
 _RETR_KEY = re.compile(
@@ -389,10 +389,11 @@ def _write_root(w, cfg, fgrid, meta):
                     "midnight of each flight's takeoff day. Groups: /observations "
                     "(native-cadence raw passthrough by instrument family), "
                     "/windowed (60 s statistics repeated at native cadence; "
-                    "/retrievals = ISARA + QC-valid means, /raw = all-row means), "
-                    "/clock_alignment (time-base provenance). Optical coefficients "
-                    "in m-1. Per-variable measurement_conditions attributes record "
-                    "the STP-vs-ambient basis from the source ICARTT headers."),
+                    "/observations = window QC + QC-valid means, /retrievals = "
+                    "ISARA outputs), /clock_alignment (time-base provenance). "
+                    "All optical coefficients in Mm-1. Per-variable "
+                    "measurement_conditions attributes record the STP-vs-ambient "
+                    "basis from the source ICARTT headers."),
         "flight_segmentation": fg.source,
         "n_rows_dropped_outside_flights": int(fg.n_dropped),
         "dropped_rows_note": (
@@ -562,7 +563,14 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
     w.group_attrs("/windowed", {
         "long_name": "60 s window statistics, repeated at native cadence",
         "comment": ("Each native-cadence sample carries the value of the 60 s "
-                    "window containing it; seconds with no window are filled.")})
+                    "window containing it; seconds with no window are filled. "
+                    "/observations = window QC and QC-valid measured means; "
+                    "/retrievals = ISARA retrieval outputs.")})
+    gp = "/windowed/observations"
+    w.group_attrs(gp, {
+        "long_name": "window QC and QC-valid-only measured window means"})
+    w.group_attrs("/windowed/retrievals", {
+        "long_name": "ISARA retrieval outputs (MOPSMAP grid search)"})
 
     # shared retrieval coordinates
     w.dim("wavelength_sca", len(ch.dry_wvl_sca))
@@ -574,21 +582,21 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
     w.raw_var("/windowed", "wavelength_abs", ("wavelength_abs",),
               np.array(ch.dry_wvl_abs, float), dtype=np.float64,
               attrs={"units": "nm", "long_name": "PSAP absorption wavelengths"})
-    w.raw_var("/windowed", "dp_mid", ("psd_bin",), grid.dpg_um, dtype=np.float64,
+    w.raw_var(gp, "dp_mid", ("psd_bin",), grid.dpg_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin center diameter"})
-    w.raw_var("/windowed", "radius_mid", ("psd_bin",), grid.dpg_um / 2.0,
+    w.raw_var(gp, "radius_mid", ("psd_bin",), grid.dpg_um / 2.0,
               dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin center radius"})
-    w.raw_var("/windowed", "dp_lower", ("psd_bin",), grid.dpl_um, dtype=np.float64,
+    w.raw_var(gp, "dp_lower", ("psd_bin",), grid.dpl_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin lower-bound diameter"})
-    w.raw_var("/windowed", "dp_upper", ("psd_bin",), grid.dpu_um, dtype=np.float64,
+    w.raw_var(gp, "dp_upper", ("psd_bin",), grid.dpu_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin upper-bound diameter"})
-    w.raw_var("/windowed", "psd_instrument", ("psd_bin",),
+    w.raw_var(gp, "psd_instrument", ("psd_bin",),
               np.array(grid.instrument), dtype=str,
               attrs={"long_name": "source instrument of each retrieval PSD bin"})
 
     flag = _broadcast(results_df["window_qc_flag"].to_numpy(float), win_idx)
-    w.scatter2d("/windowed", "window_qc_flag", flag, dtype=np.int32, fill=-1, attrs={
+    w.scatter2d(gp, "window_qc_flag", flag, dtype=np.int32, fill=-1, attrs={
         "long_name": "window quality control bitmask (0 = good); gates ISARA retrieval",
         "flag_masks": np.array(sorted(windows_mod.FLAG_MEANINGS), np.int32),
         "flag_meanings": " ".join(windows_mod.FLAG_MEANINGS[k]
@@ -604,38 +612,39 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
     ]:
         if col in results_df:
             vals = _broadcast(results_df[col].fillna(0).to_numpy(float), win_idx)
-            w.scatter2d("/windowed", col, vals, dtype=np.int32, fill=-1,
+            w.scatter2d(gp, col, vals, dtype=np.int32, fill=-1,
                         attrs={"units": "1", "long_name": long_name, "cell_methods": cm})
 
 
 def _write_retrievals(w, results_df, grid, cfg, win_idx):
     ch = cfg.channels
     cm = _WINDOW_CM.format(w=cfg.window.window_s)
+    go = "/windowed/observations"
     gp = "/windowed/retrievals"
 
     def col_rows(col, scale=1.0):
         return _broadcast(results_df[col].to_numpy(float) * scale, win_idx)
 
     def add_wvl(name, cols, dim, scale, attrs):
-        w.scatter3d(gp, name, (col_rows(c, scale) for c in cols), dim, attrs=attrs)
+        w.scatter3d(go, name, (col_rows(c, scale) for c in cols), dim, attrs=attrs)
 
     add_wvl("scattering_dry_measured",
-            [f"Sc{x}_dry_mean" for x in ch.dry_wvl_sca], "wavelength_sca", _M_PER_MM,
-            {"units": "m-1", "cell_methods": cm, "measurement_conditions": "STP",
+            [f"Sc{x}_dry_mean" for x in ch.dry_wvl_sca], "wavelength_sca", 1.0,
+            {"units": "Mm-1", "cell_methods": cm, "measurement_conditions": "STP",
              "long_name": (f"window-mean dry ({cfg.psd.variant_name}) scattering "
                            f"coefficient, gamma-adjusted to "
                            f"{cfg.filters.dry_ref_rh:.0f}% RH where measured above it")})
     add_wvl("scattering_dry_measured_std",
-            [f"Sc{x}_dry_std" for x in ch.dry_wvl_sca], "wavelength_sca", _M_PER_MM,
-            {"units": "m-1", "cell_methods": cm,
+            [f"Sc{x}_dry_std" for x in ch.dry_wvl_sca], "wavelength_sca", 1.0,
+            {"units": "Mm-1", "cell_methods": cm,
              "long_name": "within-window standard deviation of dry scattering"})
     add_wvl("absorption_measured",
-            [f"Abs{x}_mean" for x in ch.dry_wvl_abs], "wavelength_abs", _M_PER_MM,
-            {"units": "m-1", "cell_methods": cm, "measurement_conditions": "STP",
+            [f"Abs{x}_mean" for x in ch.dry_wvl_abs], "wavelength_abs", 1.0,
+            {"units": "Mm-1", "cell_methods": cm, "measurement_conditions": "STP",
              "long_name": "window-mean dry bulk absorption coefficient (PSAP)"})
     add_wvl("absorption_measured_std",
-            [f"Abs{x}_std" for x in ch.dry_wvl_abs], "wavelength_abs", _M_PER_MM,
-            {"units": "m-1", "cell_methods": cm,
+            [f"Abs{x}_std" for x in ch.dry_wvl_abs], "wavelength_abs", 1.0,
+            {"units": "Mm-1", "cell_methods": cm,
              "long_name": "within-window standard deviation of absorption"})
     add_wvl("ssa_measured", [f"SSA{x}_mean" for x in ch.dry_wvl_sca],
             "wavelength_sca", 1.0,
@@ -643,12 +652,17 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
              "long_name": "window-mean single scattering albedo (LARGE-derived)"})
 
     wet_w = ch.wet_wvl_sca[0]
-    w.scatter2d(gp, "scattering_humidified_synthesized",
-                col_rows(f"Sc{wet_w}_wet_mean", _M_PER_MM), attrs={
-        "units": "m-1", "cell_methods": cm, "measurement_conditions": "STP",
+    w.scatter2d(go, "scattering_humidified_synthesized",
+                col_rows(f"Sc{wet_w}_wet_mean"), attrs={
+        "units": "Mm-1", "cell_methods": cm, "measurement_conditions": "STP",
         "long_name": (f"window-mean scattering at {wet_w} nm gamma-adjusted to "
-                      f"{cfg.filters.wet_rh:.0f}% RH (synthesized, not directly measured)"),
-        "comment": "SC_calcRH = SC_measRH / exp(gamma*ln((100-calcRH)/(100-measRH)))"})
+                      f"{cfg.filters.wet_rh:.0f}% RH using the LARGE gamma "
+                      "parameterization (synthesized, not directly measured)"),
+        "comment": ("SC_calcRH = SC_measRH / exp(gamma*ln((100-calcRH)/(100-measRH))); "
+                    "gamma is the LARGE-derived hygroscopic growth exponent. This "
+                    "variable is the fitting target of the kappa retrieval, so "
+                    "wet_calculated scattering matches it within 1% by construction "
+                    "wherever kappa succeeded (not an independent validation).")})
 
     for name, col, units, long_name in [
         ("rh_scattering", "RH_Sc_mean", "percent", "window-mean nephelometer sample RH"),
@@ -661,10 +675,10 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
         ("altitude", "alt_mean", "m", "window-mean GPS altitude"),
     ]:
         if col in results_df:
-            w.scatter2d(gp, name, col_rows(col),
+            w.scatter2d(go, name, col_rows(col),
                         attrs={"units": units, "long_name": long_name, "cell_methods": cm})
 
-    w.scatter3d(gp, "dndlogdp",
+    w.scatter3d(go, "dndlogdp",
                 (col_rows(psd_col_name(d)) for d in grid.dpg_um), "psd_bin", attrs={
         "units": "cm-3", "cell_methods": cm, "measurement_conditions": "STP",
         "long_name": "window-mean dry number size distribution dN/dlogDp (SMPS+LAS)"})
@@ -706,9 +720,9 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
         if not m or m.group("kind") == "meas":
             continue
         var = f"{m.group('state')}_calculated_{m.group('quant').lower()}_{m.group('wvl')}nm"
-        units = "m-1" if m.group("unit") == "m-1" else "1"
-        w.scatter2d(gp, var, col_rows(col), attrs={
-            "units": units, "cell_methods": cm,
+        is_coef = m.group("unit") == "m-1"
+        w.scatter2d(gp, var, col_rows(col, _MM_PER_M if is_coef else 1.0), attrs={
+            "units": "Mm-1" if is_coef else "1", "cell_methods": cm,
             "long_name": (f"MOPSMAP-calculated {m.group('state')} "
                           f"{m.group('quant').replace('_', ' ')} at {m.group('wvl')} nm "
                           "for the retrieved refractive index"
