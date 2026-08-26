@@ -1,5 +1,19 @@
 netCDF V4 planning list (Reed + Claude, updated 2026-08-25)
-Status: PLANNING ONLY — no code changes yet.
+Status: IMPLEMENTED (items 1-9 all shipped in V4; commits a373f20..HEAD, plus
+ISARA_code 7bbf182+). Final V4 files for 2020+2021 are in isara_output/
+(pre-grid-expansion copies in isara_output/pre_grid_expansion/); regression,
+grid-shift, and validation reports in processing_logs/.
+
+REMAINING OPEN ITEMS (not code):
+- Visually confirm Geo2D classification in Panoply (root lat/lon + CF
+  coordinates attrs are in place; xarray decodes them correctly).
+- Email LARGE PI: confirm the ~96% ambient-RH ceiling and ask about the
+  ~2-3% RH offset between their effective RH and published RHw_DLH.
+- Item 8 HIGH-IMPORTANCE todo: per-wavelength CRI retrieval (see below).
+- Item 10: ISARA chi^2 solution selection (see below).
+- 2020 note: the V3 file's retrievals came from an older ISARA revision;
+  the fresh V4 run has ~3% fewer successes on the old grid (documented in
+  processing_logs/V4_regression_notes.txt). V4 values are authoritative.
 
 1. UNITS [decided: fix]
    windowed/retrievals optical coefficients are in m^-1 (ISARA native) but the
