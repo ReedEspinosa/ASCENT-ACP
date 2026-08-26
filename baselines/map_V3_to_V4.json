@@ -210,9 +210,31 @@
   "/windowed/wavelength_abs"
  ],
  "added": [
-  "/wavelength",
+  "/altitude",
   "/latitude",
   "/longitude",
-  "/altitude"
+  "/wavelength",
+  "/windowed/observations/n_ambient",
+  "/windowed/observations/rh_ambient",
+  "/windowed/observations/rh_ambient_std",
+  "/windowed/observations/scattering_ambient_synthesized",
+  "/windowed/retrievals/absorption_ambient_calculated",
+  "/windowed/retrievals/absorption_wet_calculated",
+  "/windowed/retrievals/cri_n_accepted",
+  "/windowed/retrievals/dndlogdp_ambient",
+  "/windowed/retrievals/dndlogdp_wet",
+  "/windowed/retrievals/extinction_ambient_calculated",
+  "/windowed/retrievals/growth_factor_ambient",
+  "/windowed/retrievals/growth_factor_wet",
+  "/windowed/retrievals/refractive_index_imag_accepted_std",
+  "/windowed/retrievals/refractive_index_imag_ambient",
+  "/windowed/retrievals/refractive_index_imag_wet",
+  "/windowed/retrievals/refractive_index_real_accepted_std",
+  "/windowed/retrievals/refractive_index_real_ambient",
+  "/windowed/retrievals/refractive_index_real_wet",
+  "/windowed/retrievals/scattering_ambient_calculated",
+  "/windowed/retrievals/ssa_ambient_calculated",
+  "/windowed/retrievals/surface_beyond_grid_ambient",
+  "/windowed/retrievals/surface_beyond_grid_wet"
  ]
 }
