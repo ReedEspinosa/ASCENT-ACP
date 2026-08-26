@@ -1,0 +1,141 @@
+netCDF V4 planning list (Reed + Claude, updated 2026-08-25)
+Status: PLANNING ONLY — no code changes yet.
+
+1. UNITS [decided: fix]
+   windowed/retrievals optical coefficients are in m^-1 (ISARA native) but the
+   file convention (and /observations) is Mm^-1. Convert (x1e6) at export and
+   set units attribute accordingly.
+
+2. Geo2D vs 2D [decided: try root coordinates]
+   Cause found: Panoply classifies variables as Geo2D only when it can find
+   lat/lon; windowed/retrievals has its own latitude/longitude/altitude
+   in-group, while /observations/* groups don't (nav lives in
+   observations/state_nav). Plan: promote latitude/longitude/altitude to the
+   ROOT group (next to time/flight) and add CF "coordinates" attributes on
+   data variables; verify in Panoply (and xarray) before locking the layout.
+   Cross-group coordinate resolution is tool-dependent — test first.
+
+3. Single wavelength dimension [decided: do it]
+   One shared root-level wavelength dim = union {450, 470, 532, 550, 660, 700}
+   (+ any val_wvl). Measured variables will be NaN at wavelengths not measured
+   (compresses to ~nothing under existing zlib+shuffle; verified).
+   - Per-wavelength ICARTT attrs (source_column, icartt_standard_name with
+     Blue/Green/Red) can't stay 1:1. DECISION: drop per-lambda strings; keep
+     the wavelength-independent parts of icartt_standard_name (e.g.
+     "AerOpt_Scattering_InSitu_*_RHsp_PM1_STP" pattern) in the V4 attrs.
+   - Caveat to document: fill at a given lambda = "not measured at this
+     wavelength" OR "QC-failed" — indistinguishable.
+   - Replaces windowed wavelength_sca/wavelength_abs dims (coordinate with
+     item 6 restructuring).
+
+4. scattering_humidified_synthesized vs wet_calculated_sca_coef_550nm
+   [decided: doc fix + todo note]
+   CONFIRMED sources: scattering_humidified_synthesized is OURS (window-mean
+   LARGE dry Sc550 gamma-adjusted to 80% RH using LARGE's gamma), NOT a LARGE
+   product. wet_calculated_sca_coef_550nm is ISARA's forward calc at retrieved
+   kappa. IMPORTANT: the former is the kappa fitting target (accepted at <1%
+   mismatch), so their agreement is BY CONSTRUCTION — not validation.
+   - Update long_name/comment: "derived from LARGE gamma parameterization;
+     synthesized, not measured; serves as the kappa retrieval constraint".
+   - TODO (validation, after item 7): compare our ambient-synthesized
+     scattering against LARGE's Sc550_submicron_amb — that IS an independent
+     check (their gamma + DLH RH, computed upstream of our pipeline).
+
+5. 60x repeated windowed values [decided: keep as is]
+   Verified: zlib(4)+shuffle, per-flight chunks; repetition compresses away.
+   2021 file is 175 MB, dominated by 1 Hz obs + PSDs. No action.
+
+6. Group split [decided: do it]
+   windowed/retrievals -> windowed/retrievals + windowed/observations.
+   Move dp_*, psd_instrument, radius_mid (and decide home for
+   window_qc_flag, n_valid, n_cloudy, ... counters) into
+   windowed/observations. Retrieval outputs + attempt flags stay in
+   windowed/retrievals.
+
+7. Three RH states for retrieved values [decided; policy below]
+   States: dry (as measured/standardized, gf=1 — NOT a specific RH),
+   wet (80% RH, matches fRH550_RH20to80 convention), ambient (RHw_DLH).
+   AMBIENT RH POLICY (to match LARGE, keep users' lives simple):
+   - Empirical finding (2021, inverted from Sc550_submicron_amb =
+     Sc550_dry adjusted by gamma): the RH LARGE actually used NEVER exceeds
+     95.93% across ~287k points, while RHw_DLH runs to >110% -> LARGE applies
+     a hard cap at ~96% RH (no 80% cutoff; they report ambient values at all
+     RH, capped). Their header states no cap explicitly.
+   - ADOPT (revised): report NaN for ambient state when RHw_DLH > 96%
+     (clearer for users than capping). Store rh_ambient (window-mean RHw_DLH
+     actually used) + window std of RHw as QC info.
+   - TODO: understand the ~2-3% RH discrepancy between LARGE's effective RH
+     (inverted from Sc550_submicron_amb) and published RHw_DLH; possibly
+     email LARGE PI (Ziemba) in the future. Does not block implementation.
+   - Windows lacking valid DLH RH -> ambient state = fill.
+
+8. Full optical set (CRI, sca, abs, ext) x 3 RH states x wavelength dim
+   ANSWER (how ISARA fits): single spectrally-FLAT (RRI, IRI) pair; grid
+   search RRI 1.51-1.54 (0.01 step) x IRI 0-0.030; forward-models ALL six
+   channels (sca 450/550/700, abs 470/532/660) with that one CRI; candidate
+   accepted only if all 3 sca within 20% AND all 3 abs within 1 Mm^-1;
+   final = mean of accepted candidates, re-verified. So all wavelengths are
+   in the fit criteria, but there is no spectral RI freedom — reporting CRI
+   on the wavelength dim = same value repeated (document flatness).
+   - TODO [HIGH IMPORTANCE]: per-wavelength CRI retrieval (pair adjacent
+     sca/abs channels 450/470, 550/532, 700/660 -> 2 obs per band, 2
+     unknowns). The flat-RI assumption drives systematic error in the
+     retrieved spectral properties AND systematically prevents retrieval
+     (all-channel 20% criterion unmatchable) exactly in the
+     high-spectral-dependence cases where it matters most. Caveats to
+     design around: exactly-determined per band (noise maps 1:1 into CRI);
+     needs Angstrom interpolation between sca and abs wavelengths. Not in
+     this round, but next in line after V4.
+   - CRI grid findings: the 1.51-1.54 grid is DRY-ONLY. Wet/ambient RI is
+     derived by volume mixing with water (RRI_w=(RRI_d+(gf^3-1)*1.33)/gf^3)
+     and floats freely below 1.51 (-> 1.33 as gf grows), so no wet-side
+     restriction. DECIDED: expand dry grid to ~1.47-1.56. Costs (all
+     acceptable): LUT rebuild (~2.5x candidates, one-time, cache
+     auto-invalidates via fingerprint); mean-of-accepted estimator can
+     shift even for windows that retrieved fine before (new edge candidates
+     pass the 20%/1 Mm^-1 tests and pull the mean) -> do the grid change as
+     its own final step and quantify the before/after shift; more windows
+     will retrieve successfully (previously edge-clipped). Consider also
+     reporting n_accepted / std of accepted candidates as an uncertainty
+     proxy.
+   - Wet/ambient CRI: derive by kappa volume-mixing with water (1.33+0i),
+     gf at 80% and at RH_amb_used. Also spectrally flat. Report it.
+   - Humidified sca/ext/SSA at all wavelengths: extend ISARA wet forward
+     calc to full wavelength list (same MOPSMAP call, cheap); run it at both
+     80% and ambient RH. Humidified absorption = ext - sca; document that it
+     is purely model-derived (absorption only measured dry).
+   - NOTE: narrow RRI grid (1.51-1.54) bounds everything downstream; worth a
+     mention in file metadata.
+
+9. PSD at 3 humidity states [decided: shift + SURFACE-conserving remap +
+   spillover variable]
+   gf is size-independent (bulk kappa) -> pure uniform shift in logD:
+   logDp_wet = logDp_dry + log(gf).
+   Plan: convert to dS/dlogDp (surface), shift bin EDGES by gf, overlap-remap
+   in log space back onto the ORIGINAL bin grid conserving SURFACE exactly
+   (uniform surface density in logD within each source bin), then convert
+   remapped dS/dlogDp back to dN/dlogDp via target-bin dp_mid^2.
+   Surface chosen (over number or volume) as closest to optics at this size
+   parameter range. Number and volume then NOT exactly conserved under
+   rebinning — document.
+   - SPILLOVER [decided: option (b)]: KEEP the original bin grid so
+     dry/wet/ambient PSDs plot together trivially in Panoply etc.; add a
+     "surface_beyond_grid" spillover variable (window-level, per RH state)
+     holding the surface concentration grown past dp_upper = 1.1 um.
+     (Relevant: at RH=96%, kappa=p95=0.18 -> gf ~ 1.75.)
+   - Windows without kappa -> wet/ambient PSD = fill.
+
+10. TODO (future, ISARA): try alternative solution-selection methods instead
+    of averaging all candidates inside the error window — e.g., minimum
+    chi^2 under the same error assumptions (20% sca, 1 Mm^-1 abs), or a
+    chi^2-weighted mean. Pairs naturally with the wider CRI grid and with
+    reporting n_accepted / candidate spread as uncertainty.
+
+GENERAL
+- All of the above = breaking format change -> bump to V4 in filenames and
+  header metadata.
+- Suggested implementation order: (i) items 1,4,6 (cheap, independent);
+  (ii) items 2+3 together (schema redesign, test in Panoply);
+  (iii) items 7+8+9 together (ambient-RH science change), validated against
+  LARGE Sc550_submicron_amb / SSA_amb_550nm / Ext532_submicron_amb /
+  AEscatAMB_450to700nm.

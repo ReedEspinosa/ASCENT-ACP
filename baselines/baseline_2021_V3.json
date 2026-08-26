@@ -1,0 +1,3564 @@
+{
+ "/flight": {
+  "dims": [
+   "flight"
+  ],
+  "shape": [
+   57
+  ],
+  "dtype": "int32",
+  "units": null,
+  "n_finite": 57,
+  "min": 1.0,
+  "max": 57.0,
+  "mean": 29.0,
+  "std": 16.451950239004088,
+  "sha": "32bbea9e63e4302a"
+ },
+ "/time": {
+  "dims": [
+   "time"
+  ],
+  "shape": [
+   78664
+  ],
+  "dtype": "float64",
+  "units": "s",
+  "n_finite": 78664,
+  "min": 0.0,
+  "max": 78663.0,
+  "mean": 39331.5,
+  "std": 22708.340785931498,
+  "sha": "ecb5c80507d85a65"
+ },
+ "/flight_id": {
+  "dims": [
+   "flight"
+  ],
+  "shape": [
+   57
+  ],
+  "dtype": "<class 'str'>",
+  "units": null,
+  "n": 57,
+  "sha": "0f532ccccba8afd5"
+ },
+ "/flight_date": {
+  "dims": [
+   "flight"
+  ],
+  "shape": [
+   57
+  ],
+  "dtype": "<class 'str'>",
+  "units": null,
+  "n": 57,
+  "sha": "91d53c93ffa80a27"
+ },
+ "/midnight_epoch": {
+  "dims": [
+   "flight"
+  ],
+  "shape": [
+   57
+  ],
+  "dtype": "int64",
+  "units": "seconds since 1970-01-01T00:00:00Z",
+  "n_finite": 57,
+  "min": 1611705600.0,
+  "max": 1639440000.0,
+  "mean": 1622807242.1052632,
+  "std": 7351746.463636757,
+  "sha": "2df16a10aa815954"
+ },
+ "/takeoff_time": {
+  "dims": [
+   "flight"
+  ],
+  "shape": [
+   57
+  ],
+  "dtype": "float64",
+  "units": "s",
+  "n_finite": 57,
+  "min": 43180.0,
+  "max": 68573.0,
+  "mean": 55099.333333333336,
+  "std": 8123.94510794842,
+  "sha": "c8d58d4b8bde7bc2"
+ },
+ "/landing_time": {
+  "dims": [
+   "flight"
+  ],
+  "shape": [
+   57
+  ],
+  "dtype": "float64",
+  "units": "s",
+  "n_finite": 57,
+  "min": 55036.0,
+  "max": 78664.0,
+  "mean": 66856.0350877193,
+  "std": 7847.359888958772,
+  "sha": "8a076b5b016dd4ad"
+ },
+ "/observations/row_qc_flag": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int16",
+  "units": null,
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 15.0,
+  "mean": 3.169297344873111,
+  "std": 2.249245270849316,
+  "sha": "9dab997007f6a2cb"
+ },
+ "/observations/optical/Sc550_submicron_amb": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 355371,
+  "min": 2.4200000762939453,
+  "max": 639.6099853515625,
+  "mean": 20.782904147945487,
+  "std": 17.219154511408643,
+  "sha": "0954a09cb2a4ae26"
+ },
+ "/observations/optical/Sc450_submicron": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 612029,
+  "min": -8.680000305175781,
+  "max": 535.6400146484375,
+  "mean": 20.452350081973414,
+  "std": 20.745708015560478,
+  "sha": "4d6c1b05afbbe624"
+ },
+ "/observations/optical/Sc550_submicron": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 612029,
+  "min": -6.920000076293945,
+  "max": 494.6199951171875,
+  "mean": 14.874144199607935,
+  "std": 14.84110427755808,
+  "sha": "1869baa624c7cb25"
+ },
+ "/observations/optical/Sc700_submicron": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 612029,
+  "min": -7.199999809265137,
+  "max": 487.7900085449219,
+  "mean": 11.10983599047586,
+  "std": 11.546106717032314,
+  "sha": "934dc9039ec7b726"
+ },
+ "/observations/optical/RH_Sc_submicron": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "%",
+  "n_finite": 636220,
+  "min": 23.600000381469727,
+  "max": 68.5,
+  "mean": 44.07788701156516,
+  "std": 9.527144790334402,
+  "sha": "a5e5cafe9e93f6a1"
+ },
+ "/observations/optical/Abs470_total": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 606601,
+  "min": -540.9600219726562,
+  "max": 1523.18994140625,
+  "mean": 0.7045408667301813,
+  "std": 10.916609539709803,
+  "sha": "aa72090ad1c13187"
+ },
+ "/observations/optical/Abs532_total": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 606609,
+  "min": -442.489990234375,
+  "max": 1576.6800537109375,
+  "mean": 0.580352381050966,
+  "std": 9.636134943673047,
+  "sha": "dd9b82f6a097d501"
+ },
+ "/observations/optical/Abs660_total": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 606603,
+  "min": -452.07000732421875,
+  "max": 1338.6300048828125,
+  "mean": 0.403095320256608,
+  "std": 8.765335398413212,
+  "sha": "fd2f33aed3a54886"
+ },
+ "/observations/optical/Ext532_submicron_amb": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 351076,
+  "min": -136.02999877929688,
+  "max": 1118.6099853515625,
+  "mean": 22.83860956097258,
+  "std": 19.556533686946885,
+  "sha": "eb296f2d36e982b2"
+ },
+ "/observations/optical/Ext532_submicron": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Mm-1",
+  "n_finite": 586413,
+  "min": -414.7799987792969,
+  "max": 1584.9100341796875,
+  "mean": 16.924370596730103,
+  "std": 18.814230538863526,
+  "sha": "af7c2c6d2ade63b5"
+ },
+ "/observations/optical/gamma550": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 394560,
+  "min": -1.090000033378601,
+  "max": 2.190000057220459,
+  "mean": 0.20825164726527826,
+  "std": 0.20959310463472486,
+  "sha": "9ab1d4c9da653675"
+ },
+ "/observations/optical/fRH550_RH20to80": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 394560,
+  "min": 0.2199999988079071,
+  "max": 20.790000915527344,
+  "mean": 1.3942494923464912,
+  "std": 0.4435420336071879,
+  "sha": "6f269f61821a85a1"
+ },
+ "/observations/optical/AEscatAMB_450to700nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 434264,
+  "min": -2.7899999618530273,
+  "max": 5.869999885559082,
+  "mean": 1.5026903209053537,
+  "std": 0.7282417970776776,
+  "sha": "ce90f64638a970f8"
+ },
+ "/observations/optical/AEscat_450to700nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 583152,
+  "min": -2.390000104904175,
+  "max": 3.859999895095825,
+  "mean": 1.3536858440205428,
+  "std": 0.7216963379806781,
+  "sha": "70c1db0f0ba44376"
+ },
+ "/observations/optical/AEabsDRY_470to660nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 20783,
+  "min": -3.2300000190734863,
+  "max": 3.6700000762939453,
+  "mean": 1.3922005394861832,
+  "std": 0.51814359369274,
+  "sha": "09f21d984d6599d2"
+ },
+ "/observations/optical/SSA_450nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 148218,
+  "min": 0.03799999877810478,
+  "max": 0.9940000176429749,
+  "mean": 0.9011500504534263,
+  "std": 0.10183053553665164,
+  "sha": "ab5408a9f16e3a76"
+ },
+ "/observations/optical/SSA_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 91958,
+  "min": 0.026000000536441803,
+  "max": 0.9959999918937683,
+  "mean": 0.8893344769074337,
+  "std": 0.10703436987163774,
+  "sha": "6cbbf722e9bb78ce"
+ },
+ "/observations/optical/SSA_700nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 63095,
+  "min": 0.017000000923871994,
+  "max": 0.9940000176429749,
+  "mean": 0.8537600297531598,
+  "std": 0.12374767730048603,
+  "sha": "4f57e5c1536201fe"
+ },
+ "/observations/optical/SSA_amb_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 76432,
+  "min": 0.035999998450279236,
+  "max": 0.996999979019165,
+  "mean": 0.9089946146340004,
+  "std": 0.07821326330829191,
+  "sha": "dd158411dd0a95c6"
+ },
+ "/observations/optical/stdPT": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 633304,
+  "min": 0.9850000143051147,
+  "max": 1.7330000400543213,
+  "mean": 1.1561664281802109,
+  "std": 0.08719106203271074,
+  "sha": "2290d109751182b0"
+ },
+ "/observations/microphysical/InletFlag_LARGE": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 653815,
+  "min": 0.0,
+  "max": 1.0,
+  "mean": 0.14090071350458463,
+  "std": 0.3479191032962743,
+  "sha": "423befca522a3944"
+ },
+ "/observations/aerosol_size_dist/nSMPS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 589788,
+  "min": 15.260491371154785,
+  "max": 71177.28125,
+  "mean": 1801.255597365568,
+  "std": 2981.2302947003045,
+  "sha": "289051822c809e21"
+ },
+ "/observations/aerosol_size_dist/sSMPS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "um2/cm3",
+  "n_finite": 589788,
+  "min": 0.09098360687494278,
+  "max": 70.86409759521484,
+  "mean": 8.76075927328957,
+  "std": 8.361296243276746,
+  "sha": "6630e6f9c4caecd5"
+ },
+ "/observations/aerosol_size_dist/vSMPS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "um3/cm3",
+  "n_finite": 589788,
+  "min": 0.0,
+  "max": 0.6388524770736694,
+  "mean": 0.09196484146596112,
+  "std": 0.08936561209507937,
+  "sha": "40f461981e216ddc"
+ },
+ "/observations/aerosol_size_dist/stdPT_SMPS25": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 628830,
+  "min": 0.9972459077835083,
+  "max": 1.7309671640396118,
+  "mean": 1.1568760166567946,
+  "std": 0.08584198282032289,
+  "sha": "fa85a7c85de9e69a"
+ },
+ "/observations/aerosol_size_dist/nLAS_AmmSO4": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 641031,
+  "min": 0.0,
+  "max": 12490.26953125,
+  "mean": 527.2344085841631,
+  "std": 548.2462660254074,
+  "sha": "8dd6bae6b65ea68f"
+ },
+ "/observations/aerosol_size_dist/sLAS_AmmSO4": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "um2/cm3",
+  "n_finite": 641031,
+  "min": 0.0,
+  "max": 9335.9404296875,
+  "mean": 64.28103306438004,
+  "std": 132.52033806272536,
+  "sha": "eef445137437bdae"
+ },
+ "/observations/aerosol_size_dist/vLAS_AmmSO4": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "um3/cm3",
+  "n_finite": 641031,
+  "min": 0.0,
+  "max": 1879.3800048828125,
+  "mean": 5.444808882966197,
+  "std": 22.14458147768352,
+  "sha": "71d154d051e82e7b"
+ },
+ "/observations/aerosol_size_dist/stdPT_TSILAS25": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "unitless",
+  "n_finite": 645018,
+  "min": 0.984000027179718,
+  "max": 1.7330000400543213,
+  "mean": 1.1560139447493423,
+  "std": 0.08660878740581678,
+  "sha": "2f2465789a580e5c"
+ },
+ "/observations/aerosol_size_dist/radius_smps": {
+  "dims": [
+   "size_smps"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.00158,
+  "max": 0.04455,
+  "mean": 0.0132255,
+  "std": 0.012104102634368783,
+  "sha": "1965aaa13f1ec29b"
+ },
+ "/observations/aerosol_size_dist/diameter_smps": {
+  "dims": [
+   "size_smps"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.00316,
+  "max": 0.0891,
+  "mean": 0.026451,
+  "std": 0.024208205268737567,
+  "sha": "772e6211437b6e93"
+ },
+ "/observations/aerosol_size_dist/radius_lower_smps": {
+  "dims": [
+   "size_smps"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.001485,
+  "max": 0.04215,
+  "mean": 0.012510499999999999,
+  "std": 0.011447775209620427,
+  "sha": "2ef259c8f14309ec"
+ },
+ "/observations/aerosol_size_dist/radius_upper_smps": {
+  "dims": [
+   "size_smps"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.0016799999999999999,
+  "max": 0.047,
+  "mean": 0.014027666666666666,
+  "std": 0.012819850280803681,
+  "sha": "7a1805e937a6af9c"
+ },
+ "/observations/aerosol_size_dist/dndlogd_smps": {
+  "dims": [
+   "flight",
+   "time",
+   "size_smps"
+  ],
+  "shape": [
+   57,
+   78664,
+   30
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 17126365,
+  "min": 0.0,
+  "max": 222149.078125,
+  "mean": 1240.089593657051,
+  "std": 3232.241755097099,
+  "sha": "185dad129a1e5d9e"
+ },
+ "/observations/aerosol_size_dist/radius_las": {
+  "dims": [
+   "size_las"
+  ],
+  "shape": [
+   26
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 26,
+  "min": 0.05,
+  "max": 1.58115,
+  "mean": 0.3632538461538462,
+  "std": 0.38590630063504083,
+  "sha": "b487e5a0ea10e231"
+ },
+ "/observations/aerosol_size_dist/diameter_las": {
+  "dims": [
+   "size_las"
+  ],
+  "shape": [
+   26
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 26,
+  "min": 0.1,
+  "max": 3.1623,
+  "mean": 0.7265076923076924,
+  "std": 0.7718126012700817,
+  "sha": "3831531c04ed9d2a"
+ },
+ "/observations/aerosol_size_dist/radius_lower_las": {
+  "dims": [
+   "size_las"
+  ],
+  "shape": [
+   26
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 26,
+  "min": 0.046950000000000006,
+  "max": 1.41855,
+  "mean": 0.3336923076923077,
+  "std": 0.34477459238785707,
+  "sha": "3a81789692ce2e24"
+ },
+ "/observations/aerosol_size_dist/radius_upper_las": {
+  "dims": [
+   "size_las"
+  ],
+  "shape": [
+   26
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 26,
+  "min": 0.05305,
+  "max": 1.74375,
+  "mean": 0.39895384615384616,
+  "std": 0.43349710648556916,
+  "sha": "e4d0a8506e7e218d"
+ },
+ "/observations/aerosol_size_dist/dndlogd_las": {
+  "dims": [
+   "flight",
+   "time",
+   "size_las"
+  ],
+  "shape": [
+   57,
+   78664,
+   26
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 16666806,
+  "min": 0.0,
+  "max": 28773.359375,
+  "mean": 405.28439474313666,
+  "std": 931.7147595189845,
+  "sha": "0c1c83ff7d1ee801"
+ },
+ "/observations/aerosol_composition/Org_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Organic_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.8440333604812622,
+  "max": 38.5106315612793,
+  "mean": 3.843794577139645,
+  "std": 4.838385556470768,
+  "sha": "351c505a16f1ade0"
+ },
+ "/observations/aerosol_composition/SO4_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Sulfate_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.08299999684095383,
+  "max": 7.2052998542785645,
+  "mean": 1.3358752625764565,
+  "std": 0.8607537982634582,
+  "sha": "75a1c81d598a543d"
+ },
+ "/observations/aerosol_composition/NO3_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Nitrate_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.6740000247955322,
+  "max": 5.9070000648498535,
+  "mean": 0.2733995308362026,
+  "std": 0.4716905030949659,
+  "sha": "2a835a27cd6d7629"
+ },
+ "/observations/aerosol_composition/NH4_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Ammonium_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -5.720900058746338,
+  "max": 4.517000198364258,
+  "mean": 0.46264339707930063,
+  "std": 0.4582440584246697,
+  "sha": "9dd8ae50a3a2d908"
+ },
+ "/observations/aerosol_composition/Chl_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "Chloride_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -1.8509999513626099,
+  "max": 1.9229999780654907,
+  "mean": 0.023148136753897097,
+  "std": 0.04397582401989085,
+  "sha": "6acdc19b80a5f254"
+ },
+ "/observations/aerosol_composition/mz42_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz42_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.20499999821186066,
+  "max": 1.819000005722046,
+  "mean": 0.15676367694296794,
+  "std": 0.21912048698883346,
+  "sha": "d2364280ad2b60e6"
+ },
+ "/observations/aerosol_composition/mz43_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz43_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.3610000014305115,
+  "max": 6.229466438293457,
+  "mean": 0.49124465131633216,
+  "std": 0.7234910526659205,
+  "sha": "61bd83525174c84d"
+ },
+ "/observations/aerosol_composition/mz44_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz44_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.3109999895095825,
+  "max": 4.197000026702881,
+  "mean": 0.448175149048259,
+  "std": 0.5885886442086946,
+  "sha": "ddbdf504c1511c47"
+ },
+ "/observations/aerosol_composition/mz55_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz55_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.22643333673477173,
+  "max": 1.4600000381469727,
+  "mean": 0.12546942496484445,
+  "std": 0.1815306020125006,
+  "sha": "fbb372d3137076fc"
+ },
+ "/observations/aerosol_composition/mz57_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz57_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.1770000010728836,
+  "max": 0.5929999947547913,
+  "mean": 0.03939360361555177,
+  "std": 0.06400699760577784,
+  "sha": "9811c4182ef6390c"
+ },
+ "/observations/aerosol_composition/mz58_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz58_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.09283333271741867,
+  "max": 0.421999990940094,
+  "mean": 0.03672624526310194,
+  "std": 0.052365614020543585,
+  "sha": "0a6db492cdfe6bbb"
+ },
+ "/observations/aerosol_composition/mz60_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz60_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.1755666732788086,
+  "max": 0.25,
+  "mean": 0.01644698756300803,
+  "std": 0.03491499435688101,
+  "sha": "38180e6722297bb2"
+ },
+ "/observations/aerosol_composition/mz79_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz79_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.08583333343267441,
+  "max": 0.41499999165534973,
+  "mean": 0.03390948815941179,
+  "std": 0.04795266932129586,
+  "sha": "ad94ecbd2d12fc6b"
+ },
+ "/observations/aerosol_composition/mz91_Ave_IsoK_STP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz91_micrograms_per_standard_cubic_meter",
+  "n_finite": 368244,
+  "min": -0.11100000143051147,
+  "max": 0.3089999854564667,
+  "mean": 0.02635304922700568,
+  "std": 0.03930110612789059,
+  "sha": "9ffbe75046970eee"
+ },
+ "/observations/aerosol_composition/Duration_CVI_secs": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "seconds",
+  "n_finite": 6215,
+  "min": 9.0482759475708,
+  "max": 1016.2252807617188,
+  "mean": 157.30056313233135,
+  "std": 128.90142107412896,
+  "sha": "9824672e66b21e24"
+ },
+ "/observations/aerosol_composition/Org_frac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "organic_mass_fraction_of_total_unitless",
+  "n_finite": 6155,
+  "min": 0.009999999776482582,
+  "max": 1.0,
+  "mean": 0.6618095860310401,
+  "std": 0.1754622657543734,
+  "sha": "ea4aa9c943eceed5"
+ },
+ "/observations/aerosol_composition/SO4_frac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "sulfate_mass_fraction_of_total_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 0.5759999752044678,
+  "mean": 0.14858131606131275,
+  "std": 0.12716602797363172,
+  "sha": "e31e3d9ef2d95bdc"
+ },
+ "/observations/aerosol_composition/NO3_frac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "nitrate_mass_fraction_of_total_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 0.40676170587539673,
+  "mean": 0.0516940698832477,
+  "std": 0.05668720734861053,
+  "sha": "a9d4dbc278c6b683"
+ },
+ "/observations/aerosol_composition/NH4_frac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ammonium_mass_fraction_of_total_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 0.7269999980926514,
+  "mean": 0.07214703494023762,
+  "std": 0.0972980487319173,
+  "sha": "501628ddcadd6254"
+ },
+ "/observations/aerosol_composition/Chl_frac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "chloride_mass_fraction_of_total_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 0.49758100509643555,
+  "mean": 0.06574151097285849,
+  "std": 0.0855419904486484,
+  "sha": "4d20b40e4fccf3a8"
+ },
+ "/observations/aerosol_composition/mz42_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz42_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 0.6945378184318542,
+  "mean": 0.021506904975827877,
+  "std": 0.03902320566615315,
+  "sha": "ffd05046bc68f8d1"
+ },
+ "/observations/aerosol_composition/mz43_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz43_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 7.553131580352783,
+  "mean": 0.05805182782303625,
+  "std": 0.40421578495919236,
+  "sha": "6ee724a7a123a3b6"
+ },
+ "/observations/aerosol_composition/mz44_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz44_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 9.774059295654297,
+  "mean": 0.24854800963364979,
+  "std": 0.5232674050723962,
+  "sha": "943c18f89dc7584b"
+ },
+ "/observations/aerosol_composition/mz55_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz55_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 0.20570659637451172,
+  "mean": 0.016258489042468162,
+  "std": 0.024767933200843077,
+  "sha": "da6b4c1a28a11ca9"
+ },
+ "/observations/aerosol_composition/mz57_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz57_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 10.409000396728516,
+  "mean": 0.05631697829123399,
+  "std": 0.5996188807274301,
+  "sha": "dca0f9cd8f080115"
+ },
+ "/observations/aerosol_composition/mz58_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz58_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 1.4291865825653076,
+  "mean": 0.02208285942200201,
+  "std": 0.0808556122492685,
+  "sha": "5eac1146cc4e67cc"
+ },
+ "/observations/aerosol_composition/mz60_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz60_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 2.5320000648498535,
+  "mean": 0.020311779008538547,
+  "std": 0.1314291761143563,
+  "sha": "fd9be0113e29452f"
+ },
+ "/observations/aerosol_composition/mz79_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz79_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 4.636000156402588,
+  "mean": 0.021742323454580065,
+  "std": 0.22687157540197497,
+  "sha": "f67ec8318b4decb6"
+ },
+ "/observations/aerosol_composition/mz91_ORGfrac_CVI": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mz91_mass_fraction_of_Org_unitless",
+  "n_finite": 6155,
+  "min": 0.0,
+  "max": 2.187000036239624,
+  "mean": 0.012610560522063875,
+  "std": 0.10720783987741044,
+  "sha": "e472c9458d397b29"
+ },
+ "/observations/aerosol_composition/Sodium": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19724,
+  "min": -8888.0,
+  "max": 11.925661087036133,
+  "mean": -64.25177416984711,
+  "std": 747.8922136437697,
+  "sha": "5c034d1418898e12"
+ },
+ "/observations/aerosol_composition/Potassium": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19724,
+  "min": -8888.0,
+  "max": 7.525448322296143,
+  "mean": -784.5477040029747,
+  "std": 2496.758216162582,
+  "sha": "03259469d148fe70"
+ },
+ "/observations/aerosol_composition/Magnesium": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19580,
+  "min": -8888.0,
+  "max": 1.1649999618530273,
+  "mean": -6845.275027378011,
+  "std": 3728.6428291080106,
+  "sha": "e93eaf585818b1d5"
+ },
+ "/observations/aerosol_composition/Calcium": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19724,
+  "min": -8888.0,
+  "max": 12.6899995803833,
+  "mean": -252.09879039099454,
+  "std": 1467.8172573217369,
+  "sha": "324f2a184c5be821"
+ },
+ "/observations/aerosol_composition/Chloride": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19724,
+  "min": -8888.0,
+  "max": 17.81999969482422,
+  "mean": -1825.322950326473,
+  "std": 3572.009250199615,
+  "sha": "468ab786db3fa163"
+ },
+ "/observations/aerosol_composition/Nitrate": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19724,
+  "min": -8888.0,
+  "max": 93.62000274658203,
+  "mean": -406.05452133131166,
+  "std": 1842.631207844438,
+  "sha": "3aa72471713e4ff7"
+ },
+ "/observations/aerosol_composition/Sulfate": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 19724,
+  "min": -8888.0,
+  "max": 5.75,
+  "mean": -294.5347153901057,
+  "std": 1582.2970991938867,
+  "sha": "4ae6834961430eff"
+ },
+ "/observations/aerosol_composition/Oxalate": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 9880,
+  "min": -8888.0,
+  "max": 0.6317999958992004,
+  "mean": -599.0884159437394,
+  "std": 2194.9627368299366,
+  "sha": "3eac30514952aad3"
+ },
+ "/observations/aerosol_composition/Ammonium": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "microgram_per_standard_cubic_meter",
+  "n_finite": 3969,
+  "min": -8888.0,
+  "max": 1.9609999656677246,
+  "mean": -453.9550309265631,
+  "std": 1931.0151715181278,
+  "sha": "296c4992ebc33982"
+ },
+ "/observations/ccn/CCN_SS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "%",
+  "n_finite": 531445,
+  "min": 0.3700000047683716,
+  "max": 0.3700000047683716,
+  "mean": 0.3700000047683716,
+  "std": 0.0,
+  "sha": "7051f9c4ed6a3175"
+ },
+ "/observations/ccn/N_CCN_stdPT": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "cm-3",
+  "n_finite": 531445,
+  "min": 0.0,
+  "max": 9439.0,
+  "mean": 650.7251373311325,
+  "std": 565.0617323299507,
+  "sha": "08e18dc5bde49be0"
+ },
+ "/observations/cloud_probes/N_CDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 663768,
+  "min": 0.0,
+  "max": 1096.4324951171875,
+  "mean": 7.915878706317464,
+  "std": 37.616398853526185,
+  "sha": "59b20d8bb7c70380"
+ },
+ "/observations/cloud_probes/LWC_CDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "g/m3",
+  "n_finite": 663768,
+  "min": 0.0,
+  "max": 1.5287526845932007,
+  "mean": 0.004549835091464082,
+  "std": 0.03210377278917928,
+  "sha": "cec6942dd92de14e"
+ },
+ "/observations/cloud_probes/Reff_CDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "micron",
+  "n_finite": 62132,
+  "min": 1.25,
+  "max": 22.270000457763672,
+  "mean": 5.20717556222526,
+  "std": 2.456525903424078,
+  "sha": "ba40f02f7e932a3b"
+ },
+ "/observations/cloud_probes/Veff_CDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "micron",
+  "n_finite": 62132,
+  "min": 0.0,
+  "max": 9.333999633789062,
+  "mean": 0.6083342076571232,
+  "std": 0.4062225272164383,
+  "sha": "78d87aa21b8c54c5"
+ },
+ "/observations/cloud_probes/N_FCDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "#/m^3",
+  "n_finite": 607967,
+  "min": 0.0,
+  "max": 3634143744.0,
+  "mean": 15691087.793442935,
+  "std": 81226102.0759164,
+  "sha": "ab24a81fad8ef0b6"
+ },
+ "/observations/cloud_probes/LWC_FCDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "kg/m^3",
+  "n_finite": 647834,
+  "min": 0.0,
+  "max": 0.003069639438763261,
+  "mean": 6.651478831437837e-06,
+  "std": 5.090024009139874e-05,
+  "sha": "668920e7f9f99cc1"
+ },
+ "/observations/cloud_probes/ED_FCDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m",
+  "n_finite": 647834,
+  "min": 0.0,
+  "max": 4.8000001697801054e-05,
+  "mean": 4.139832392026682e-06,
+  "std": 4.235714838774437e-06,
+  "sha": "a7d2160da84db8df"
+ },
+ "/observations/cloud_probes/MVD_FCDP": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m",
+  "n_finite": 647834,
+  "min": 0.0,
+  "max": 4.8000001697801054e-05,
+  "mean": 4.34671058808733e-06,
+  "std": 4.96189819854946e-06,
+  "sha": "dd3d6487926edf41"
+ },
+ "/observations/cloud_probes/N_CAS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 69728,
+  "min": 0.0,
+  "max": 1096.0,
+  "mean": 39.14088244175483,
+  "std": 107.35558071210816,
+  "sha": "f8c3804b94e5c837"
+ },
+ "/observations/cloud_probes/LWC_CAS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "g/m3",
+  "n_finite": 69728,
+  "min": 0.0,
+  "max": 1.121000051498413,
+  "mean": 0.015063141264502289,
+  "std": 0.05835757234888549,
+  "sha": "fa183d700fd21d54"
+ },
+ "/observations/cloud_probes/Reff_CAS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "micron",
+  "n_finite": 49278,
+  "min": 0.33009999990463257,
+  "max": 21.889999389648438,
+  "mean": 3.197175440734589,
+  "std": 2.9654950494471097,
+  "sha": "7d9d1449da627165"
+ },
+ "/observations/cloud_probes/Veff_CAS": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "micron",
+  "n_finite": 49278,
+  "min": 0.0031419999431818724,
+  "max": 11.170000076293945,
+  "mean": 0.9364689095062209,
+  "std": 0.9250366266904092,
+  "sha": "46f6daf1c30b3811"
+ },
+ "/observations/cloud_probes/radius_cdp": {
+  "dims": [
+   "size_cdp"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 1.25,
+  "max": 24.5,
+  "mean": 11.2,
+  "std": 7.204281134621737,
+  "sha": "e1f4a25bc4f36fb8"
+ },
+ "/observations/cloud_probes/diameter_cdp": {
+  "dims": [
+   "size_cdp"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 2.5,
+  "max": 49.0,
+  "mean": 22.4,
+  "std": 14.408562269243474,
+  "sha": "55edc578bd525534"
+ },
+ "/observations/cloud_probes/radius_lower_cdp": {
+  "dims": [
+   "size_cdp"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 1.0,
+  "max": 24.0,
+  "mean": 10.804166666666667,
+  "std": 7.102499804450699,
+  "sha": "568f80b73e90960a"
+ },
+ "/observations/cloud_probes/radius_upper_cdp": {
+  "dims": [
+   "size_cdp"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 1.5,
+  "max": 25.0,
+  "mean": 11.604166666666666,
+  "std": 7.3019748565409035,
+  "sha": "eea9e74ae5b0d8a4"
+ },
+ "/observations/cloud_probes/dndlogd_cdp": {
+  "dims": [
+   "flight",
+   "time",
+   "size_cdp"
+  ],
+  "shape": [
+   57,
+   78664,
+   30
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 19817820,
+  "min": 0.0,
+  "max": 5805.0,
+  "mean": 4.397695471930057,
+  "std": 46.81491262457913,
+  "sha": "20e6cfd2ae24a70b"
+ },
+ "/observations/cloud_probes/radius_fcdp": {
+  "dims": [
+   "size_fcdp"
+  ],
+  "shape": [
+   18
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 18,
+  "min": 1.8371173070873836,
+  "max": 23.979157616563597,
+  "mean": 11.449754880249019,
+  "std": 6.79207478233864,
+  "sha": "bd604a497b689b76"
+ },
+ "/observations/cloud_probes/diameter_fcdp": {
+  "dims": [
+   "size_fcdp"
+  ],
+  "shape": [
+   18
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 18,
+  "min": 3.6742346141747673,
+  "max": 47.958315233127195,
+  "mean": 22.899509760498038,
+  "std": 13.58414956467728,
+  "sha": "0126b3ab54ebe6b9"
+ },
+ "/observations/cloud_probes/radius_lower_fcdp": {
+  "dims": [
+   "size_fcdp"
+  ],
+  "shape": [
+   18
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 18,
+  "min": 1.5,
+  "max": 23.0,
+  "mean": 10.819444444444445,
+  "std": 6.617425206077111,
+  "sha": "8ed562dcdec58f99"
+ },
+ "/observations/cloud_probes/radius_upper_fcdp": {
+  "dims": [
+   "size_fcdp"
+  ],
+  "shape": [
+   18
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 18,
+  "min": 2.25,
+  "max": 25.0,
+  "mean": 12.125,
+  "std": 6.95933126576589,
+  "sha": "0a0f89e4b7c3579a"
+ },
+ "/observations/cloud_probes/dndlogd_fcdp": {
+  "dims": [
+   "flight",
+   "time",
+   "size_fcdp"
+  ],
+  "shape": [
+   57,
+   78664,
+   18
+  ],
+  "dtype": "float32",
+  "units": "#/m^3",
+  "n_finite": 10943406,
+  "min": 0.0,
+  "max": 12093421568.0,
+  "mean": 7845655.864016025,
+  "std": 93770881.42470366,
+  "sha": "06b7d3fab853177b"
+ },
+ "/observations/cloud_probes/radius_cas": {
+  "dims": [
+   "size_cas"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.2775,
+  "max": 23.75,
+  "mean": 5.17375,
+  "std": 6.764934704969443,
+  "sha": "4d736cc4a23ee13c"
+ },
+ "/observations/cloud_probes/diameter_cas": {
+  "dims": [
+   "size_cas"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.555,
+  "max": 47.5,
+  "mean": 10.3475,
+  "std": 13.529869409938886,
+  "sha": "485709a31ca894fb"
+ },
+ "/observations/cloud_probes/radius_lower_cas": {
+  "dims": [
+   "size_cas"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.255,
+  "max": 22.5,
+  "mean": 4.781791666666667,
+  "std": 6.315586305615699,
+  "sha": "7e7a48917e9058c4"
+ },
+ "/observations/cloud_probes/radius_upper_cas": {
+  "dims": [
+   "size_cas"
+  ],
+  "shape": [
+   30
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 30,
+  "min": 0.30000000000000004,
+  "max": 25.0,
+  "mean": 5.606625,
+  "std": 7.221432258893776,
+  "sha": "32e11dcce2012bf7"
+ },
+ "/observations/cloud_probes/dndlogd_cas": {
+  "dims": [
+   "flight",
+   "time",
+   "size_cas"
+  ],
+  "shape": [
+   57,
+   78664,
+   30
+  ],
+  "dtype": "float32",
+  "units": "#/cm3",
+  "n_finite": 2078430,
+  "min": -0.10320000350475311,
+  "max": 3824.0,
+  "mean": 21.551468498283302,
+  "std": 112.18240923805286,
+  "sha": "01d7d467e0fa8cc8"
+ },
+ "/observations/trace_gas/CO2_ppm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ppm",
+  "n_finite": 470874,
+  "min": 405.1066589355469,
+  "max": 443.32666015625,
+  "mean": 419.6431881967756,
+  "std": 3.704150141876972,
+  "sha": "b502bba00d047386"
+ },
+ "/observations/trace_gas/CH4_ppm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ppm",
+  "n_finite": 470970,
+  "min": 1.8872250318527222,
+  "max": 3.6848249435424805,
+  "mean": 1.9629600281092427,
+  "std": 0.03910964157917184,
+  "sha": "07dbc596cdcfc0f0"
+ },
+ "/observations/trace_gas/CO_ppm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ppm",
+  "n_finite": 470943,
+  "min": 0.06092499941587448,
+  "max": 0.5511749982833862,
+  "mean": 0.1109465791158309,
+  "std": 0.023230327317813024,
+  "sha": "26b293fb76e3d109"
+ },
+ "/observations/trace_gas/H2O_DLH": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ppmv",
+  "n_finite": 649299,
+  "min": -999.9000244140625,
+  "max": 30566.630859375,
+  "mean": 11532.061402932331,
+  "std": 7671.649839600283,
+  "sha": "379f542c60eae20d"
+ },
+ "/observations/trace_gas/RHi_DLH": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "percent",
+  "n_finite": 649299,
+  "min": -999.9000244140625,
+  "max": 136.39999389648438,
+  "mean": -846.3358332271393,
+  "std": 375.5523736705997,
+  "sha": "d897413416da3724"
+ },
+ "/observations/trace_gas/RHw_DLH": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "percent",
+  "n_finite": 649299,
+  "min": -999.9000244140625,
+  "max": 126.5999984741211,
+  "mean": 46.499228026716864,
+  "std": 161.0330494918051,
+  "sha": "da6d97cf95e4fe63"
+ },
+ "/observations/trace_gas/O3_ppbv": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ppbv",
+  "n_finite": 444020,
+  "min": 6.300000190734863,
+  "max": 85.9000015258789,
+  "mean": 38.008625739637,
+  "std": 13.328465991571237,
+  "sha": "7d8320ea4d55b1a1"
+ },
+ "/observations/state_nav/Latitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "deg",
+  "n_finite": 673308,
+  "min": 31.940710067749023,
+  "max": 41.632728576660156,
+  "mean": 36.240560791692985,
+  "std": 1.4725532945089737,
+  "sha": "c9e64c83a95a5f66"
+ },
+ "/observations/state_nav/Longitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "deg",
+  "n_finite": 673308,
+  "min": -76.95604705810547,
+  "max": -67.32652282714844,
+  "mean": -73.69899811047509,
+  "std": 1.8765854320200104,
+  "sha": "a77f8847e5f3267c"
+ },
+ "/observations/state_nav/GPS_altitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m",
+  "n_finite": 673304,
+  "min": -34.79999923706055,
+  "max": 6415.39990234375,
+  "mean": 931.4796916721181,
+  "std": 802.2952823130148,
+  "sha": "8b6a80dc38766366"
+ },
+ "/observations/state_nav/Pressure_Altitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "ft",
+  "n_finite": 672337,
+  "min": -767.5999755859375,
+  "max": 20591.0703125,
+  "mean": 2640.5718355348513,
+  "std": 2601.69195246256,
+  "sha": "cf9d320a56f3c785"
+ },
+ "/observations/state_nav/Pitch": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "deg +-180",
+  "n_finite": 673308,
+  "min": -4.21999979019165,
+  "max": 21.739999771118164,
+  "mean": 5.918891637129428,
+  "std": 2.1814626076238404,
+  "sha": "1b5ac08be2bb0b41"
+ },
+ "/observations/state_nav/Roll": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "deg +-180",
+  "n_finite": 673284,
+  "min": -55.47999954223633,
+  "max": 48.47999954223633,
+  "mean": -1.4790775654198038,
+  "std": 5.3632347987939655,
+  "sha": "bb741bcd313d4e71"
+ },
+ "/observations/state_nav/True_Heading": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "deg 0-360",
+  "n_finite": 673308,
+  "min": 0.07000000029802322,
+  "max": 359.9200134277344,
+  "mean": 197.7584135669882,
+  "std": 98.40713349103238,
+  "sha": "800fb59c0c06ed93"
+ },
+ "/observations/state_nav/True_Air_Speed": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m/s",
+  "n_finite": 661512,
+  "min": 17.549999237060547,
+  "max": 187.3300018310547,
+  "mean": 113.15313120728734,
+  "std": 12.093222212597171,
+  "sha": "1b80ccfad9e7c71d"
+ },
+ "/observations/state_nav/Static_Air_Temp": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "degrees Celcius",
+  "n_finite": 661417,
+  "min": -20.440000534057617,
+  "max": 33.189998626708984,
+  "mean": 10.671330990415685,
+  "std": 9.172781339156222,
+  "sha": "02ab5022934a161e"
+ },
+ "/observations/state_nav/IR_Surf_Temp": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "degrees Celcius",
+  "n_finite": 672338,
+  "min": -49.70000076293945,
+  "max": 50.0,
+  "mean": 17.925904873039055,
+  "std": 9.730086404562423,
+  "sha": "bbe957b3cf01000d"
+ },
+ "/observations/state_nav/Static_Pressure": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "mb",
+  "n_finite": 672351,
+  "min": 442.1000061035156,
+  "max": 1035.780029296875,
+  "mean": 913.2042933579877,
+  "std": 82.01746265331799,
+  "sha": "a3e20d00392c8a66"
+ },
+ "/observations/state_nav/Wind_Speed": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m/s",
+  "n_finite": 386545,
+  "min": 0.009999999776482582,
+  "max": 38.70000076293945,
+  "mean": 8.345184338779536,
+  "std": 4.7237806278197985,
+  "sha": "7b61d92930f9fe03"
+ },
+ "/observations/state_nav/Wind_Direction": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "deg 0-360 cw from +y",
+  "n_finite": 386545,
+  "min": 0.0,
+  "max": 360.0,
+  "mean": 205.63622131751018,
+  "std": 103.12119666475745,
+  "sha": "96cfb52ad4a02042"
+ },
+ "/windowed/wavelength_sca": {
+  "dims": [
+   "wavelength_sca"
+  ],
+  "shape": [
+   3
+  ],
+  "dtype": "float64",
+  "units": "nm",
+  "n_finite": 3,
+  "min": 450.0,
+  "max": 700.0,
+  "mean": 566.6666666666666,
+  "std": 102.74023338281629,
+  "sha": "a0e8c1288065f830"
+ },
+ "/windowed/wavelength_abs": {
+  "dims": [
+   "wavelength_abs"
+  ],
+  "shape": [
+   3
+  ],
+  "dtype": "float64",
+  "units": "nm",
+  "n_finite": 3,
+  "min": 470.0,
+  "max": 660.0,
+  "mean": 554.0,
+  "std": 79.1117353283738,
+  "sha": "c3b35cbc0064da49"
+ },
+ "/windowed/dp_mid": {
+  "dims": [
+   "psd_bin"
+  ],
+  "shape": [
+   51
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 51,
+  "min": 0.00316,
+  "max": 1.0,
+  "mean": 0.1797750980392157,
+  "std": 0.25098349287468813,
+  "sha": "0602f497b94cd2f2"
+ },
+ "/windowed/radius_mid": {
+  "dims": [
+   "psd_bin"
+  ],
+  "shape": [
+   51
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 51,
+  "min": 0.00158,
+  "max": 0.5,
+  "mean": 0.08988754901960785,
+  "std": 0.12549174643734406,
+  "sha": "f77eb006037ef7d6"
+ },
+ "/windowed/dp_lower": {
+  "dims": [
+   "psd_bin"
+  ],
+  "shape": [
+   51
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 51,
+  "min": 0.00297,
+  "max": 0.943928,
+  "mean": 0.1697467470588235,
+  "std": 0.2369233637875811,
+  "sha": "2b02826b76789722"
+ },
+ "/windowed/dp_upper": {
+  "dims": [
+   "psd_bin"
+  ],
+  "shape": [
+   51
+  ],
+  "dtype": "float64",
+  "units": "um",
+  "n_finite": 51,
+  "min": 0.00336,
+  "max": 1.12205,
+  "mean": 0.1916815294117647,
+  "std": 0.26998028925884265,
+  "sha": "d0cf268fccf3e591"
+ },
+ "/windowed/psd_instrument": {
+  "dims": [
+   "psd_bin"
+  ],
+  "shape": [
+   51
+  ],
+  "dtype": "<class 'str'>",
+  "units": null,
+  "n": 51,
+  "sha": "8adfe53d23fd8172"
+ },
+ "/windowed/window_qc_flag": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": null,
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 7.0,
+  "mean": 6.418295437875899,
+  "std": 1.821157507790236,
+  "sha": "d93fd4dba1d113a6"
+ },
+ "/windowed/n_valid": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 60.0,
+  "mean": 2.3862168109138917,
+  "std": 10.316922647026649,
+  "sha": "fb9780de062593ef"
+ },
+ "/windowed/n_cloudy": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 60.0,
+  "mean": 48.9655273580754,
+  "std": 21.615234234765676,
+  "sha": "26547d00342f3fd3"
+ },
+ "/windowed/n_inlet_bad": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 60.0,
+  "mean": 10.557564911251283,
+  "std": 21.470729024361106,
+  "sha": "66307f257c55e507"
+ },
+ "/windowed/n_low_signal": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 60.0,
+  "mean": 29.14365996772774,
+  "std": 26.577662318086514,
+  "sha": "91a0a0923b75d87f"
+ },
+ "/windowed/n_low_ssa": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 60.0,
+  "mean": 0.4293178817661728,
+  "std": 3.2185174701422707,
+  "sha": "88dba841d10b0bb3"
+ },
+ "/windowed/retrievals/scattering_dry_measured": {
+  "dims": [
+   "flight",
+   "time",
+   "wavelength_sca"
+  ],
+  "shape": [
+   57,
+   78664,
+   3
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 195453,
+  "min": 2.900000026784255e-07,
+  "max": 0.0001304591860389337,
+  "mean": 1.3332969848000872e-05,
+  "std": 1.2411601648104172e-05,
+  "sha": "ef504e67fb88aba4"
+ },
+ "/windowed/retrievals/scattering_dry_measured_std": {
+  "dims": [
+   "flight",
+   "time",
+   "wavelength_sca"
+  ],
+  "shape": [
+   57,
+   78664,
+   3
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 169839,
+  "min": 0.0,
+  "max": 2.1602636479656212e-05,
+  "mean": 1.8644012703576267e-06,
+  "std": 1.6850226330420626e-06,
+  "sha": "fd330dc373b946fc"
+ },
+ "/windowed/retrievals/absorption_measured": {
+  "dims": [
+   "flight",
+   "time",
+   "wavelength_abs"
+  ],
+  "shape": [
+   57,
+   78664,
+   3
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 192393,
+  "min": -4.4424999941838905e-05,
+  "max": 2.2349999198922887e-05,
+  "mean": 4.870418096945399e-07,
+  "std": 2.9215617826156652e-06,
+  "sha": "8ac9251f87120e0f"
+ },
+ "/windowed/retrievals/absorption_measured_std": {
+  "dims": [
+   "flight",
+   "time",
+   "wavelength_abs"
+  ],
+  "shape": [
+   57,
+   78664,
+   3
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 167139,
+  "min": 0.0,
+  "max": 5.7438282965449616e-05,
+  "mean": 2.173336083343089e-06,
+  "std": 3.3822021004615482e-06,
+  "sha": "24ae70d4befa9c40"
+ },
+ "/windowed/retrievals/ssa_measured": {
+  "dims": [
+   "flight",
+   "time",
+   "wavelength_sca"
+  ],
+  "shape": [
+   57,
+   78664,
+   3
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 67593,
+  "min": 0.5891340374946594,
+  "max": 0.9879999756813049,
+  "mean": 0.8868074423666157,
+  "std": 0.06176537191501073,
+  "sha": "6eab081721e296b8"
+ },
+ "/windowed/retrievals/scattering_humidified_synthesized": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 54864,
+  "min": 4.899445229966659e-06,
+  "max": 9.241301449947059e-05,
+  "mean": 1.557338147338626e-05,
+  "std": 1.243659771622991e-05,
+  "sha": "78d8d2e7ce33d0ce"
+ },
+ "/windowed/retrievals/rh_scattering": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "percent",
+  "n_finite": 65151,
+  "min": 25.100000381469727,
+  "max": 62.70000076293945,
+  "mean": 37.3513388990527,
+  "std": 7.456438625193972,
+  "sha": "aa20338cae3a9f03"
+ },
+ "/windowed/retrievals/gamma550": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 54864,
+  "min": -0.39500001072883606,
+  "max": 0.7211111187934875,
+  "mean": 0.12397934169907034,
+  "std": 0.14939061455126854,
+  "sha": "84f5a4a09d512729"
+ },
+ "/windowed/retrievals/f_rh_550": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 54864,
+  "min": 0.5899999737739563,
+  "max": 2.8155555725097656,
+  "mean": 1.2319444652747815,
+  "std": 0.26134758786633594,
+  "sha": "79eaa306863b2253"
+ },
+ "/windowed/retrievals/angstrom_exponent": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 65151,
+  "min": -0.05714285746216774,
+  "max": 3.0199999809265137,
+  "mean": 1.8779529318858674,
+  "std": 0.5349246104589467,
+  "sha": "50a0c012613e369e"
+ },
+ "/windowed/retrievals/angstrom_exponent_std": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 56613,
+  "min": 0.0,
+  "max": 0.5114489197731018,
+  "mean": 0.09513864589367575,
+  "std": 0.07545264881303831,
+  "sha": "5fca0374822f7b06"
+ },
+ "/windowed/retrievals/latitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "degrees_north",
+  "n_finite": 65151,
+  "min": 32.38849639892578,
+  "max": 41.58100128173828,
+  "mean": 36.62323069661374,
+  "std": 1.4188634484184652,
+  "sha": "6323098773e21fd2"
+ },
+ "/windowed/retrievals/longitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "degrees_east",
+  "n_finite": 65151,
+  "min": -76.95384216308594,
+  "max": -68.58312225341797,
+  "mean": -75.04116144455637,
+  "std": 1.6392927908615156,
+  "sha": "2ef4b3805d636745"
+ },
+ "/windowed/retrievals/altitude": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m",
+  "n_finite": 65151,
+  "min": -33.38428497314453,
+  "max": 3637.00390625,
+  "mean": 965.8561619930067,
+  "std": 686.507953764026,
+  "sha": "1c2cd38492a81da2"
+ },
+ "/windowed/retrievals/dndlogdp": {
+  "dims": [
+   "flight",
+   "time",
+   "psd_bin"
+  ],
+  "shape": [
+   57,
+   78664,
+   51
+  ],
+  "dtype": "float32",
+  "units": "cm-3",
+  "n_finite": 1753783,
+  "min": 0.0,
+  "max": 127785.21875,
+  "mean": 2089.1272662027054,
+  "std": 5259.620208460665,
+  "sha": "043a3797b4117156"
+ },
+ "/windowed/retrievals/refractive_index_real": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 1.5099999904632568,
+  "max": 1.5499999523162842,
+  "mean": 1.534612517912855,
+  "std": 0.008016347242124877,
+  "sha": "8e502c6f7ddcb195"
+ },
+ "/windowed/retrievals/refractive_index_imag": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 2.2219999664230272e-05,
+  "max": 0.029500000178813934,
+  "mean": 0.010090306875663462,
+  "std": 0.005634682843798574,
+  "sha": "328de7e10c946de5"
+ },
+ "/windowed/retrievals/kappa": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 17484,
+  "min": 0.0010000000474974513,
+  "max": 0.35899999737739563,
+  "mean": 0.0814317090890812,
+  "std": 0.052135925406980546,
+  "sha": "43b3229ce21dee8f"
+ },
+ "/windowed/retrievals/attempt_flag_cri": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 2.0,
+  "mean": 0.07122781282088896,
+  "std": 0.3568591951191284,
+  "sha": "268cf12972edb3fe"
+ },
+ "/windowed/retrievals/attempt_flag_kappa": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 2.0,
+  "mean": 0.051647352207716005,
+  "std": 0.31666258762514604,
+  "sha": "7f1f88e9143020c0"
+ },
+ "/windowed/retrievals/retrieval_qc_flag": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "int32",
+  "units": "1",
+  "n_finite": 681700,
+  "min": 0.0,
+  "max": 2.0,
+  "mean": 0.9794367023617427,
+  "std": 0.20051914320436848,
+  "sha": "141362b5080e8f58"
+ },
+ "/windowed/retrievals/dry_calculated_sca_coef_450nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 8.969844202511013e-06,
+  "max": 0.00011435330088716,
+  "mean": 2.2748423538776262e-05,
+  "std": 1.7008866030530746e-05,
+  "sha": "b2ed31db400b132b"
+ },
+ "/windowed/retrievals/dry_calculated_abs_coef_470nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 0.0,
+  "max": 5.933129159529926e-06,
+  "mean": 1.3131731594450617e-06,
+  "std": 1.241496377204378e-06,
+  "sha": "035fcd205ed0ef42"
+ },
+ "/windowed/retrievals/dry_calculated_ssa_450nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 0.8466659784317017,
+  "max": 1.0,
+  "mean": 0.9419433310083557,
+  "std": 0.03129096815360597,
+  "sha": "653e513a20aa7d5f"
+ },
+ "/windowed/retrievals/dry_calculated_ssa_470nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 0.8425205945968628,
+  "max": 1.0,
+  "mean": 0.9406560529014478,
+  "std": 0.031984865673111866,
+  "sha": "9c57f29c2ddc40ab"
+ },
+ "/windowed/retrievals/dry_calculated_ext_coef_450nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 9.026710358739365e-06,
+  "max": 0.00011585767060751095,
+  "mean": 2.4143293611874528e-05,
+  "std": 1.7757645462660262e-05,
+  "sha": "cac12c069b8a8d66"
+ },
+ "/windowed/retrievals/dry_calculated_ext_coef_470nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 8.314669685205445e-06,
+  "max": 0.00010750258661573753,
+  "mean": 2.223949287751623e-05,
+  "std": 1.6433059392983448e-05,
+  "sha": "e58ab92a3aadf120"
+ },
+ "/windowed/retrievals/dry_calculated_sca_coef_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 5.615547252091346e-06,
+  "max": 7.857922173570842e-05,
+  "mean": 1.5180665804580431e-05,
+  "std": 1.1561326637650565e-05,
+  "sha": "0262d1919705d551"
+ },
+ "/windowed/retrievals/dry_calculated_abs_coef_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 0.0,
+  "max": 4.988232376490487e-06,
+  "mean": 1.1008839191622688e-06,
+  "std": 1.0433710764443488e-06,
+  "sha": "e67edbe108c39239"
+ },
+ "/windowed/retrievals/dry_calculated_ssa_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 0.8224912285804749,
+  "max": 1.0,
+  "mean": 0.9351283883228891,
+  "std": 0.03493308769998238,
+  "sha": "3dc8ff894c09750d"
+ },
+ "/windowed/retrievals/dry_calculated_ssa_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 0.8271942734718323,
+  "max": 1.0,
+  "mean": 0.9364159797956872,
+  "std": 0.034249430861665306,
+  "sha": "f92b98828df0689d"
+ },
+ "/windowed/retrievals/dry_calculated_ext_coef_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 5.772275926574366e-06,
+  "max": 7.971408194862306e-05,
+  "mean": 1.6229663134777562e-05,
+  "std": 1.2120722683608205e-05,
+  "sha": "349c268ca1198e95"
+ },
+ "/windowed/retrievals/dry_calculated_ext_coef_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 6.279947683651699e-06,
+  "max": 8.524508302798495e-05,
+  "mean": 1.7386760222979436e-05,
+  "std": 1.2966415547317318e-05,
+  "sha": "c4315559d48adafd"
+ },
+ "/windowed/retrievals/dry_calculated_sca_coef_700nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 2.9599343633890385e-06,
+  "max": 4.547101343632676e-05,
+  "mean": 8.794040482031133e-06,
+  "std": 6.679179589656177e-06,
+  "sha": "06198ca5567140cd"
+ },
+ "/windowed/retrievals/dry_calculated_abs_coef_660nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 0.0,
+  "max": 3.6635992728406563e-06,
+  "mean": 8.038362906635067e-07,
+  "std": 7.652289573786832e-07,
+  "sha": "af0140c79a25d5ae"
+ },
+ "/windowed/retrievals/dry_calculated_ssa_700nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 0.7788419723510742,
+  "max": 1.0,
+  "mean": 0.9228737519135788,
+  "std": 0.04134665341133964,
+  "sha": "8c24e9f8f819c9ad"
+ },
+ "/windowed/retrievals/dry_calculated_ssa_660nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 20858,
+  "min": 0.7912829518318176,
+  "max": 1.0,
+  "mean": 0.9264230870431285,
+  "std": 0.03950983713609466,
+  "sha": "add08d58451a1fc8"
+ },
+ "/windowed/retrievals/dry_calculated_ext_coef_700nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 3.0687622256664326e-06,
+  "max": 4.6259585360530764e-05,
+  "mean": 9.531524568273738e-06,
+  "std": 7.075695151773705e-06,
+  "sha": "fd69a6c0845fd0c9"
+ },
+ "/windowed/retrievals/dry_calculated_ext_coef_660nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 3.5970820135844406e-06,
+  "max": 5.334896923159249e-05,
+  "mean": 1.0912327264918324e-05,
+  "std": 8.132918041611341e-06,
+  "sha": "269db97448fdffee"
+ },
+ "/windowed/retrievals/dry_calculated_sca_coef_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 20858,
+  "min": 6.114943516877247e-06,
+  "max": 8.405419794144109e-05,
+  "mean": 1.628587629160052e-05,
+  "std": 1.2379326527957487e-05,
+  "sha": "d58dd5e85798fa20"
+ },
+ "/windowed/retrievals/wet_calculated_sca_coef_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 17484,
+  "min": 6.066848072805442e-06,
+  "max": 8.985067688627169e-05,
+  "mean": 1.9438755414829606e-05,
+  "std": 1.4070925192982985e-05,
+  "sha": "b35c315ecac1ea15"
+ },
+ "/windowed/retrievals/wet_calculated_ssa_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 17484,
+  "min": 0.8420459628105164,
+  "max": 1.0,
+  "mean": 0.9484960532139325,
+  "std": 0.030431562438516774,
+  "sha": "2d9fa2555267d588"
+ },
+ "/windowed/retrievals/wet_calculated_ext_coef_550nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 17484,
+  "min": 6.197842139954446e-06,
+  "max": 9.027351916301996e-05,
+  "mean": 2.0475663852364115e-05,
+  "std": 1.4620988637089468e-05,
+  "sha": "30a0b60d4945c64d"
+ },
+ "/windowed/retrievals/wet_calculated_sca_coef_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 17484,
+  "min": 6.588209544133861e-06,
+  "max": 9.575647709425539e-05,
+  "mean": 2.081110010553704e-05,
+  "std": 1.5031314568038615e-05,
+  "sha": "807d9bee3908ef81"
+ },
+ "/windowed/retrievals/wet_calculated_ssa_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "1",
+  "n_finite": 17484,
+  "min": 0.8462550640106201,
+  "max": 1.0,
+  "mean": 0.9495579574970489,
+  "std": 0.02980070975373664,
+  "sha": "8da5988c62198abf"
+ },
+ "/windowed/retrievals/wet_calculated_ext_coef_532nm": {
+  "dims": [
+   "flight",
+   "time"
+  ],
+  "shape": [
+   57,
+   78664
+  ],
+  "dtype": "float32",
+  "units": "m-1",
+  "n_finite": 17484,
+  "min": 6.726064384565689e-06,
+  "max": 9.619932097848505e-05,
+  "mean": 2.1897566845700285e-05,
+  "std": 1.5609263186534597e-05,
+  "sha": "6259c9e35e40e7cc"
+ },
+ "/clock_alignment/flight_date": {
+  "dims": [
+   "flight_date"
+  ],
+  "shape": [
+   43
+  ],
+  "dtype": "int64",
+  "units": "days since 2021-01-27 00:00:00",
+  "n_finite": 43,
+  "min": 0.0,
+  "max": 321.0,
+  "mean": 131.51162790697674,
+  "std": 90.34928915513554,
+  "sha": "f0656e11a111ba61"
+ },
+ "/clock_alignment/shift_group": {
+  "dims": [
+   "shift_group"
+  ],
+  "shape": [
+   4
+  ],
+  "dtype": "<class 'str'>",
+  "units": null,
+  "n": 4,
+  "sha": "dce7bb4ecb42ce3e"
+ },
+ "/clock_alignment/applied_shift_s": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "float64",
+  "units": "s",
+  "n_finite": 172,
+  "min": -22.0,
+  "max": 24.0,
+  "mean": 5.098837209302325,
+  "std": 7.329186543682992,
+  "sha": "667a22f0b31b9458"
+ },
+ "/clock_alignment/decision_code": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "int8",
+  "units": null,
+  "n_finite": 172,
+  "min": 0.0,
+  "max": 1.0,
+  "mean": 0.563953488372093,
+  "std": 0.49589308457069714,
+  "sha": "0c2fe786ef18c78e"
+ },
+ "/clock_alignment/peak_r": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "float64",
+  "units": "1",
+  "n_finite": 136,
+  "min": -0.3188,
+  "max": 1.0,
+  "mean": 0.5057044117647058,
+  "std": 0.3065482696055931,
+  "sha": "4c29fe00201c0174"
+ },
+ "/clock_alignment/n_valid": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "int64",
+  "units": "1",
+  "n_finite": 172,
+  "min": 0.0,
+  "max": 30633.0,
+  "mean": 9256.726744186046,
+  "std": 9153.620060403151,
+  "sha": "5c1680fb126d2e42"
+ },
+ "/clock_alignment/monotonic_halfwidth_s": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "float64",
+  "units": "s",
+  "n_finite": 136,
+  "min": 0.0,
+  "max": 30.0,
+  "mean": 16.639705882352942,
+  "std": 8.424118730412282,
+  "sha": "84ca7a8257f332ef"
+ },
+ "/clock_alignment/decision": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "<class 'str'>",
+  "units": null,
+  "n": 172,
+  "sha": "3acd1da72697771c"
+ },
+ "/clock_alignment/reason": {
+  "dims": [
+   "flight_date",
+   "shift_group"
+  ],
+  "shape": [
+   43,
+   4
+  ],
+  "dtype": "<class 'str'>",
+  "units": null,
+  "n": 172,
+  "sha": "8d12851ecda3eaea"
+ }
+}
