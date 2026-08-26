@@ -29,6 +29,7 @@ def fake_isara(monkeypatch, tmp_path):
 
     mod = types.ModuleType("ISARA")
     mod.Retr_PSD = fake_retr_psd
+    mod.default_CRI_grid = lambda *a, **k: np.array([[1.52, 0.001], [1.53, 0.002]])
     monkeypatch.setitem(sys.modules, "ISARA", mod)
     monkeypatch.setattr(isara_bridge, "_ISARA", None)
     monkeypatch.setattr(isara_bridge, "_LUTS", {})
@@ -116,7 +117,7 @@ def test_lut_built_per_pattern_and_passed(monkeypatch, tmp_path):
 
     isara_mod = types.ModuleType("ISARA")
     isara_mod.Retr_PSD = fake_retr_psd
-    isara_mod.default_CRI_grid = lambda: np.array([[1.52, 0.001], [1.53, 0.002]])
+    isara_mod.default_CRI_grid = lambda *a, **k: np.array([[1.52, 0.001], [1.53, 0.002]])
     lut_mod = types.ModuleType("optics_lut")
     lut_mod.build = fake_build
     lut_mod.OpticsLUT = FakeLUT
@@ -148,6 +149,7 @@ def test_value_error_becomes_flag_zero(monkeypatch, tmp_path):
 
     mod = types.ModuleType("ISARA")
     mod.Retr_PSD = angry
+    mod.default_CRI_grid = lambda *a, **k: np.array([[1.52, 0.001]])
     monkeypatch.setitem(sys.modules, "ISARA", mod)
     monkeypatch.setattr(isara_bridge, "_ISARA", None)
 

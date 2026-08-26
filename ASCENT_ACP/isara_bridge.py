@@ -31,6 +31,14 @@ def import_isara(isara_code_dir):
     return ISARA
 
 
+def _cri_grid(cfg):
+    """Candidate (RRI, IRI) grid from the config's RRI bounds."""
+    if _ISARA is None:
+        import_isara(cfg.paths.isara_code_dir)
+    return _ISARA.default_CRI_grid(cfg.isara.rri_min, cfg.isara.rri_max,
+                                   cfg.isara.rri_step)
+
+
 def _union_wavelengths(ch):
     """Replicate Retr_CRI's wavelength layout: interleave sca/abs then sort."""
     pairs = []
@@ -63,11 +71,12 @@ def prepare_luts(good_windows, grid, cfg, verbose=True):
         dnd = [row[psd_col_name(d)] for d in grid.dpg_um]
         counts[_pattern_key(dnd)] = counts.get(_pattern_key(dnd), 0) + 1
 
+    cri_grid = _cri_grid(cfg)
+
     cache_dir = cfg.paths.lut_cache_dir or os.path.join(
         cfg.paths.output_dir, "lut_cache"
     )
     wvl = _union_wavelengths(cfg.channels)
-    cri_grid = ISARA.default_CRI_grid()
     luts = {}
     for key, n in sorted(counts.items(), key=lambda kv: -kv[1]):
         if n < cfg.isara.lut_min_pattern_count or len(key) < 2:
@@ -138,6 +147,7 @@ def build_retr_kwargs(row, grid, cfg):
         )
         * 1e-6,
         "wet_wvl": {"sca": list(ch.wet_wvl_sca)},
+        "CRI_p": _cri_grid(cfg),
         "RH_wet": cfg.filters.wet_rh,
         # window-mean ambient RH (NaN -> no ambient forward state)
         "RH_ambient": float(row["RH_amb_mean"]) if "RH_amb_mean" in row else None,

@@ -129,6 +129,13 @@ class PSDConfig:
 
 @dataclass
 class IsaraConfig:
+    # Dry RRI search grid (the IRI grid is fixed inside ISARA). The mean of
+    # all grid candidates matching the measurements within tolerance is the
+    # reported CRI, so widening this range can shift results everywhere, not
+    # only at the old bounds.
+    rri_min: float = 1.51
+    rri_max: float = 1.54
+    rri_step: float = 0.01
     size_equ: str = "cs"
     shape: str = "sphere"
     nonabs_fraction: float = 0.0

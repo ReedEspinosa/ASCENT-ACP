@@ -831,6 +831,15 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
          f"ISARA-retrieved imaginary part of the dry complex refractive index; {cri_note}"),
         ("kappa", "kappa_unitless",
          "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk value)"),
+        ("cri_n_accepted", "dry_CRI_n_accepted_unitless",
+         "number of CRI grid candidates matching the measurements within "
+         "tolerance; the reported CRI is their mean"),
+        ("refractive_index_real_accepted_std", "dry_RRI_accepted_std_unitless",
+         "standard deviation of the real refractive index over accepted grid "
+         "candidates (retrieval-spread proxy, not a full uncertainty)"),
+        ("refractive_index_imag_accepted_std", "dry_IRI_accepted_std_unitless",
+         "standard deviation of the imaginary refractive index over accepted "
+         "grid candidates (retrieval-spread proxy, not a full uncertainty)"),
         ("refractive_index_real_wet", "wet_RRI_unitless",
          f"real refractive index of the wet state; {mix_note}"),
         ("refractive_index_imag_wet", "wet_IRI_unitless",

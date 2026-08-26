@@ -1,9 +1,60 @@
-# ASCENT-ACP netCDF Output v2/v3 + Single-Pass Driver — Design Spec
+# ASCENT-ACP netCDF Output v2/v3/v4 + Single-Pass Driver — Design Spec
 
-Status: **implemented (v3)**. Supersedes the flat single-group v1 file formerly
+Status: **implemented (v4)**. Supersedes the flat single-group v1 file formerly
 produced by `netcdf_export.py`, and adds a campaign-agnostic ICARTT→netCDF
 driver (`ASCENT_ACP.run`). All decisions in §2 are as-built; run
 `python -m ASCENT_ACP.run --config configs/activate_2021_full.json`.
+
+## v4 addendum (2026-08) — layout + science changes on top of v3
+
+1. **One shared root `wavelength` dimension** (sorted union of every measured,
+   humidified, and validation wavelength; ACTIVATE: 450, 470, 532, 550, 660,
+   700 nm). Every per-wavelength variable family is merged onto it and holds
+   fill at wavelengths it does not cover (compresses to ~nothing):
+   - `/observations/optical`: `Sc*/Abs*/Ext*/SSA*` columns →
+     `scattering_submicron`, `absorption_total`, `extinction_submicron[_amb]`,
+     `ssa[_amb]`, `scattering_submicron_amb` (member ICARTT columns listed in
+     `source_column`; color token stripped from `icartt_standard_name`).
+   - `/windowed/observations` measured means (`scattering_dry_measured`, …).
+   - `/windowed/retrievals` forward calcs:
+     `{scattering,absorption,extinction,ssa}_{dry,wet,ambient}_calculated`.
+2. **Root georeferencing coordinates** `latitude`/`longitude`/`altitude`
+   (native cadence, from state_nav); every `(flight, time)` data variable
+   carries a CF `coordinates` attribute pointing at them so generic tools
+   (e.g. Panoply) can georeference variables in any group.
+3. **`/windowed` split** into `/windowed/observations` (window QC flag +
+   reject counters, PSD bin coordinates, QC-valid measured window means,
+   synthesized humidified/ambient scattering, window-mean nav) and
+   `/windowed/retrievals` (ISARA outputs only).
+4. **All optical coefficients in Mm⁻¹** (v3 stored the windowed ones in m⁻¹).
+5. **Three humidity states for retrieval products.** dry = as measured
+   (growth factor 1); wet = fixed `filters.wet_rh` (80 % RH, the kappa
+   constraint state); ambient = window-mean DLH `RHw_DLH` (`rh_ambient`,
+   with `rh_ambient_std`, `n_ambient`). Ambient policy: seconds with RH >
+   `filters.ambient_rh_max` (96 %, the effective ceiling recovered from
+   LARGE's own ambient products) or without DLH data are **NaN, not capped**;
+   windows need ≥ `window.min_ambient_points` usable seconds. Per state the
+   file carries the full forward-calculated optical set (item 1), the
+   humidified CRI (`refractive_index_real/imag_{wet,ambient}`, water
+   volume-mixing, spectrally flat) and `growth_factor_{wet,ambient}`.
+   `scattering_ambient_synthesized` is the per-second gamma adjustment to
+   ambient RH, window-averaged — directly comparable to LARGE
+   `Sc550_submicron_amb` (see `scripts/validate_ambient.py`).
+6. **Humidified PSDs** `dndlogdp_{wet,ambient}` on the dry `psd_bin` grid:
+   bulk-kappa growth is a uniform log-diameter shift, remapped back onto the
+   dry bin edges conserving **surface area** exactly (number/volume only
+   approximately); surface grown past the last bin edge is reported in
+   `surface_beyond_grid_{wet,ambient}` instead of being clipped
+   (`ASCENT_ACP/humidify.py`).
+7. **CRI retrieval diagnostics**: `cri_n_accepted`,
+   `refractive_index_real/imag_accepted_std` (size and spread of the
+   accepted-candidate set whose mean is the reported CRI). The dry RRI search
+   grid is configurable (`isara.rri_min/max/step`).
+8. Requires the companion ISARA_code update (RH_ambient / out_wvl /
+   humidified_optics / accepted-set diagnostics).
+9. Regression tooling: `scripts/compare_nc_versions.py` (dump/diff with an
+   explicit rename/scale/wavelength-slice map) verified every V3 variable maps
+   into V4; `baselines/` holds the V3 reference dumps and the V3→V4 map.
 
 ## v3 addendum (2026-07) — layout changes on top of the v2 design below
 
