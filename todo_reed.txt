@@ -163,6 +163,54 @@ REMAINING OPEN ITEMS (not code):
   windows carry a nonzero uncertainty_flag (mostly min-chi2 near gate).
   Typical ambient 1-sigmas (median): SSA550 0.016-0.018, RRI 0.037-
   0.046, IRI 0.002-0.003, AE 0.07-0.14.
+  -> V8 SHIPPED (2026-08-31; Reed's marginalization point): chi^2 is now
+  generalized, r' S^-1 r with S = instrument terms (f_rel split half-
+  independent/half-common preserving marginal sigmas) + rank-1 outer
+  products of the model-nuisance coefficient shifts (PSD lnD scale,
+  N scale, impactor D50/gsd/rho) — residuals along known nuisance
+  directions are marginalized over, inconsistent spectral shapes still
+  fail (unit-tested). Propagation drops gain terms for everything inside
+  S (no double count; direct product terms kept).
+  isara.chi2_sigma = "instrument-cov" (default) | "instrument" | "legacy".
+  Results: 2021 CRI 1442->2173 (min_chi2(all) med 3.1->1.10), 2020
+  1519->1832; sigmaRRI ~0.028 both years. KEY VALUE SHIFT: 2021 RRI
+  median 1.552 (V7, railed) -> 1.516 (V8) — marginalizing the sizing
+  direction releases the high-RRI compensation bias. Remaining 2021
+  failures carry genuinely unexplained spectral tilt (D-dependent sizing
+  error a uniform scale cannot mimic) -> the raw-signal LAS refit is the
+  next lever. Plots regenerated: processing_logs/V8_plots/ (script now
+  scripts/plot_uncertainty_boxplots.py OUT_DIR VERSION).
+  -> V9 (2026-08-31, after code+physics review): joint-posterior
+  uncertainty accounting. Review found (1) direct nuisance terms used
+  PRIOR widths, overstating sigma for directly-measured quantities
+  (sigma(sca_calc550) was 47% vs the 8% measurement anchor); (2) the
+  kappa wet-channel sigma wrongly used the full ~8% instrument model
+  although the synthesized target shares the dry channel's calibration
+  (now ratio-based: 1% gamma term + non-cancelling noise floor); (3)
+  minor notes (theta-conditioning uses posterior-x spread — slightly
+  optimistic; kappa sigma posterior-only; PSD gap-fill unmodeled).
+  V9 conditions the nuisance amplitudes on the fit residual
+  (theta_hat = D M^-1 r, Sigma_theta = I - D M^-1 D'), reports sigma
+  from the posterior second moment (Sigma + theta_hat theta_hat' — the
+  known-but-uncorrected shift counts as uncertainty), and ships
+  sizing_scale_shift as a per-window diagnostic (med ~+0.04 lnD,
+  independently reproducing the +4% sizing offset found earlier).
+  sigma(sca_calc550)/value 47%->23% (remainder = the theta_hat bias
+  term, as intended).
+- TODO (2026-08-31): reconsider PSAP error handling. V8 per-channel chi^2
+  decomposition: 2020 FAILED windows are dominated (91% of chi^2) by an
+  absorption spectral-shape inconsistency — measured Abs470 substantial
+  while Abs660 <= 0 in 54% of them (median -0.28 Mm-1), i.e. an
+  effectively infinite AAE no flat-IRI model can produce. Negative red
+  absorption alongside real blue absorption is unphysical -> likely a
+  PSAP correction artifact (scattering-subtraction/Virkkula behavior at
+  660) rather than aerosol; extreme BrC possible for the positive-Abs660
+  minority. Options: (a) QC screen flagging internally-inconsistent
+  absorption spectra (Abs660<0 with Abs470 >> noise); (b) an additional
+  correlated PSAP spectral-artifact term in the chi^2 covariance so such
+  windows retrieve mainly from scattering + blue absorption; (c) revisit
+  the correction scheme (Muller constrained two-stream) upstream.
+  Retrieved 2020 windows are unaffected (abs |z| med 0.15-0.19).
 - TODO (2026-08-31): bring the APS (Aerodynamic Particle Sizer) into the
   merge/PSD. It measures the coarse tail in AERODYNAMIC diameter, which
   (a) fills the 2020 total-variant gap between the LAS top (3.16 um) and

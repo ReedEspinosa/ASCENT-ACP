@@ -68,6 +68,79 @@ def _coeffs(dpg_um, dnd_cm3, rri, iri, wvls):
     return out
 
 
+def cov_parts(dpg, dnd_weighted, raw_dnd, pen_params, sca_meas, abs_meas,
+              sca_wvls, abs_wvls, wvls, window_s, regime,
+              ref_cri=(1.52, 0.005)):
+    """Full observation+model covariance S [(Mm^-1)^2], channel order
+    [sca..., abs...]. Measurement part: per-channel white+floor diagonals
+    plus rank-1 common-mode calibration terms (neph f_rel across the sca
+    block; the PSAP 0.016*b_sp scattering-subtraction across the abs
+    block). Model part: rank-1 outer products of the secant coefficient
+    shifts of each structural nuisance (PSD lnD scale, PSD concentration
+    scale, impactor D50/steepness/density) evaluated at a reference CRI —
+    residual patterns along these directions are thereby marginalized
+    over in the chi^2 rather than rejected."""
+    n_s, n_a = len(sca_wvls), len(abs_wvls)
+    rri0, iri0 = ref_cri
+    t = window_s
+
+    def yvec(dpg_n, dnd_n):
+        c = _coeffs(dpg_n, dnd_n, rri0, iri0, wvls)
+        return np.array([c[w][0] for w in sca_wvls]
+                        + [c[w][1] for w in abs_wvls])
+
+    y0 = yvec(dpg, dnd_weighted)
+    y_sca_meas = np.array([sca_meas[w] for w in sca_wvls])
+    b_sp_near = np.array([sca_meas[min(sca_meas, key=lambda ws: abs(ws - wv))]
+                          for wv in abs_wvls])
+    abs_meas_v = np.array([abs_meas[w] for w in abs_wvls])
+
+    S = np.zeros((n_s + n_a, n_s + n_a))
+    # measurement. The UM f_rel values are MARGINAL per-channel sigmas whose
+    # cross-channel correlation is unquantified (one gas calibration is
+    # common; per-wavelength truncation corrections are not). Split the
+    # variance evenly: half independent (diagonal), half common (rank-1),
+    # which preserves each channel's marginal sigma exactly.
+    half = 1.0 / np.sqrt(2.0)
+    for i, wv in enumerate(sca_wvls):
+        a = um.NEPH_A[int(wv)]
+        S[i, i] = (a ** 2 * (um.NEPH_T_REF / t)
+                   + (a * np.sqrt(um.NEPH_T_REF / um.NEPH_ZERO_DUR)) ** 2
+                   + (half * um.NEPH_FREL[regime] * y_sca_meas[i]) ** 2)
+    for j in range(n_a):
+        t_eff = max(t, um.PSAP_T_INTERNAL)
+        S[n_s + j, n_s + j] = (um.PSAP_A ** 2 * (um.PSAP_T_REF / t_eff)
+                               + um.PSAP_FLOOR ** 2
+                               + (um.PSAP_FREL * abs_meas_v[j]) ** 2
+                               + (half * um.PSAP_FSCA_ERR * b_sp_near[j]) ** 2)
+    v = np.r_[half * um.NEPH_FREL[regime] * y_sca_meas, np.zeros(n_a)]
+    S += np.outer(v, v)
+    v = np.r_[np.zeros(n_s), half * um.PSAP_FSCA_ERR * b_sp_near]
+    S += np.outer(v, v)
+    # model nuisances (secant dy at the reference CRI)
+    sD = np.exp(um.OPC_DLND)
+    dys = [(yvec(dpg * sD, dnd_weighted) - yvec(dpg / sD, dnd_weighted)) / 2,
+           0.10 * y0]
+    d50, gsd, rho = pen_params
+    if d50 > 0:
+        def pen_of(d50_, gsd_, rho_):
+            sexp = np.log(5.25) / np.log(gsd_)
+            return 1.0 / (1.0 + ((dpg * np.sqrt(rho_)) / d50_) ** sexp)
+        for hi, lo in [((d50 * 1.1, gsd, rho), (d50 * 0.9, gsd, rho)),
+                       ((d50, gsd * 1.09, rho),
+                        (d50, max(gsd / 1.09, 1.01), rho)),
+                       ((d50, gsd, rho + 0.2), (d50, gsd, rho - 0.2))]:
+            dys.append((yvec(dpg, raw_dnd * pen_of(*hi))
+                        - yvec(dpg, raw_dnd * pen_of(*lo))) / 2)
+    return S, np.array(dys)
+
+
+def build_obs_cov(*args, **kwargs):
+    """Total covariance S = Sigma_meas + sum_k dy_k dy_k' (see cov_parts)."""
+    S, D = cov_parts(*args, **kwargs)
+    return S + D.T @ D
+
+
 def _grown(dpg, rri, iri, kappa, rh):
     gf = (1 + kappa * rh / (100 - rh)) ** (1 / 3)
     rri_w = (rri + (gf ** 3 - 1) * 1.33) / gf ** 3
@@ -135,8 +208,11 @@ def _window_uncertainty_inner(it):
         near = min(it["sca_meas"], key=lambda ws: abs(ws - wv))
         out[f"Abs{wv}_sigma"] = float(um.sigma_absorption(
             v, it["sca_meas"][near], t))
-    out["Sc_wet_sigma"] = float(um.sigma_scattering(
-        it["wet_meas"], t, it["wet_wvl"], it["regime"]))
+    # ratio-based: calibration cancels in the synthesized wet/dry pair
+    a_w = um.NEPH_A[int(it["wet_wvl"])]
+    out["Sc_wet_sigma"] = float(np.sqrt(
+        (0.01 * it["wet_meas"]) ** 2 + a_w ** 2 * (um.NEPH_T_REF / t)
+        + (a_w * np.sqrt(um.NEPH_T_REF / um.NEPH_ZERO_DUR)) ** 2))
     n_eff = max(float(it["n_valid"]), 1.0)
     sig_bins = um.sigma_number(np.where(fin, raw, np.nan), n_eff,
                                Q=1.0, edge_bins=2)
@@ -163,7 +239,18 @@ def _window_uncertainty_inner(it):
                       + [it["abs_meas"][w] for w in abs_w])
     sig = np.array([out[f"Sc{w}_dry_sigma"] for w in sca_w]
                    + [out[f"Abs{w}_sigma"] for w in abs_w])
-    chi2 = (((y - y_meas) / sig) ** 2).sum(axis=1)
+    marg = it["marginalized"]
+    if marg:
+        S_meas, D = cov_parts(dpg, dnd, raw[fin],
+                              (it["d50"], it["gsd"], it["rho"]),
+                              it["sca_meas"], it["abs_meas"], sca_w, abs_w,
+                              wvls, it["window_s"], it["regime"])
+        S = S_meas + D.T @ D
+        S_inv = np.linalg.inv(S)
+        r = y - y_meas
+        chi2 = np.einsum("ki,ij,kj->k", r, S_inv, r)
+    else:
+        chi2 = (((y - y_meas) / sig) ** 2).sum(axis=1)
     w = np.exp(-0.5 * (chi2 - chi2.min()))
     w /= w.sum()
     x = grid_cri
@@ -173,7 +260,8 @@ def _window_uncertainty_inner(it):
     cov_x = (w[:, None] * dxc).T @ dxc                      # 2x2
     cov_xy = (w[:, None] * dxc).T @ dyc                     # 2x6
     cov_yy = (w[:, None] * dyc).T @ dyc                     # 6x6
-    G = cov_xy @ np.linalg.inv(cov_yy + np.diag(sig ** 2))  # 2x6
+    S_gain = S if marg else np.diag(sig ** 2)
+    G = cov_xy @ np.linalg.inv(cov_yy + S_gain)              # 2x6
 
     # ---- product Jacobians -------------------------------------------------
     base = _products(dpg, dnd, rri, iri, kappa, rh_wet, rh_amb, wvls)
@@ -201,22 +289,17 @@ def _window_uncertainty_inner(it):
     y0 = y_of(dpg, dnd)
     var_nuis = np.zeros_like(p0)
 
-    def add_model_nuisance(dpg_p, dnd_p, dpg_m, dnd_m):
-        tot = np.zeros_like(p0)
-        for dpg_n, dnd_n, in ((dpg_p, dnd_p), (dpg_m, dnd_m)):
-            dy = y_of(dpg_n, dnd_n) - y0
-            dx = -G @ dy
-            direct = _pvec(_products(dpg_n, dnd_n, rri, iri, kappa, rh_wet,
-                                     rh_amb, wvls), keys) - p0
-            tot += np.abs(direct + Jx.T @ dx)
-        return (tot / 2.0) ** 2
+    def direct_secant(dpg_p, dnd_p, dpg_m, dnd_m):
+        """Signed per-1-sigma direct product shift of one nuisance."""
+        Pp = _pvec(_products(dpg_p, dnd_p, rri, iri, kappa, rh_wet, rh_amb,
+                             wvls), keys)
+        Pm = _pvec(_products(dpg_m, dnd_m, rri, iri, kappa, rh_wet, rh_amb,
+                             wvls), keys)
+        return (Pp - Pm) / 2.0, Pp, Pm
 
-    # PSD diameter scale (correlated lnD = 0.10; kappa response deferred)
-    s = np.exp(um.OPC_DLND)
-    var_nuis += add_model_nuisance(dpg * s, dnd, dpg / s, dnd)
-    # PSD concentration common-mode (10%)
-    var_nuis += add_model_nuisance(dpg, dnd * 1.10, dpg, dnd * 0.90)
-    # impactor parameters (submicron variant only)
+    # nuisance perturbation pairs, ORDER MATCHING cov_parts' D rows
+    pairs = [((dpg * np.exp(um.OPC_DLND), dnd), (dpg / np.exp(um.OPC_DLND), dnd)),
+             ((dpg, dnd * 1.10), (dpg, dnd * 0.90))]
     if it["d50"] > 0:
         rawf = raw[fin]
 
@@ -226,19 +309,49 @@ def _window_uncertainty_inner(it):
 
         b = (it["d50"], it["gsd"], it["rho"])
         for hi, lo in [((b[0] * 1.1, b[1], b[2]), (b[0] * 0.9, b[1], b[2])),
-                       ((b[0], b[1] * 1.09, b[2]), (b[0], max(b[1] / 1.09, 1.01), b[2])),
+                       ((b[0], b[1] * 1.09, b[2]),
+                        (b[0], max(b[1] / 1.09, 1.01), b[2])),
                        ((b[0], b[1], b[2] + 0.2), (b[0], b[1], b[2] - 0.2))]:
-            var_nuis += add_model_nuisance(dpg, rawf * pen_of(*hi),
-                                           dpg, rawf * pen_of(*lo))
+            pairs.append(((dpg, rawf * pen_of(*hi)), (dpg, rawf * pen_of(*lo))))
 
-    # data-side common modes (no direct product term)
-    for dy_meas in (np.r_[um.NEPH_FREL[it["regime"]] * y_meas[:3], 0, 0, 0],
-                    np.r_[0, 0, 0, um.PSAP_FSCA_ERR
-                          * np.array([it["sca_meas"][min(it["sca_meas"],
-                                      key=lambda ws: abs(ws - wv))]
-                                      for wv in abs_w])]):
-        dx = G @ dy_meas
-        var_nuis += (Jx.T @ dx) ** 2
+    if marg:
+        # V9 joint-posterior accounting: condition the nuisance amplitudes on
+        # the residual at the reported CRI. theta_k is in 1-sigma units; the
+        # data constrain the components whose coefficient signatures (rows of
+        # D) are observable, so directly-measured products collapse toward
+        # measurement precision while unobserved directions stay at prior
+        # width. Products are REPORTED at theta=0, so the posterior second
+        # moment (Sigma_post + theta_hat theta_hat') is used, counting the
+        # known-but-uncorrected shift as uncertainty.
+        dPmat = np.stack([direct_secant(*p, *m)[0] for p, m in pairs])  # K x P
+        K = D.shape[0]
+        M = np.linalg.inv(S + cov_yy)   # S = S_meas + D'D (6x6 data space)
+        r_hat = y_meas - y_of(dpg, dnd)
+        theta_hat = D @ M @ r_hat
+        Sig_theta = np.eye(K) - D @ M @ D.T
+        E2 = Sig_theta + np.outer(theta_hat, theta_hat)
+        var_nuis = var_nuis + np.einsum("kp,kl,lp->p", dPmat, E2, dPmat)
+        out["sizing_lnD_shift_unitless"] = float(theta_hat[0] * um.OPC_DLND)
+    else:
+        for (pp, pm) in pairs:
+            tot = np.zeros_like(p0)
+            for dpg_n, dnd_n in (pp, pm):
+                direct = _pvec(_products(dpg_n, dnd_n, rri, iri, kappa, rh_wet,
+                                         rh_amb, wvls), keys) - p0
+                dy = y_of(dpg_n, dnd_n) - y0
+                tot += np.abs(direct + Jx.T @ (-G @ dy))
+            var_nuis = var_nuis + (tot / 2.0) ** 2
+
+    # data-side common modes: in marginalized mode these live inside S
+    # (posterior already carries them); V7 mode adds them via the gain
+    if not marg:
+        for dy_meas in (np.r_[um.NEPH_FREL[it["regime"]] * y_meas[:3], 0, 0, 0],
+                        np.r_[0, 0, 0, um.PSAP_FSCA_ERR
+                              * np.array([it["sca_meas"][min(it["sca_meas"],
+                                          key=lambda ws: abs(ws - wv))]
+                                          for wv in abs_w])]):
+            dx = G @ dy_meas
+            var_nuis += (Jx.T @ dx) ** 2
 
     sigma = np.sqrt(var_noise + var_nuis)
     for k, sg in zip(keys, sigma):
@@ -311,6 +424,7 @@ def run_all(results_df, grid, cfg, progress=True):
             "rh_amb": float(row.get("RH_amb_mean", np.nan)),
             "rri_min": cfg.isara.rri_min,
             "rri_max": cfg.isara.rri_max,
+            "marginalized": cfg.isara.chi2_sigma == "instrument-cov",
             "d50": cfg.psd.impactor_d50_aero_um,
             "gsd": cfg.psd.impactor_gsd,
             "rho": cfg.psd.impactor_rho_gcm3,

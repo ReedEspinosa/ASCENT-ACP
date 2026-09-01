@@ -49,7 +49,38 @@ tolerances (regression path). Bridge computes the arrays from measured
 window means. Config: `isara.chi2_sigma = "legacy" | "instrument"`.
 
 DECIDED (Reed, 2026-08-31): instrument sigmas feed the SAME chi2-wmean
-machinery for gating AND weighting — no split treatment. Expected
+machinery for gating AND weighting — no split treatment.
+
+V8 REFINEMENT (Reed, 2026-08-31): the diagonal-sigma chi^2 (V7) gates
+conditionally on a perfect model, rejecting windows for residuals our own
+budget expects. V8 marginalizes instead: chi^2 = r' S^-1 r / n_ch with
+S = Sigma_meas + sum_k dy_k dy_k' — the model nuisances (PSD lnD scale,
+concentration scale, impactor D50/gsd/rho) enter as rank-1 outer products
+of their secant coefficient shifts, so residual patterns along known
+nuisance directions are forgiven while inconsistent spectral shapes still
+fail. Measurement f_rel terms are split half-independent (diagonal) /
+half-common (rank-1), preserving each channel's marginal sigma (the UM
+values are marginals with unquantified cross-channel correlation).
+Bookkeeping: in this mode the propagation drops the gain terms for
+everything inside S (posterior width already carries them) and keeps only
+the nuisances' DIRECT product effects at fixed CRI.
+Config: isara.chi2_sigma = "instrument-cov" (default) | "instrument" (V7)
+| "legacy".
+
+V9 REFINEMENT (2026-08-31): joint-posterior nuisance accounting. The V8
+direct terms used PRIOR nuisance widths, overstating sigma for products
+the data directly pin (calculated coefficients at measured wavelengths).
+V9 conditions the nuisance amplitudes theta on the residual at the
+reported CRI: theta_hat = D (S + Cov_yy)^-1 r, Sigma_theta = I - D(...)D';
+product sigmas use E[theta theta'] = Sigma_theta + theta_hat theta_hat'
+so the known-but-uncorrected shift is counted as uncertainty (products
+stay reported at theta = 0). Observable directions collapse toward
+measurement precision; unobserved ones stay at prior width; AE barely
+moves (its slope direction is weakly observed). New diagnostic exported:
+sizing_scale_shift (posterior lnD shift; ~+0.04 in 2021 — the sizing
+offset the raw-signal refit will address). Wet-channel sigma corrected to
+the ratio model (1% gamma + noise floor; calibration cancels against the
+dry channel the target is synthesized from). Expected
 population effects (quantify in the U2 A/B anyway): tighter than 20% at
 high signal, looser than the effective floor at low signal, which should
 largely cure the 3.5x min-chi^2 inflation at Sc550 < 20 Mm^-1 seen in the

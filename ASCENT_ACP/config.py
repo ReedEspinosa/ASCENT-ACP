@@ -174,10 +174,14 @@ class IsaraConfig:
     # ISARA_code (~100x faster, spheres only, <=0.21% vs exact Mie). The LUT
     # machinery above is only relevant to the 'mopsmap' engine.
     forward_engine: str = "table"
-    # chi^2 sigmas: "instrument" = per-window UM error models (neph/PSAP;
-    # see uncertainty_models.py) drive gating AND weighting; "legacy" = the
-    # historical fixed tolerances (20% sca, 1 Mm-1 abs, 1% wet sca).
-    chi2_sigma: str = "instrument"
+    # chi^2 sigmas: "instrument-cov" (default) = full observation+model
+    # covariance: UM instrument terms plus rank-1 outer products of the
+    # correlated structural nuisances (PSD diameter scale, concentration
+    # scale, impactor parameters), so residuals along known model-
+    # uncertainty directions are marginalized over instead of rejected;
+    # "instrument" = diagonal UM sigmas only (V7 behavior; conditional on
+    # a perfect model); "legacy" = fixed tolerances (20%/1 Mm-1/1%).
+    chi2_sigma: str = "instrument-cov"
     # nephelometer f_rel regime for sigma_scattering; "" = auto: "pm1" when
     # an impactor is configured (submicron variant), else "pm10".
     neph_regime: str = ""
@@ -219,7 +223,7 @@ class MergeConfig:
 class OutputConfig:
     """Controls the grouped netCDF export (ASCENT_ACP.netcdf_export)."""
 
-    version: str = "V7"             # filename version tag
+    version: str = "V9"             # filename version tag
     emit_observations: bool = True  # /observations native-cadence passthrough
     float32: bool = True            # store float vars as float32
     compression_level: int = 4      # zlib complevel (0 = off)

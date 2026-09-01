@@ -172,9 +172,42 @@ def build_retr_kwargs(row, grid, cfg):
         "forward_engine": cfg.isara.forward_engine,
         "estimator": cfg.isara.estimator,
     }
-    if cfg.isara.chi2_sigma == "instrument":
+    if cfg.isara.chi2_sigma in ("instrument", "instrument-cov"):
         kwargs.update(instrument_sigmas(row, cfg))
+    if cfg.isara.chi2_sigma == "instrument-cov":
+        cov = observation_covariance(row, dndlogdp, grid, cfg)
+        if cov is not None:
+            kwargs["obs_cov"] = cov
     return kwargs
+
+
+def observation_covariance(row, dndlogdp_weighted, grid, cfg):
+    # Full observation+model covariance ((m^-1)^2) marginalizing over the
+    # correlated structural nuisances; see uncertainty_propagation
+    # .build_obs_cov. None when the PSD is too sparse to forward-model.
+    from . import uncertainty_propagation as up  # noqa: PLC0415
+
+    ch = cfg.channels
+    fin = np.isfinite(dndlogdp_weighted) & (grid.dpg_um > 0)
+    if fin.sum() < 10:
+        return None
+    sca_meas = {w: float(row[f"Sc{w}_dry_mean"]) for w in ch.dry_wvl_sca}
+    abs_meas = {w: float(row[f"Abs{w}_mean"]) for w in ch.dry_wvl_abs}
+    if not (np.isfinite(list(sca_meas.values())).all()
+            and np.isfinite(list(abs_meas.values())).all()):
+        return None
+    up._import_sphere_optics(cfg.paths.isara_code_dir)
+    raw = np.array([row[psd_col_name(d)] for d in grid.dpg_um], float)
+    regime = cfg.isara.neph_regime or (
+        "pm1" if cfg.psd.impactor_d50_aero_um > 0 else "pm10")
+    wvls = sorted({*ch.dry_wvl_sca, *ch.dry_wvl_abs})
+    S = up.build_obs_cov(
+        grid.dpg_um[fin], dndlogdp_weighted[fin], raw[fin],
+        (cfg.psd.impactor_d50_aero_um, cfg.psd.impactor_gsd,
+         cfg.psd.impactor_rho_gcm3),
+        sca_meas, abs_meas, list(ch.dry_wvl_sca), list(ch.dry_wvl_abs),
+        wvls, float(cfg.window.window_s), regime)
+    return S * 1e-12  # (Mm^-1)^2 -> (m^-1)^2
 
 
 def instrument_sigmas(row, cfg):
@@ -194,9 +227,18 @@ def instrument_sigmas(row, cfg):
         near = min(ch.dry_wvl_sca, key=lambda ws: abs(ws - w))
         abs_sigma.append(um.sigma_absorption(float(row[f"Abs{w}_mean"]),
                                              sca_meas[near], t))
-    wet_sigma = np.array([um.sigma_scattering(float(row[f"Sc{w}_wet_mean"]),
-                                              t, w, regime)
-                          for w in ch.wet_wvl_sca])
+    # The kappa target is SYNTHESIZED from the same dry nephelometer channel
+    # (dry Sc x gamma adjustment), so the instrument calibration cancels in
+    # the ratio; what remains is the gamma-parameterization uncertainty
+    # (the historic 1% criterion) plus the non-cancelling noise floor.
+    wet_sigma = []
+    for w in ch.wet_wvl_sca:
+        v = float(row[f"Sc{w}_wet_mean"])
+        a = um.NEPH_A[int(w)]
+        wet_sigma.append(np.sqrt((0.01 * v) ** 2 + a ** 2 * (um.NEPH_T_REF / t)
+                                 + (a * np.sqrt(um.NEPH_T_REF
+                                                / um.NEPH_ZERO_DUR)) ** 2))
+    wet_sigma = np.array(wet_sigma)
     return {"sca_sigma": sca_sigma * 1e-6,
             "abs_sigma": np.array(abs_sigma) * 1e-6,
             "wet_sigma": wet_sigma * 1e-6}

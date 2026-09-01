@@ -1085,6 +1085,12 @@ def _write_uncertainty(w, unc_df, grid, cfg, win_idx):
         ("angstrom_exponent_dry_calculated", "dry_AE_unitless",
          sig + "the dry calculated 450-700 nm scattering Angstrom exponent "
          "(correlations between wavelengths included)"),
+        ("sizing_scale_shift", "sizing_lnD_shift_unitless",
+         "posterior-mean log-diameter scale shift of the PSD inferred from "
+         "the fit residual (diagnostic of the correlated LAS sizing "
+         "nuisance; positive = the fit prefers larger true sizes than the "
+         "AmmSO4-calibrated labels; PSDs and products are NOT corrected by "
+         "this shift — it is counted as uncertainty)"),
         ("angstrom_exponent_ambient_calculated", "amb_AE_unitless",
          sig + "the ambient calculated 450-700 nm scattering Angstrom exponent "
          "(correlations between wavelengths included)"),

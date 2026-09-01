@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 
 BASE = "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE/isara_output/"
 OUT = sys.argv[1] if len(sys.argv) > 1 else "."
+VER = sys.argv[2] if len(sys.argv) > 2 else "V8"
 
 EDGES = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, np.inf]
 LABELS = ["0–0.05", "0.05–0.1", "0.1–0.2", "0.2–0.3",
@@ -35,7 +36,7 @@ VARS = [
 
 
 def load(year, tag):
-    b = pickle.load(open(f"{BASE}ISARA_ACTIVATE_{year}_{tag}_60s_V7.pkl", "rb"))
+    b = pickle.load(open(f"{BASE}ISARA_ACTIVATE_{year}_{tag}_60s_{VER}.pkl", "rb"))
     return b["results"], b["uncertainty"]
 
 
@@ -117,10 +118,8 @@ for year, tag in [("2021", "submicron"), ("2020", "total")]:
     res, unc = load(year, tag)
     ext_km, vals, sigs = frame(res, unc)
     boxfig(ext_km, vals,
-           f"ACTIVATE {year} ({tag}) — ambient-state retrievals vs "
-           "ambient extinction (V7)",
-           f"{OUT}/V7_{year}_ambient_values_boxplots.png")
+           f"ACTIVATE {year} ({tag}) — ambient-state retrievals vs ambient extinction ({VER})",
+           f"{OUT}/{VER}_{year}_ambient_values_boxplots.png")
     boxfig(ext_km, sigs,
-           f"ACTIVATE {year} ({tag}) — 1σ uncertainties of "
-           "ambient-state retrievals (V7)",
-           f"{OUT}/V7_{year}_ambient_uncertainty_boxplots.png", sigma=True)
+           f"ACTIVATE {year} ({tag}) — 1σ uncertainties of ambient-state retrievals ({VER})",
+           f"{OUT}/{VER}_{year}_ambient_uncertainty_boxplots.png", sigma=True)

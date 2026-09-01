@@ -350,3 +350,37 @@ bounds merge-stage memory.
   doubles raw 60 s vars; default off.)
 - Resume granularity is **per stage per year** (not per flight date). Finer
   per-date resume can be added later if a single date's failure proves common.
+
+## 12. V5-V9 addendum (2026-08-31)
+
+Successive same-schema-family releases after V4 (all in `isara_output/`;
+full narrative in `THEORY.md` and `todo_reed.txt`):
+
+- **V5**: FCDP cloud-filter units fix (~6x more valid windows); table
+  forward engine; chi2-weighted-mean estimator (new
+  `/windowed/retrievals` variables `cri_min_chi2`, `kappa_min_chi2`,
+  `kappa_std`; the `*_accepted_std` variables become posterior-weighted
+  stds); `dp_mid`/`diameter_*` coordinate dims and unified `cm-3` PSD
+  units (Sect. 10); submicron cut moved to 0.75 um geometric.
+- **V6**: sharp submicron cut replaced by impactor penetration weighting
+  (retrieval-side only). New `/windowed/observations/impactor_penetration`
+  (on `dp_mid`) and global `impactor_*` attrs; 2021 grid extends to the
+  ~1% penetration point. 2020 unchanged bit-for-bit.
+- **V7**: instrument sigma models gate/weight the chi^2; new top-level
+  group `/windowed_uncertainty/{observations,retrievals}` mirroring
+  `/windowed` names and dims with 1-sigma values, plus
+  `uncertainty_flag` (bitmask: rri/iri near grid edge, min chi^2 near
+  gate, large ambient growth).
+- **V8**: generalized covariance chi^2 (measurement + correlated model
+  nuisances; `isara_chi2` semantics of `cri_min_chi2` change to the
+  marginal reduced chi^2). Retrieved values shift: 2021 RRI un-rails.
+- **V9**: joint-posterior uncertainty accounting (sigmas only; values
+  identical to V8). New `/windowed_uncertainty/retrievals/
+  sizing_scale_shift` diagnostic (posterior lnD shift of the PSD);
+  wet-channel sigma ratio-based. `angstrom_exponent_{dry,ambient}_
+  calculated` sigmas include cross-wavelength correlations.
+
+Provenance: every file embeds the resolved `config_json`, both repo git
+SHAs, `isara_forward_engine`, `isara_estimator`, and the impactor/psd
+attrs; `references` cites Kacenelenbogen 2022, Gasteiger & Wiegner 2018,
+Schlosser et al. 2025.
