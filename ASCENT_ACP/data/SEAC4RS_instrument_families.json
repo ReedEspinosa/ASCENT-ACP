@@ -1,0 +1,46 @@
+{
+ "_comment": "SEAC4RS (2013, NASA DC-8) family map; longest-prefix match of column names. PI-Neph GRASP retrievals and DASH-SP growth factors get their own families (independent retrievals kept under /observations, not used by the ISARA fit).",
+ "family_order": [
+  "optical",
+  "microphysical",
+  "aerosol_size_dist",
+  "aerosol_composition",
+  "ccn",
+  "cloud_probes",
+  "pineph_retrievals",
+  "hygroscopic_growth",
+  "trace_gas",
+  "state_nav"
+ ],
+ "family_long_name": {
+  "optical": "In-situ aerosol optical measurements (TSI-3563 nephelometer, PSAP; NOAA CRDS extinction)",
+  "microphysical": "In-situ microphysical aerosol measurements (LARGE CPCs)",
+  "aerosol_size_dist": "In-situ dry aerosol size distributions (SMPS, TSI LAS [PSL], DMT UHSAS [AmmSO4], TSI APS [PSL])",
+  "aerosol_composition": "In-situ aerosol composition (AMS 60 s, SAGA bulk ions, HDSP2 black carbon)",
+  "ccn": "Cloud condensation nuclei concentrations (LARGE CCN counter)",
+  "cloud_probes": "Cloud particle measurements (SPEC FCDP)",
+  "pineph_retrievals": "PI-Neph GRASP retrievals: PSD, complex refractive index, SSA, sphericity (independent of the ISARA retrieval)",
+  "hygroscopic_growth": "DASH-SP size-resolved hygroscopic growth factors",
+  "trace_gas": "Trace-gas and water-vapor measurements (DLH H2O)",
+  "state_nav": "Aircraft state and navigation (DC-8 housekeeping)",
+  "other": "Unclassified instruments"
+ },
+ "title_to_family": {
+  "In-situ_optical_aerosol_measurements_from_the_NASA_DC-8": "optical",
+  "Aerosol_cavity_ringdown_extinction_spectrometer": "optical",
+  "In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_DC-8": "aerosol_size_dist",
+  "In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_DC-8": "aerosol_size_dist",
+  "In-situ_Submicron_Particle_Size_Distributions_from_the_DMT_UHSAS_on_the_NASA_DC-8": "aerosol_size_dist",
+  "In-situ_Particle_Size_Distributions_from_the_TSI_APS_on_the_NASA_DC-8": "aerosol_size_dist",
+  "Particle_Number_Density_Measurements": "microphysical",
+  "FCDP_on_DC8": "cloud_probes",
+  "Non-refractory": "aerosol_composition",
+  "Bulk_aerosol_ionic_composition_from_NASA_DC-8": "aerosol_composition",
+  "NOAA_Humidified_Dual_Single-Particle_Soot_Photometer": "aerosol_composition",
+  "NASA_LARGE_CCN_Counter": "ccn",
+  "Diode_Laser_Hygrometer": "trace_gas",
+  "DC-8_Data_Acquisition_and_Distribution": "state_nav",
+  "PI-Neph__Polarized_Imaging_Nephelometer__aerosol_scattering_matrix_element_measurements": "pineph_retrievals",
+  "Differential_aerosol_sizing_and_hygroscopicity_spectrometer_probe__DASH-SP": "hygroscopic_growth"
+ }
+}

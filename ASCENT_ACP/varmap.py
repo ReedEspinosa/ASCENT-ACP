@@ -26,17 +26,41 @@ def resolve(df, suffix, required=True):
 
 
 def resolve_bins(df, instrument):
-    """Return the ordered list of ``<instrument>_BinNN`` columns (e.g. 'LAS')."""
+    """Ordered per-bin columns of one sizing instrument.
+
+    Two naming schemes are recognized (both campaign conventions seen so
+    far): ordinal ``<instrument>_BinNN`` (ACTIVATE; ordered by bin number,
+    required contiguous) and center-diameter ``<instrument>_<NNN>nm``
+    (SEAC4RS LARGE; ordered by the nm value).
+    """
     pat = re.compile(rf"_{instrument}_Bin(\d+)$")
     found = []
     for c in df.columns:
         m = pat.search(c)
         if m:
             found.append((int(m.group(1)), c))
-    found.sort()
-    nums = [n for n, _ in found]
-    if not nums:
-        raise KeyError(f"No '{instrument}_BinNN' columns found")
-    if nums != list(range(nums[0], nums[0] + len(nums))):
-        raise ValueError(f"{instrument} bins are not contiguous: {nums}")
+    if found:
+        found.sort()
+        nums = [n for n, _ in found]
+        if nums != list(range(nums[0], nums[0] + len(nums))):
+            raise ValueError(f"{instrument} bins are not contiguous: {nums}")
+        return [c for _, c in found]
+    pat = re.compile(rf"_{instrument}_(\d+)nm$")
+    found = sorted((int(m.group(1)), c) for c in df.columns
+                   for m in [pat.search(c)] if m)
+    if not found:
+        raise KeyError(f"No '{instrument}_BinNN' or '{instrument}_<NNN>nm' "
+                       "columns found")
     return [c for _, c in found]
+
+
+def bin_centers_from_names(cols):
+    """Center diameters (um) parsed from ``<TAG>_<NNN>nm`` column names, or
+    None when the columns are not diameter-named."""
+    vals = []
+    for c in cols:
+        m = re.search(r"_(\d+)nm(?:_[A-Za-z0-9]+)?$", c)
+        if not m:
+            return None
+        vals.append(int(m.group(1)) / 1000.0)
+    return vals

@@ -16,15 +16,20 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+# Modes:
+#   plot_uncertainty_boxplots.py OUT_DIR VERSION            (ACTIVATE, both years)
+#   plot_uncertainty_boxplots.py OUT_DIR VERSION BUNDLE.pkl "LABEL"   (any campaign)
 BASE = "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE/isara_output/"
 OUT = sys.argv[1] if len(sys.argv) > 1 else "."
 VER = sys.argv[2] if len(sys.argv) > 2 else "V8"
+BUNDLE = sys.argv[3] if len(sys.argv) > 3 else None
+LABEL = sys.argv[4] if len(sys.argv) > 4 else "campaign"
 
-EDGES = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, np.inf]
+EDGES = [0.0, 0.05, 0.1, 0.2, 0.3, 0.5, 1.0, np.inf]
 LABELS = ["0–0.05", "0.05–0.1", "0.1–0.2", "0.2–0.3",
-          "0.3–0.5", "≥0.5"]
+          "0.3–0.5", "0.5–1", "≥1"]
 # ordinal blue ramp (dataviz reference palette, steps 250->550 + interpolants)
-RAMP = ["#86b6ef", "#5f9fe9", "#3987e5", "#2a72c8", "#1c5cab", "#154a8a"]
+RAMP = ["#86b6ef", "#6ea9ec", "#5f9fe9", "#3987e5", "#2a72c8", "#1c5cab", "#154a8a"]
 INK, MUTED = "#1a1a2e", "#6b6b7b"
 
 VARS = [
@@ -114,12 +119,23 @@ def boxfig(ext_km, data, title, fname, sigma=False):
     print("wrote", fname)
 
 
-for year, tag in [("2021", "submicron"), ("2020", "total")]:
-    res, unc = load(year, tag)
-    ext_km, vals, sigs = frame(res, unc)
+if BUNDLE:
+    b = pickle.load(open(BUNDLE, "rb"))
+    ext_km, vals, sigs = frame(b["results"], b["uncertainty"])
+    slug = LABEL.replace(" ", "_").replace("(", "").replace(")", "")
     boxfig(ext_km, vals,
-           f"ACTIVATE {year} ({tag}) — ambient-state retrievals vs ambient extinction ({VER})",
-           f"{OUT}/{VER}_{year}_ambient_values_boxplots.png")
+           f"{LABEL} — ambient-state retrievals vs ambient extinction ({VER})",
+           f"{OUT}/{VER}_{slug}_ambient_values_boxplots.png")
     boxfig(ext_km, sigs,
-           f"ACTIVATE {year} ({tag}) — 1σ uncertainties of ambient-state retrievals ({VER})",
-           f"{OUT}/{VER}_{year}_ambient_uncertainty_boxplots.png", sigma=True)
+           f"{LABEL} — 1σ uncertainties of ambient-state retrievals ({VER})",
+           f"{OUT}/{VER}_{slug}_ambient_uncertainty_boxplots.png", sigma=True)
+else:
+    for year, tag in [("2021", "submicron"), ("2020", "total")]:
+        res, unc = load(year, tag)
+        ext_km, vals, sigs = frame(res, unc)
+        boxfig(ext_km, vals,
+               f"ACTIVATE {year} ({tag}) — ambient-state retrievals vs ambient extinction ({VER})",
+               f"{OUT}/{VER}_{year}_ambient_values_boxplots.png")
+        boxfig(ext_km, sigs,
+               f"ACTIVATE {year} ({tag}) — 1σ uncertainties of ambient-state retrievals ({VER})",
+               f"{OUT}/{VER}_{year}_ambient_uncertainty_boxplots.png", sigma=True)

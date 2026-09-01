@@ -1,0 +1,87 @@
+{
+  "campaign": "SEAC4RS",
+  "year": "2013",
+  "paths": {
+    "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/merged1sec_SEAC4RS_2013_V1.pkl",
+    "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/merged1sec_SEAC4RS_2013_V1_meta.pickle",
+    "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/isara_output",
+    "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
+    "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
+    "optical_dataset_dir": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/",
+    "scratch_dir": "/tmp/ascent_acp_scratch"
+  },
+  "channels": {
+    "sca_suffixes": {
+      "450": "Sc450_sub",
+      "550": "Sc550_sub",
+      "700": "Sc700_sub"
+    },
+    "abs_suffixes": {
+      "470": "Abs470_total",
+      "532": "Abs532_total"
+    },
+    "ssa_suffixes": {
+      "450": "SSA_dry_450nm",
+      "550": "SSA_dry_550nm",
+      "700": "SSA_dry_700nm"
+    },
+    "rh_sc_suffix": "",
+    "rh_sc_assumed_percent": 30.0,
+    "rh_ambient_suffix": "Relative_Humidity_H2O",
+    "gamma_suffix": "gamma550",
+    "frh_suffix": "fRH550_RH20to80",
+    "ae_suffix": "AE_Scattering_450to550nm",
+    "inlet_flag_suffix": "optical_aerosol_measurements_from_the_NASA_DC-8_Inlet",
+    "n_fcdp_suffix": "conc",
+    "lwc_fcdp_suffix": "lwc",
+    "lat_suffix": "Latitude",
+    "lon_suffix": "Longitude",
+    "alt_suffix": "GPS_Altitude",
+    "dry_wvl_abs": [
+      470,
+      532
+    ]
+  },
+  "filters": {
+    "use_fcdp": true,
+    "fcdp_n_scale_to_cm3": 0.001,
+    "fcdp_lwc_scale_to_gm3": 1.0
+  },
+  "psd": {
+    "variant_name": "submicron",
+    "smps_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/SEAC4RS_SMPS_bins.csv",
+    "las_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/SEAC4RS_LAS_bins.csv",
+    "stitch_dp_um": 0.095,
+    "psd_max_um": 2.0,
+    "impactor_d50_aero_um": 1.0,
+    "impactor_gsd": 1.15,
+    "impactor_rho_gcm3": 1.77
+  },
+  "output": {
+    "version": "V1"
+  },
+  "merge": {
+    "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS",
+    "instruments": [
+      "LARGE-OPTICAL",
+      "LARGE-LAS-PSL",
+      "LARGE-SMPS-PSL",
+      "LARGE-UHSAS-AMMSO4",
+      "LARGE-APS-PSL",
+      "LARGE-CNC",
+      "PINEPH-SSA-PSD-RI",
+      "DASH-SP",
+      "DLH",
+      "DC8HSKPING",
+      "FCDP",
+      "AMS-60S",
+      "HDSP2-BC",
+      "NOAA-AEROEXT",
+      "CCN",
+      "SAGA-AERO"
+    ],
+    "filename_regex": "^S[Ee][Aa][Cc]4[Rr][Ss]-(?P<instr>[A-Za-z0-9\\-]+)_DC8_(?P<date>\\d{8})_R\\d+(_L\\d)?\\.ict$",
+    "flight_marker_instrument": "DC8HSKPING",
+    "n_workers": 6
+  }
+}

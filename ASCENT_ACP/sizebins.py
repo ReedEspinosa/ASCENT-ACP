@@ -74,8 +74,19 @@ def build_grid(df, psd_cfg):
             f"Bin-table/DataFrame mismatch: SMPS {len(smps['dpg'])} vs "
             f"{len(smps_cols)} cols, LAS {len(las['dpg'])} vs {len(las_cols)} cols"
         )
+    if psd_cfg.stitch_dp_um > 0:
+        # overlapping instruments (e.g. SEAC4RS SMPS to 316 nm vs LAS from
+        # 100 nm): keep SMPS bins at/below the stitch diameter and LAS bins
+        # above it
+        k = smps["dpg"] <= psd_cfg.stitch_dp_um
+        smps = {key: v[k] for key, v in smps.items()}
+        smps_cols = [c for c, keep in zip(smps_cols, k) if keep]
+        k = las["dpg"] > psd_cfg.stitch_dp_um
+        las = {key: v[k] for key, v in las.items()}
+        las_cols = [c for c, keep in zip(las_cols, k) if keep]
     if smps["dpu"][-1] > las["dpl"][0] + 1e-9:
-        raise ValueError("SMPS and LAS bins overlap; merge logic assumes none")
+        raise ValueError("SMPS and LAS bins overlap; set psd.stitch_dp_um "
+                         "to choose the hand-off diameter")
 
     dpl = np.concatenate([smps["dpl"], las["dpl"]])
     dpg = np.concatenate([smps["dpg"], las["dpg"]])

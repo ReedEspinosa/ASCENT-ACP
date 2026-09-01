@@ -61,7 +61,11 @@ class ChannelConfig:
             "700": "SSA_700nm",
         }
     )
+    # Nephelometer sample-RH column; "" = not archived for this campaign,
+    # assume the constant rh_sc_assumed_percent instead (the reported dry
+    # scattering is then taken at that RH for gamma adjustments).
     rh_sc_suffix: str = "RH_Sc_submicron"
+    rh_sc_assumed_percent: float = 30.0
     rh_ambient_suffix: str = "RHw_DLH"  # ambient RH over liquid water (DLH)
     gamma_suffix: str = "gamma550"
     frh_suffix: str = "fRH550_RH20to80"
@@ -147,6 +151,10 @@ class PSDConfig:
     impactor_gsd: float = 1.15
     impactor_rho_gcm3: float = 1.77
     impactor_min_penetration: float = 0.005  # drop bins below this P
+    # Hand-off diameter when the SMPS and LAS bin ranges overlap (0 = the
+    # instruments must not overlap, the ACTIVATE case). SMPS bins with
+    # center <= stitch and LAS bins with center > stitch are kept.
+    stitch_dp_um: float = 0.0
     inlet_cutoff_um: float = 5.0  # aircraft inlet 50% cutoff; hard upper limit
     smps_min_dp_um: float = 0.0  # optionally trim smallest SMPS bins
 

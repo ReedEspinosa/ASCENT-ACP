@@ -112,7 +112,13 @@ _UNIT_SUFFIX = [
 _WINDOW_CM = "time: mean within {w} s window (value repeated at native cadence)"
 
 # size-distribution bin columns: '<TAG>_BinNN' or 'dNdlogD_NNN_<TAG>'
-_BIN_SHORT = re.compile(r"(?:^|_)([A-Za-z0-9]+)_Bin(\d+)$|^dNdlogD_0*(\d+)_([A-Za-z0-9]+)$")
+# three bin-column conventions: '<TAG>_BinNN' (ACTIVATE), 'dNdlogD_NNN_<TAG>',
+# and center-diameter-named '<TAG>_<NNN>nm[_<CAL>]' (SEAC4RS LARGE, where CAL
+# is a calibration token like PSL/AmmSO4). The nm form can false-match
+# per-wavelength scalars, so _split_bin_columns demotes tags with < 4 columns.
+_BIN_SHORT = re.compile(
+    r"(?:^|_)([A-Za-z0-9]+)_Bin(\d+)$|^dNdlogD_0*(\d+)_([A-Za-z0-9]+)$"
+    r"|(?:^|_)([A-Za-z0-9]+)_(\d+)nm(?:_([A-Za-z0-9]+))?$")
 
 # Observation variables that are per-wavelength copies of one quantity
 # (Sc550_submicron, Abs470_total, SSA_450nm, Ext532_submicron_amb, ...);
@@ -170,8 +176,13 @@ def _meta_titles(meta):
 
 
 def _short_name(col, title):
-    """Column name with its instrument-title prefix removed."""
-    return col[len(title) + 1:] if title and col.startswith(title + "_") else col
+    """Column name with its instrument-title prefix removed.
+
+    '/' is replaced (netCDF would interpret it as a subgroup separator —
+    e.g. SAGA's 'Cl_ug/m3' columns).
+    """
+    short = col[len(title) + 1:] if title and col.startswith(title + "_") else col
+    return short.lstrip("_").replace("/", "_per_")
 
 
 def _guess_units(short):
@@ -209,7 +220,12 @@ def _bin_tag(short):
         return None, None
     if m.group(1) is not None:
         return m.group(1).lower(), int(m.group(2))
-    return m.group(4).lower(), int(m.group(3))
+    if m.group(3) is not None:
+        return m.group(4).lower(), int(m.group(3))
+    tag = m.group(5).lower()
+    if m.group(7):
+        tag = f"{tag}_{m.group(7).lower()}"   # e.g. uhsas_ammso4
+    return tag, int(m.group(6))               # ordered by center nm
 
 
 # --------------------------------------------------------------------------- #
@@ -557,16 +573,42 @@ def _dedupe_shorts(entries):
 def _split_bin_columns(pairs):
     """Split [(col, title)] into ({tag: [(col, short, n)]}, [(col, short)])."""
     bins, scalars = {}, []
+    titles = {}
     for col, title in pairs:
         short = _short_name(col, title)
         tag, n = _bin_tag(short)
         if tag is not None:
             bins.setdefault(tag, []).append((col, short, n))
+            titles.setdefault(tag, {})[col] = title
         else:
             scalars.append((col, title, short))
+    # a "tag" with only a few members is almost certainly a per-wavelength
+    # scalar caught by the <NNN>nm pattern (ext_dry_405nm, ...), not a size
+    # distribution — demote it
+    for tag in [t for t, e in bins.items() if len(e) < 4]:
+        for col, short, _ in bins.pop(tag):
+            scalars.append((col, titles[tag][col], short))
     for tag in bins:
         bins[tag].sort(key=lambda t: t[2])
     return bins, scalars
+
+
+def _bin_table_from_shorts(tag, shorts):
+    """BinTable synthesized from diameter-named columns ('<TAG>_<NNN>nm...'),
+    edges at log-midpoints (end edges extrapolated). None if not nm-named."""
+    centers = varmap.bin_centers_from_names(shorts)
+    if centers is None or len(centers) < 2:
+        return None
+    c = np.asarray(centers, float)
+    if np.any(np.diff(c) <= 0):
+        return None
+    logc = np.log10(c)
+    mid = (logc[:-1] + logc[1:]) / 2
+    lo = 10 ** np.r_[2 * logc[0] - mid[0], mid]
+    up = 10 ** np.r_[mid, 2 * logc[-1] - mid[-1]]
+    return icartt_headers.BinTable(list(shorts), c, lo, up,
+                                   "bin center diameters parsed from the "
+                                   "column names; edges at log-midpoints")
 
 
 def _write_size_coords(w, gpath, tag, bt, order):
@@ -676,6 +718,10 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
                 bt2 = _fallback_bin_table(tag, df, cfg)
                 order = _match_bin_table(bt2, shorts)
                 bt = bt2 if order is not None else None
+            if order is None:
+                bt2 = _bin_table_from_shorts(tag, shorts)
+                if bt2 is not None:
+                    bt, order = bt2, np.arange(len(shorts))
             if order is None:
                 bt, order = None, np.arange(len(shorts))
             dim = _write_size_coords(w, gpath, tag, bt, order)

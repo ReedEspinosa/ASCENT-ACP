@@ -231,7 +231,7 @@ def _window_uncertainty_inner(it):
     grid_cri = it["cri_grid"]
     sca_w = it["sca_wvls"]
     abs_w = it["abs_wvls"]
-    y = np.empty((len(grid_cri), 6))
+    y = np.empty((len(grid_cri), len(sca_w) + len(abs_w)))
     for k, (rr, ii) in enumerate(grid_cri):
         c = _coeffs(dpg, dnd, rr, ii, wvls)
         y[k] = [c[w][0] for w in sca_w] + [c[w][1] for w in abs_w]
@@ -345,8 +345,10 @@ def _window_uncertainty_inner(it):
     # data-side common modes: in marginalized mode these live inside S
     # (posterior already carries them); V7 mode adds them via the gain
     if not marg:
-        for dy_meas in (np.r_[um.NEPH_FREL[it["regime"]] * y_meas[:3], 0, 0, 0],
-                        np.r_[0, 0, 0, um.PSAP_FSCA_ERR
+        n_s, n_a = len(sca_w), len(abs_w)
+        for dy_meas in (np.r_[um.NEPH_FREL[it["regime"]] * y_meas[:n_s],
+                              np.zeros(n_a)],
+                        np.r_[np.zeros(n_s), um.PSAP_FSCA_ERR
                               * np.array([it["sca_meas"][min(it["sca_meas"],
                                           key=lambda ws: abs(ws - wv))]
                                           for wv in abs_w])]):

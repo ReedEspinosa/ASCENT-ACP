@@ -30,7 +30,13 @@ def derive_optical_columns(df, cfg):
     """
     ch, flt = cfg.channels, cfg.filters
     out = pd.DataFrame(index=df.index)
-    rh = df[varmap.resolve(df, ch.rh_sc_suffix)]
+    if ch.rh_sc_suffix:
+        rh = df[varmap.resolve(df, ch.rh_sc_suffix)]
+    else:
+        # campaign archives no nephelometer sample RH; assume the configured
+        # constant (documented caveat: the wet/ambient gamma synthesis then
+        # carries the RH-assumption error)
+        rh = pd.Series(ch.rh_sc_assumed_percent, index=df.index)
     gamma = df[varmap.resolve(df, ch.gamma_suffix)]
     out["RH_Sc"] = rh
     out["gamma"] = gamma
