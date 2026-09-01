@@ -90,7 +90,8 @@
     "rho_dry": 1.0,
     "rho_wet": 1.0,
     "num_theta": 2,
-    "n_workers": 8
+    "n_workers": 8,
+    "sizing_correction": true
   },
   "merge": {
     "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE",

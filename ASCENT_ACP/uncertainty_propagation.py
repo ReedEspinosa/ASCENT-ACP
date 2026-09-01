@@ -41,6 +41,7 @@ FLAG_NEAR_GATE = 4
 FLAG_LARGE_GF = 8
 
 _SO = None  # sphere_optics module, per process
+_SIZING = None  # sizing_correction state (set by _worker_init / run_all)
 
 
 def _import_sphere_optics(isara_dir):
@@ -70,7 +71,7 @@ def _coeffs(dpg_um, dnd_cm3, rri, iri, wvls):
 
 def cov_parts(dpg, dnd_weighted, raw_dnd, pen_params, sca_meas, abs_meas,
               sca_wvls, abs_wvls, wvls, window_s, regime,
-              ref_cri=(1.52, 0.005)):
+              ref_cri=(1.52, 0.005), lnd_sigma=None):
     """Full observation+model covariance S [(Mm^-1)^2], channel order
     [sca..., abs...]. Measurement part: per-channel white+floor diagonals
     plus rank-1 common-mode calibration terms (neph f_rel across the sca
@@ -118,7 +119,7 @@ def cov_parts(dpg, dnd_weighted, raw_dnd, pen_params, sca_meas, abs_meas,
     v = np.r_[np.zeros(n_s), half * um.PSAP_FSCA_ERR * b_sp_near]
     S += np.outer(v, v)
     # model nuisances (secant dy at the reference CRI)
-    sD = np.exp(um.OPC_DLND)
+    sD = np.exp(um.OPC_DLND if lnd_sigma is None else lnd_sigma)
     dys = [(yvec(dpg * sD, dnd_weighted) - yvec(dpg / sD, dnd_weighted)) / 2,
            0.10 * y0]
     d50, gsd, rho = pen_params
@@ -225,6 +226,8 @@ def _window_uncertainty_inner(it):
     dpg = dpg_all[fin]
     dnd = (raw * pen)[fin]
     rri, iri, kappa = it["rri"], it["iri"], it["kappa"]
+    cols_fin = np.where(fin)[0]
+    lnd_sigma = it.get("lnd_sigma") or um.OPC_DLND
     rh_wet, rh_amb = it["rh_wet"], it["rh_amb"]
 
     # ---- candidate cloud, posterior, gain ----------------------------------
@@ -232,19 +235,33 @@ def _window_uncertainty_inner(it):
     sca_w = it["sca_wvls"]
     abs_w = it["abs_wvls"]
     y = np.empty((len(grid_cri), len(sca_w) + len(abs_w)))
+    from . import sizing_correction as szc  # noqa: PLC0415
     for k, (rr, ii) in enumerate(grid_cri):
-        c = _coeffs(dpg, dnd, rr, ii, wvls)
+        if _SIZING is not None:
+            dpg_k, dnd_k = szc.apply(_SIZING, k, dpg, dnd, cols=cols_fin)
+        else:
+            dpg_k, dnd_k = dpg, dnd
+        c = _coeffs(dpg_k, dnd_k, rr, ii, wvls)
         y[k] = [c[w][0] for w in sca_w] + [c[w][1] for w in abs_w]
+    if _SIZING is not None:
+        # base/products/nuisances evaluated at the reported CRI's correction
+        kn = szc.nearest_candidate(_SIZING, rri, iri)
+        dpg, dnd = szc.apply(_SIZING, kn, dpg, dnd, cols=cols_fin)
+        raw_fin_corr = szc.apply(_SIZING, kn, dpg_all[fin], raw[fin],
+                                 cols=cols_fin)[1]
+    else:
+        raw_fin_corr = raw[fin]
     y_meas = np.array([it["sca_meas"][w] for w in sca_w]
                       + [it["abs_meas"][w] for w in abs_w])
     sig = np.array([out[f"Sc{w}_dry_sigma"] for w in sca_w]
                    + [out[f"Abs{w}_sigma"] for w in abs_w])
     marg = it["marginalized"]
     if marg:
-        S_meas, D = cov_parts(dpg, dnd, raw[fin],
+        S_meas, D = cov_parts(dpg, dnd, raw_fin_corr,
                               (it["d50"], it["gsd"], it["rho"]),
                               it["sca_meas"], it["abs_meas"], sca_w, abs_w,
-                              wvls, it["window_s"], it["regime"])
+                              wvls, it["window_s"], it["regime"],
+                              lnd_sigma=lnd_sigma)
         S = S_meas + D.T @ D
         S_inv = np.linalg.inv(S)
         r = y - y_meas
@@ -298,10 +315,11 @@ def _window_uncertainty_inner(it):
         return (Pp - Pm) / 2.0, Pp, Pm
 
     # nuisance perturbation pairs, ORDER MATCHING cov_parts' D rows
-    pairs = [((dpg * np.exp(um.OPC_DLND), dnd), (dpg / np.exp(um.OPC_DLND), dnd)),
+    sDn = np.exp(lnd_sigma)
+    pairs = [((dpg * sDn, dnd), (dpg / sDn, dnd)),
              ((dpg, dnd * 1.10), (dpg, dnd * 0.90))]
     if it["d50"] > 0:
-        rawf = raw[fin]
+        rawf = raw_fin_corr
 
         def pen_of(d50, gsd, rho):
             sexp = np.log(5.25) / np.log(gsd)
@@ -331,7 +349,7 @@ def _window_uncertainty_inner(it):
         Sig_theta = np.eye(K) - D @ M @ D.T
         E2 = Sig_theta + np.outer(theta_hat, theta_hat)
         var_nuis = var_nuis + np.einsum("kp,kl,lp->p", dPmat, E2, dPmat)
-        out["sizing_lnD_shift_unitless"] = float(theta_hat[0] * um.OPC_DLND)
+        out["sizing_lnD_shift_unitless"] = float(theta_hat[0] * lnd_sigma)
     else:
         for (pp, pm) in pairs:
             tot = np.zeros_like(p0)
@@ -377,8 +395,10 @@ def _window_uncertainty_inner(it):
     return out
 
 
-def _worker_init(isara_dir):
+def _worker_init(isara_dir, sizing_state=None):
+    global _SIZING
     _import_sphere_optics(isara_dir)
+    _SIZING = sizing_state
 
 
 def run_all(results_df, grid, cfg, progress=True):
@@ -394,6 +414,9 @@ def run_all(results_df, grid, cfg, progress=True):
     cri_grid = isara_bridge._cri_grid(cfg)
     pen = (grid.penetration if grid.penetration is not None
            else np.ones(len(grid)))
+    sizing_state = isara_bridge.build_sizing_state(grid, cfg)
+    lnd_sigma = (cfg.isara.sizing_residual_lnd if sizing_state is not None
+                 else um.OPC_DLND)
 
     items = []
     for ts, row in results_df.iterrows():
@@ -427,6 +450,7 @@ def run_all(results_df, grid, cfg, progress=True):
             "rri_min": cfg.isara.rri_min,
             "rri_max": cfg.isara.rri_max,
             "marginalized": cfg.isara.chi2_sigma == "instrument-cov",
+            "lnd_sigma": lnd_sigma,
             "d50": cfg.psd.impactor_d50_aero_um,
             "gsd": cfg.psd.impactor_gsd,
             "rho": cfg.psd.impactor_rho_gcm3,
@@ -435,14 +459,17 @@ def run_all(results_df, grid, cfg, progress=True):
     results = {}
     n_workers = cfg.isara.n_workers
     if n_workers <= 1:
+        global _SIZING
         _import_sphere_optics(cfg.paths.isara_code_dir)
+        _SIZING = sizing_state
         for i, item in enumerate(items):
             ts, res = _window_uncertainty(item)
             results[ts] = res
     else:
         with ProcessPoolExecutor(max_workers=n_workers,
                                  initializer=_worker_init,
-                                 initargs=(cfg.paths.isara_code_dir,)) as pool:
+                                 initargs=(cfg.paths.isara_code_dir,
+                                           sizing_state)) as pool:
             for i, (ts, res) in enumerate(
                     pool.map(_window_uncertainty, items, chunksize=8)):
                 results[ts] = res

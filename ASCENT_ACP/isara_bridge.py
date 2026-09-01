@@ -13,12 +13,24 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import pandas as pd
 
+from . import sizing_correction as szc
 from . import uncertainty_models as um
 from .windows import psd_col_name
 
 # Set per-process by _worker_init (workers) or import_isara (serial path)
 _ISARA = None
 _LUTS = {}  # bin-pattern key -> optics_lut.OpticsLUT
+_SIZING = None  # sizing_correction state dict (or None)
+
+
+def build_sizing_state(grid, cfg):
+    """Per-run optical-sizer RI correction state (None when disabled)."""
+    if not cfg.isara.sizing_correction:
+        return None
+    mask = grid.instrument == cfg.psd.optical_instrument_tag
+    return szc.build_state(cfg.paths.isara_code_dir, grid.dpl_um, grid.dpg_um,
+                           grid.dpu_um, mask, cfg.psd.optical_lambda_nm,
+                           cfg.psd.optical_cal_ri, _cri_grid(cfg))
 
 
 def import_isara(isara_code_dir):
@@ -201,12 +213,25 @@ def observation_covariance(row, dndlogdp_weighted, grid, cfg):
     regime = cfg.isara.neph_regime or (
         "pm1" if cfg.psd.impactor_d50_aero_um > 0 else "pm10")
     wvls = sorted({*ch.dry_wvl_sca, *ch.dry_wvl_abs})
+    dpg_f = grid.dpg_um[fin]
+    dnd_f = dndlogdp_weighted[fin]
+    raw_f = raw[fin]
+    lnd_sigma = um.OPC_DLND
+    if _SIZING is not None:
+        # evaluate S with the correction applied at the reference CRI and
+        # with the smaller post-correction sizing residual
+        k = szc.nearest_candidate(_SIZING, 1.52, 0.005)
+        cols = np.where(fin)[0]
+        dpg_f, dnd_f = szc.apply(_SIZING, k, dpg_f, dnd_f, cols=cols)
+        _, raw_f = szc.apply(_SIZING, k, grid.dpg_um[fin], raw_f, cols=cols)
+        raw_f = raw_f  # counts-conserving rescale only
+        lnd_sigma = cfg.isara.sizing_residual_lnd
     S = up.build_obs_cov(
-        grid.dpg_um[fin], dndlogdp_weighted[fin], raw[fin],
+        dpg_f, dnd_f, raw_f,
         (cfg.psd.impactor_d50_aero_um, cfg.psd.impactor_gsd,
          cfg.psd.impactor_rho_gcm3),
         sca_meas, abs_meas, list(ch.dry_wvl_sca), list(ch.dry_wvl_abs),
-        wvls, float(cfg.window.window_s), regime)
+        wvls, float(cfg.window.window_s), regime, lnd_sigma=lnd_sigma)
     return S * 1e-12  # (Mm^-1)^2 -> (m^-1)^2
 
 
@@ -249,7 +274,7 @@ def _retrieve_one(item):
     timestamp, kwargs, lut_key = item
     lut = _LUTS.get(lut_key)
     try:
-        result = _ISARA.Retr_PSD(**kwargs, lut=lut)
+        result = _ISARA.Retr_PSD(**kwargs, lut=lut, sizing_corr=_SIZING)
     except ValueError as err:  # e.g. <2 valid PSD bins
         result = {
             "attempt_flag_CRI_unitless": 0,
@@ -259,18 +284,20 @@ def _retrieve_one(item):
     return timestamp, result
 
 
-def _worker_init(isara_code_dir, scratch_dir, lut_states):
+def _worker_init(isara_code_dir, scratch_dir, lut_states, sizing_state=None):
     """Per-worker setup: cwd for MOPSMAP temp files and a unique RNG state.
 
     mopsmap_wrapper names its temp files from time.time() and np.random.randn();
     forked workers inherit identical RNG state, so reseed per PID to avoid
     temp-file collisions.
     """
+    global _SIZING
     os.makedirs(scratch_dir, exist_ok=True)
     os.chdir(scratch_dir)
     np.random.seed(os.getpid() & 0xFFFFFFFF)
     import_isara(isara_code_dir)
     _install_luts(lut_states)
+    _SIZING = sizing_state
 
 
 def run_all_windows(windows_df, grid, cfg, progress=True):
@@ -283,9 +310,12 @@ def run_all_windows(windows_df, grid, cfg, progress=True):
     if good.empty:
         return pd.DataFrame()
 
+    global _SIZING
     lut_states = {}
     if cfg.isara.use_lut and cfg.isara.forward_engine == "mopsmap":
         lut_states = prepare_luts(good, grid, cfg, verbose=progress)
+    sizing_state = build_sizing_state(grid, cfg)
+    _SIZING = sizing_state   # main process too (observation_covariance)
     items = []
     for ts, row in good.iterrows():
         kwargs = build_retr_kwargs(row, grid, cfg)
@@ -296,6 +326,7 @@ def run_all_windows(windows_df, grid, cfg, progress=True):
     if n_workers <= 1:
         import_isara(cfg.paths.isara_code_dir)
         _install_luts(lut_states)
+        _SIZING = sizing_state
         os.makedirs(cfg.paths.scratch_dir, exist_ok=True)
         prev_cwd = os.getcwd()
         os.chdir(cfg.paths.scratch_dir)
@@ -311,7 +342,8 @@ def run_all_windows(windows_df, grid, cfg, progress=True):
         with ProcessPoolExecutor(
             max_workers=n_workers,
             initializer=_worker_init,
-            initargs=(cfg.paths.isara_code_dir, cfg.paths.scratch_dir, lut_states),
+            initargs=(cfg.paths.isara_code_dir, cfg.paths.scratch_dir, lut_states,
+                      sizing_state),
         ) as pool:
             for i, (ts, res) in enumerate(pool.map(_retrieve_one, items, chunksize=1)):
                 results[ts] = res

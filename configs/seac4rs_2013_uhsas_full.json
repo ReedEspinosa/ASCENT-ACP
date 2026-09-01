@@ -48,15 +48,17 @@
     "fcdp_lwc_scale_to_gm3": 1.0
   },
   "psd": {
-    "variant_name": "submicron",
+    "variant_name": "submicronUHSAS",
     "smps_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/SEAC4RS_SMPS_bins.csv",
-    "las_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/SEAC4RS_LAS_bins.csv",
+    "las_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/SEAC4RS_UHSAS_bins.csv",
     "stitch_dp_um": 0.095,
     "psd_max_um": 2.0,
     "impactor_d50_aero_um": 1.0,
     "impactor_gsd": 1.15,
     "impactor_rho_gcm3": 1.77,
-    "optical_cal_ri": 1.58
+    "optical_cal_ri": 1.52,
+    "optical_instrument_tag": "UHSAS",
+    "optical_lambda_nm": 1054.0
   },
   "output": {
     "version": "V2"
@@ -86,7 +88,6 @@
     "n_workers": 6
   },
   "isara": {
-    "sizing_correction": true,
-    "sizing_residual_lnd": 0.1
+    "sizing_correction": true
   }
 }

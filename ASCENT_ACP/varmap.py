@@ -45,7 +45,7 @@ def resolve_bins(df, instrument):
         if nums != list(range(nums[0], nums[0] + len(nums))):
             raise ValueError(f"{instrument} bins are not contiguous: {nums}")
         return [c for _, c in found]
-    pat = re.compile(rf"_{instrument}_(\d+)nm$")
+    pat = re.compile(rf"_{instrument}_(\d+)nm(?:_[A-Za-z0-9]+)?$")
     found = sorted((int(m.group(1)), c) for c in df.columns
                    for m in [pat.search(c)] if m)
     if not found:

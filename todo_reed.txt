@@ -106,8 +106,22 @@ REMAINING OPEN ITEMS (not code):
   the D-scale nuisance will dominate the V7 uncertainty budget; (c) a
   log-D fudge factor was considered and REJECTED by Reed (2026-08-31)
   in favor of the raw-signal refit below.
-- HIGH PRIORITY (2026-08-31, Reed; DO NOT implement yet — scope first):
-  fit the LAS RAW OPTICAL SIGNAL instead of the AS-calibrated PSD. The
+- HIGH PRIORITY — NOW SCOPED (2026-08-31, see LAS_RI_CORRECTION_PLAN.md):
+  LAS RI sizing correction = the raw-signal refit realized as per-
+  candidate bin-diameter remapping (bins are signal thresholds, so the
+  two are equivalent). Feasibility VERIFIED: the MOPSMAP sphere files
+  carry Mishchenko ALPH1 Legendre coefficients of P11 (reconstruction
+  normalizes to 1.0000), so a LAS-geometry partial-scattering response
+  kernel qsca_partial(mr, mi, x) can be added to the table extract (v2)
+  offline. Open before implementation: exact LAS 3340 collection
+  geometry/azimuth (nominal 22-158 deg at 633 nm — confirm vs Moore et
+  al. 2021 / TSI), the multivalued-region smoothing convention matching
+  instrument firmware, residual lnD prior, and whether to build the
+  UHSAS 1054 nm kernel in the same pass. Validation gates culminate in
+  the SEAC4RS rerun: sizing_lnD_shift +0.181 -> ~0 and the PI-Neph RI
+  comparison regaining correlation.
+  Original idea (superseded framing): fit the LAS RAW OPTICAL SIGNAL
+  instead of the AS-calibrated PSD. The
   2021 misfit looks like particle RI differing from the AmmSO4
   calibration; rather than patching the calibrated diameters, invert the
   calibration: map each LAS bin back to the raw scattering-signal
@@ -366,3 +380,14 @@ GENERAL
   (iii) items 7+8+9 together (ambient-RH science change), validated against
   LARGE Sc550_submicron_amb / SSA_amb_550nm / Ext532_submicron_amb /
   AEscatAMB_450to700nm.
+
+- SIZING CORRECTION IMPLEMENTED + ALL CAMPAIGNS RERUN (2026-09-01, see
+  LAS_RI_CORRECTION_PLAN.md Sect. 10): ACTIVATE V10, SEAC4RS V2 (LAS +
+  UHSAS variants). Key numbers in the plan; figures in
+  processing_logs/sizing_v2_plots/. NEW FINDINGS: (a) SEAC4RS LAS carries
+  a ~+0.12 lnD NON-RI sizing bias (UHSAS cross-run proves it instrument-
+  specific; residual prior 0.10 for that config); (b) kappa is strongly
+  PSD-tail dependent (LAS-run 0.30 vs UHSAS-run 0.05, DASH ~0.19
+  between); (c) dry-RRI dynamic range remains posterior-limited while a
+  sizing nuisance stays in S -> NEXT STructural step: JOINT LAS+UHSAS
+  retrieval to constrain sizing per window.

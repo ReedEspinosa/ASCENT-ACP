@@ -151,6 +151,13 @@ class PSDConfig:
     impactor_gsd: float = 1.15
     impactor_rho_gcm3: float = 1.77
     impactor_min_penetration: float = 0.005  # drop bins below this P
+    # Optical-sizer identity of the coarse PSD instrument: column tag (LAS
+    # or UHSAS...), its calibration RI, and its laser wavelength. Used by
+    # the RI sizing correction (LAS_RI_CORRECTION_PLAN.md); las_bins_csv
+    # holds this instrument's bins whatever the tag.
+    optical_instrument_tag: str = "LAS"
+    optical_cal_ri: float = 1.52     # AmmSO4 1.52; PSL 1.58 (Moore et al. 2021)
+    optical_lambda_nm: float = 633.0  # LAS 633; UHSAS 1054
     # Hand-off diameter when the SMPS and LAS bin ranges overlap (0 = the
     # instruments must not overlap, the ACTIVATE case). SMPS bins with
     # center <= stitch and LAS bins with center > stitch are kept.
@@ -190,6 +197,12 @@ class IsaraConfig:
     # "instrument" = diagonal UM sigmas only (V7 behavior; conditional on
     # a perfect model); "legacy" = fixed tolerances (20%/1 Mm-1/1%).
     chi2_sigma: str = "instrument-cov"
+    # Per-candidate optical-sizer RI sizing correction (bin remapping via
+    # the qsca_partial response kernel). When on, the correlated lnD
+    # nuisance shrinks to sizing_residual_lnd (calibration transfer +
+    # geometry + convention residuals).
+    sizing_correction: bool = False
+    sizing_residual_lnd: float = 0.05
     # nephelometer f_rel regime for sigma_scattering; "" = auto: "pm1" when
     # an impactor is configured (submicron variant), else "pm10".
     neph_regime: str = ""
@@ -231,7 +244,7 @@ class MergeConfig:
 class OutputConfig:
     """Controls the grouped netCDF export (ASCENT_ACP.netcdf_export)."""
 
-    version: str = "V9"             # filename version tag
+    version: str = "V10"            # filename version tag
     emit_observations: bool = True  # /observations native-cadence passthrough
     float32: bool = True            # store float vars as float32
     compression_level: int = 4      # zlib complevel (0 = off)

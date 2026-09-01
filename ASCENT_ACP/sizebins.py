@@ -67,8 +67,9 @@ def build_grid(df, psd_cfg):
     """
     smps = load_bins(psd_cfg.smps_bins_csv)
     las = load_bins(psd_cfg.las_bins_csv)
+    tag = getattr(psd_cfg, "optical_instrument_tag", "LAS")
     smps_cols = varmap.resolve_bins(df, "SMPS")
-    las_cols = varmap.resolve_bins(df, "LAS")
+    las_cols = varmap.resolve_bins(df, tag)
     if len(smps_cols) != len(smps["dpg"]) or len(las_cols) != len(las["dpg"]):
         raise ValueError(
             f"Bin-table/DataFrame mismatch: SMPS {len(smps['dpg'])} vs "
@@ -92,7 +93,7 @@ def build_grid(df, psd_cfg):
     dpg = np.concatenate([smps["dpg"], las["dpg"]])
     dpu = np.concatenate([smps["dpu"], las["dpu"]])
     cols = smps_cols + las_cols
-    instr = np.array(["SMPS"] * len(smps_cols) + ["LAS"] * len(las_cols))
+    instr = np.array(["SMPS"] * len(smps_cols) + [tag] * len(las_cols))
 
     if not np.all(np.diff(dpg) > 0):
         raise ValueError("Merged bin centers are not strictly increasing")
