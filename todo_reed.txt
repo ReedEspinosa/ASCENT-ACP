@@ -5,6 +5,171 @@ ISARA_code 7bbf182+). Final V4 files for 2020+2021 are in isara_output/
 grid-shift, and validation reports in processing_logs/.
 
 REMAINING OPEN ITEMS (not code):
+- RERUN PENDING (2026-08-26): cloud-filter FCDP units bug FIXED in code but
+  the shipped V4 files predate it. The FCDP ICARTT reports N_FCDP in #/m^3
+  and LWC_FCDP in kg/m^3; the filter applied CDP-unit thresholds (#/cm3,
+  g/m3) to both probes, so N_FCDP>1/m^3 falsely flagged 41-52% of rows as
+  cloud and the FCDP LWC test never fired. Fix: fcdp_*_scale factors in
+  FilterConfig applied in cloud_mask(). Impact on rerun: valid rows
+  8.2%->24.2% (2020), 2.6%->24.3% (2021); windows with n_valid>=20:
+  814->2536 and 488->4746. Rerun both years (-> V4 files regenerate) after
+  the other pending updates are decided.
+- CONSIDER (discussed, not decided): decouple the windowed-PSD averaging
+  mask from the optical filters (Sc450>10 gates the PSD even though the
+  PSD needs no neph signal); would roughly triple PSD coverage on top of
+  the units fix.
+- ENGINE SWAP DONE (2026-08-31, see GRASP_KERNEL_PLAN.md for the full
+  investigation): forward model is now the in-process table engine
+  (ISARA_code sphere_optics.py reading mopsmap_sphere_table/, commits
+  eb0cd02+0d485f9, local only) behind IsaraConfig.forward_engine
+  (default "table"; "mopsmap" subprocess path kept as reference).
+  A/B on 48 real 2021 windows: identical attempt flags, |dRRI|<=0.0036,
+  |dkappa|<=0.002, 115x speedup (2021 retrieval stage ~5 min at the
+  post-FCDP-fix 4518-window load). GRASP kernels not used (0.04-mr and
+  spiky-PSD analyses in the plan doc); kerneloptics.py in GEOSmie_TOA
+  remains for shape studies. NaN-bin interpolation fill: still TODO
+  (less urgent now — the table engine has no per-pattern LUT penalty,
+  windows just drop NaN bins as before).
+- ESTIMATOR IMPLEMENTED (2026-08-31): chi2-weighted mean for BOTH the CRI
+  grid search and the kappa scan (ISARA commit fe7a518; IsaraConfig
+  .estimator default "chi2-wmean", "linf-mean" kept for regression).
+  Posterior mean with sigma = historical tolerances (20% sca, 1 Mm-1 abs,
+  1% wet sca), gate min reduced chi2 <= 1. New outputs: cri_min_chi2,
+  kappa_min_chi2, kappa_std; *_accepted_std now posterior-weighted stds
+  (netcdf_export long_names updated). End-to-end on 120 real 2021
+  windows: CRI successes 66->94, kappa 64->92; where both estimators
+  succeed, dRRI med -0.004, dkappa med +0.008. Study basis:
+  scripts/estimator_study.py (chi2<1 plain mean rejected: region spans
+  ~40% of grid -> grid-shape dependent; min-chi2 rejected: noisiest).
+- PSD TRUNCATION vs INSTRUMENT SIZE RANGES (2026-08-31, investigate
+  before rerun; measured with the table engine on real V4 PSDs):
+  * 2021 submicron: neph is PM1 (impactor; cut diameter CONVENTION
+    UNSTATED in ICARTT headers, PM1 usually = 1.0 um AERODYNAMIC =
+    ~0.77 um geometric at rho~1.7) but our psd_max_um=1.0 cuts at bin
+    CENTER dp<=1.0 um (LAS dry AmmSO4-optical diameter, top bin edge
+    1.06 um). The 0.77-1.06 um band carries median 14.7% / p90 33% of
+    modeled Sc550 -> if the impactor is aerodynamic-1.0, we
+    systematically over-include scattering vs what the neph saw (RRI
+    biased low). RESOLVED 2026-08-31: impactor is D50 = 1.0 um
+    AERODYNAMIC per Schlosser et al. (2025, ISARA paper — now cited in
+    the nc references attr). psd_max_um set to 0.75 (= 1.0/sqrt(1.77),
+    AmmSO4 density consistent with LAS sizing) for the 2021 submicron
+    variant in configs + PsdConfig default; deliberately kept a plain
+    config field for easy adjustment in later reruns. 2021 grid is now
+    48 bins (SMPS 30 + LAS 18, top center 0.708 um, edge ~0.75).
+  * BOTH years: PSAP absorption is Bulk/Total (no impactor) while the
+    2021 PSD is submicron -> supermicron absorption inflates IRI.
+    Same inconsistency exists in LARGE's own SSA product (documented
+    in their header); document ours in the nc metadata at minimum.
+  * 2020 total: grid ends at LAS 3.16 um centers (3.55 edge) vs inlet
+    ~5 um; neph also under-registers coarse scattering (angular
+    truncation). Bins 2.0-3.55 um already carry median 8% / p90 38% of
+    modeled Sc550 -> total-variant CRI is coarse-tail sensitive; the
+    3.55-5 um unmodeled band adds a high-RRI bias of unknown size.
+  * LAS sizes are dry OPTICAL diameters calibrated for AmmSO4 (RI 1.52);
+    retrieved RRI != 1.52 makes the size grid slightly inconsistent with
+    the retrieval (heritage ISARA limitation; note in metadata).
+- V5 CHI2 DIAGNOSIS (2026-08-31, after V5 shipped): the 2021-vs-2020
+  min-chi2 gap (retrieved windows: 0.185 vs 0.065; success rate 57% vs
+  91%) is NOT absorption (abs carries only 4-10% of chi2) — it is
+  scattering SPECTRAL SHAPE. 2021 model under-predicts sca at all
+  wavelengths, worst at 700 nm (median -22%), modeled AE too steep by
+  +0.29; 14% of windows push RRI against the 1.56 ceiling (p90=1.545).
+  Matched-window 700nm residual: V4 sharp-1.0um cut -9.2% -> V5
+  sharp-0.75um cut -20.4%, i.e. BOTH sharp cuts under-predict red
+  because a D50 impactor TRANSMITS ~50% at its cut and rolls off
+  gradually — the measured submicron sca genuinely contains partial
+  0.75-1.5um contribution that a step cut at any diameter removes
+  entirely. Secondary effect: min-chi2 ~3.5x higher at Sc550<20 Mm-1
+  (20% relative sigma understates the absolute noise floor in clean
+  marine air). PROPOSED FIX (V6): replace the sharp cut with the
+  impactor penetration curve — weight LAS bins by T(D_aero) with
+  D50=1.0um aero (Schlosser et al. 2025) and a configurable sharpness
+  (typical impactor GSD ~1.1-1.2; ask LARGE for their curve), using the
+  same rho=1.77 aero->geo mapping. Config: impactor_d50_aero_um +
+  impactor_sharpness alongside psd_max_um. Expected: red residual
+  healed, RRI un-railed, 2021 success rate up. 2020's smaller opposite
+  signature (model AE too FLAT by -0.16, -5.6% at 450) is consistent
+  with uncorrected neph angular truncation of the coarse mode.
+  -> V6 RESULTS (2026-08-31): 2020 bit-identical (impactor disabled ✓).
+  2021: modest gains only — CRI ok 2595->2738, kappa 2528->2669, 700nm
+  residual -21.8->-20.4%, dAE +0.29->+0.25, RRI railing 14->9%. Follow-up
+  experiment (60 windows, reported CRI held fixed): NO impactor steepness
+  closes the red deficit — broader tails (gsd 1.35/1.6) make it WORSE
+  (the log-logistic loses more below D50 than it gains above for our
+  steeply falling PSDs). A uniform diameter scale of ~+4% (well inside
+  the LAS +/-10% correlated sizing uncertainty, Moore et al. 2021)
+  closes BOTH channels' magnitude and most of the slope: D*1.10 swings
+  450/700 residuals to +28/+23%. CONCLUSION: the remaining 2021 misfit
+  is degenerate with LAS sizing scale, not an impactor-shape problem.
+  Implications: (a) keep gsd=1.15 pending LARGE's measured curve; (b)
+  the D-scale nuisance will dominate the V7 uncertainty budget; (c) a
+  log-D fudge factor was considered and REJECTED by Reed (2026-08-31)
+  in favor of the raw-signal refit below.
+- HIGH PRIORITY (2026-08-31, Reed; DO NOT implement yet — scope first):
+  fit the LAS RAW OPTICAL SIGNAL instead of the AS-calibrated PSD. The
+  2021 misfit looks like particle RI differing from the AmmSO4
+  calibration; rather than patching the calibrated diameters, invert the
+  calibration: map each LAS bin back to the raw scattering-signal
+  amplitude the instrument actually recorded (via the AS response
+  curve), and inside the retrieval forward-model that signal for each
+  candidate CRI (scattering cross-section integrated over the LAS
+  collection geometry and 633 nm phase function) — sizing then becomes
+  self-consistent with the retrieved RI and the Moore et al. (2021)
+  circularity disappears. Known catches to scope before committing:
+  (1) the 633 nm Mie response is NON-MONOTONIC above ~0.5 um (UM 3a) —
+  the signal->size mapping is multi-valued exactly where we need it
+  most, so the forward model must work in signal space (predict counts
+  per signal bin), never invert; (2) needs the LAS collection-geometry
+  kernel (solid angles, Mie phase-function integral) — get from TSI
+  docs/PI or fit to the published AS calibration; (3) absorbing
+  particles depress the response (IRI enters sizing); (4) SMPS bins are
+  mobility-based (RI-independent) — only the LAS part transforms, the
+  stitch point needs care; (5) kappa/wet states grow the PSD in
+  GEOMETRIC diameter, so the signal-space fit must still carry a
+  geometric representation internally.
+  -> IMPLEMENTED in V6 (2026-08-31): log-logistic penetration weighting
+  P(D_a)=1/(1+(D_a/D50)^s), D50=1.0um aero, 16-84% gsd=1.15 (assumed;
+  ask LARGE for their curve), rho=1.77; applied to the RETRIEVAL PSD
+  only in isara_bridge (reported dndlogdp unweighted); curve exported as
+  /windowed/observations/impactor_penetration + global impactor_* attrs.
+  psd_max_um is now only a hard grid cap (2.0 um submicron / 5.0 total).
+- PLANNED (2026-08-31, see UNCERTAINTY_MODULE_PLAN.md): V7 uncertainty
+  module — instrument sigma models (from ACMAP_Meloe/ISARA/
+  aerosol_insitu_uncertainty_models.md) replacing the ad-hoc chi^2
+  tolerances, + propagation of instrument AND structural uncertainties
+  (PSD diameter scale, impactor D50/gsd/rho, calibration common-modes)
+  into all retrieved products via posterior widths + one-at-a-time
+  perturbation reruns; output in a new top-level /windowed_uncertainty
+  group mirroring /windowed. Measured (not retrieved) values feed the
+  sigma models per Reed's rule. Open questions listed in the plan.
+  DECIDED: instrument sigmas drive chi^2 gating AND weighting; all
+  propagation (incl. PSD diameter-scale) via the ensemble-gain/Kalman
+  path only. OAT +/-1-sigma re-retrieval validation of the linearization
+  (stratified ~300-window subsample, one-off) -> nice-to-have TODO, not
+  release-gating.
+  -> V7 SHIPPED (2026-08-31): uncertainty_models.py (UM port, tested vs
+  published anchors), instrument sigmas in chi^2 (Retr_CRI/Retr_kappa
+  sca/abs/wet_sigma args; IsaraConfig.chi2_sigma="instrument"),
+  uncertainty_propagation.py (posterior Jacobians + ensemble gain,
+  0.18 s/window), /windowed_uncertainty/{observations,retrievals} group
+  + uncertainty_flag, boxplot script scripts/plot_v7_uncertainty_
+  boxplots.py (figures in processing_logs/V7_plots/). POPULATION NOTE:
+  realistic sigmas are stricter than the legacy tolerances at typical
+  signal — CRI successes 2021 2738->1442, 2020 1911->1519; 2021
+  all-window median min-chi2 = 3.1 (the sizing-scale inconsistency the
+  20% tolerance previously absorbed is now exposed -> raises the stakes
+  on the HIGH PRIORITY raw-signal LAS refit). 75%/31% of retrieved
+  windows carry a nonzero uncertainty_flag (mostly min-chi2 near gate).
+  Typical ambient 1-sigmas (median): SSA550 0.016-0.018, RRI 0.037-
+  0.046, IRI 0.002-0.003, AE 0.07-0.14.
+- TODO (2026-08-31): bring the APS (Aerodynamic Particle Sizer) into the
+  merge/PSD. It measures the coarse tail in AERODYNAMIC diameter, which
+  (a) fills the 2020 total-variant gap between the LAS top (3.16 um) and
+  the ~5 um inlet cutoff, (b) constrains the effective density via
+  overlap with the LAS optical sizing (sharpening the aerodynamic->
+  geometric conversion behind the 0.75 um submicron cut), and (c) gives
+  the bulk-PSAP absorption channels a physically complete PSD.
 - Visually confirm Geo2D classification in Panoply (root lat/lon + CF
   coordinates attrs are in place; xarray decodes them correctly).
 - Email LARGE PI: confirm the ~96% ambient-RH ceiling and ask about the

@@ -52,13 +52,14 @@ def assemble(windows_df, retrievals_df, grid, cfg):
     return results
 
 
-def save_checkpoint(results_df, grid, cfg, path):
+def save_checkpoint(results_df, grid, cfg, path, uncertainty=None):
     """Pickle the full result bundle (the pre-netCDF checkpoint)."""
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     bundle = {
         "results": results_df,
         "grid": grid,
         "config_json": cfg.to_json(),
+        "uncertainty": uncertainty,
     }
     with open(path, "wb") as f:
         pickle.dump(bundle, f)

@@ -73,14 +73,18 @@ def cloud_mask(df, cfg):
     LWC threshold; missing probe data does not flag a row by itself.
     """
     ch, flt = cfg.channels, cfg.filters
-    pairs = [(ch.n_cdp_suffix, flt.cloud_n_max_cm3), (ch.lwc_cdp_suffix, flt.cloud_lwc_max_gm3)]
+    # FCDP values are scaled into the CDP's units (#/cm3, g/m3) before the
+    # shared thresholds are applied; the FCDP ICARTT units are #/m^3, kg/m^3.
+    pairs = [(ch.n_cdp_suffix, flt.cloud_n_max_cm3, 1.0),
+             (ch.lwc_cdp_suffix, flt.cloud_lwc_max_gm3, 1.0)]
     if flt.use_fcdp:
-        pairs += [(ch.n_fcdp_suffix, flt.cloud_n_max_cm3), (ch.lwc_fcdp_suffix, flt.cloud_lwc_max_gm3)]
+        pairs += [(ch.n_fcdp_suffix, flt.cloud_n_max_cm3, flt.fcdp_n_scale_to_cm3),
+                  (ch.lwc_fcdp_suffix, flt.cloud_lwc_max_gm3, flt.fcdp_lwc_scale_to_gm3)]
     cloudy = pd.Series(False, index=df.index)
-    for suffix, thresh in pairs:
+    for suffix, thresh, scale in pairs:
         col = varmap.resolve(df, suffix, required=False)
         if col is not None:
-            cloudy |= df[col] > thresh
+            cloudy |= df[col] * scale > thresh
     if flt.cloud_pad_s > 0:
         w = 2 * flt.cloud_pad_s + 1
         cloudy = cloudy.rolling(w, center=True, min_periods=1).max().astype(bool)

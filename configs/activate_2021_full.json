@@ -78,9 +78,10 @@
   },
   "psd": {
     "variant_name": "submicron",
-    "psd_max_um": 1.0,
+    "psd_max_um": 2.0,
     "inlet_cutoff_um": 5.0,
-    "smps_min_dp_um": 0.0
+    "smps_min_dp_um": 0.0,
+    "impactor_d50_aero_um": 1.0
   },
   "isara": {
     "size_equ": "cs",

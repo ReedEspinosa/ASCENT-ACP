@@ -473,7 +473,9 @@ def _write_root(w, df, cfg, fgrid, meta):
                     "created by ASCENT_ACP.netcdf_export"),
         "references": ("Kacenelenbogen et al. (2022), doi:10.5194/acp-22-3713-2022 "
                        "(QA method); Gasteiger & Wiegner (2018), "
-                       "doi:10.5194/gmd-11-2739-2018 (MOPSMAP)"),
+                       "doi:10.5194/gmd-11-2739-2018 (MOPSMAP single-particle "
+                       "optics); Schlosser et al. (2025) (ISARA method; LARGE "
+                       "submicron-scattering impactor D50 = 1.0 um aerodynamic)"),
         "comment": ("All data on a (flight, time) grid: time is seconds since UTC "
                     "midnight of each flight's takeoff day. Groups: /observations "
                     "(native-cadence raw passthrough by instrument family), "
@@ -493,6 +495,19 @@ def _write_root(w, df, cfg, fgrid, meta):
             "envelope are synthetic, not measurements."),
         "source_merged_pickle": str(cfg.paths.input_pkl),
         "window_seconds": int(cfg.window.window_s),
+        "psd_max_um": float(cfg.psd.psd_max_um),
+        "psd_truncation_note": (
+            "The retrieval PSD is weighted by the impactor penetration curve "
+            "in /windowed/observations/impactor_penetration (V6+; replaces "
+            "the V5 sharp cut, which misrepresented the ~50% transmission at "
+            "the impactor D50 and under-predicted red scattering). psd_max_um "
+            "is only a hard grid cap. Absorption channels are bulk (no "
+            "impactor) in all years; reported dndlogdp is unweighted."),
+        "impactor_d50_aero_um": float(cfg.psd.impactor_d50_aero_um),
+        "impactor_gsd": float(cfg.psd.impactor_gsd),
+        "impactor_rho_gcm3": float(cfg.psd.impactor_rho_gcm3),
+        "isara_forward_engine": cfg.isara.forward_engine,
+        "isara_estimator": cfg.isara.estimator,
         "config_json": cfg.to_json(),
         "ascent_acp_git_sha": _git_sha(here),
         "isara_git_sha": _git_sha(cfg.paths.isara_code_dir),
@@ -555,18 +570,23 @@ def _split_bin_columns(pairs):
 
 
 def _write_size_coords(w, gpath, tag, bt, order):
-    """Size dimension + radius/diameter coordinate variables for one tag."""
-    dim = f"size_{tag}"
+    """Size dimension + radius/diameter coordinate variables for one tag.
+
+    The dimension is named after the bin-center-diameter variable so that
+    ``diameter_<tag>`` is a true coordinate variable (plotting tools then put
+    diameter on the axis instead of a bare bin index).
+    """
+    dim = f"diameter_{tag}"
     w.dim(dim, len(order))
     center = bt.center_um[order] if bt is not None else np.full(len(order), np.nan)
     lower = bt.lower_um[order] if bt is not None else np.full(len(order), np.nan)
     upper = bt.upper_um[order] if bt is not None else np.full(len(order), np.nan)
     src = bt.source if bt is not None else "sizes not found"
-    w.raw_var(gpath, f"radius_{tag}", (dim,), center / 2.0, dtype=np.float64, attrs={
-        "units": "um", "long_name": f"{tag.upper()} bin center radius",
-        "source": src})
     w.raw_var(gpath, f"diameter_{tag}", (dim,), center, dtype=np.float64, attrs={
-        "units": "um", "long_name": f"{tag.upper()} bin center diameter"})
+        "units": "um", "long_name": f"{tag.upper()} bin center diameter",
+        "source": src})
+    w.raw_var(gpath, f"radius_{tag}", (dim,), center / 2.0, dtype=np.float64, attrs={
+        "units": "um", "long_name": f"{tag.upper()} bin center radius"})
     w.raw_var(gpath, f"radius_lower_{tag}", (dim,), lower / 2.0, dtype=np.float64,
               attrs={"units": "um", "long_name": f"{tag.upper()} bin lower-edge radius"})
     w.raw_var(gpath, f"radius_upper_{tag}", (dim,), upper / 2.0, dtype=np.float64,
@@ -665,6 +685,11 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
                 long_name=f"{tag.upper()} number size distribution dN/dlogDp",
                 source_column=f"{len(cols)} columns {shorts[0]}..{shorts[-1]}",
                 shift_group=shift_groups.get(cols[0], "none"))
+            # one units string for every dN/dlogDp in the file ("cm-3", also
+            # udunits-parseable); keep the ICARTT original when it differed
+            if attrs.get("units") not in (None, "cm-3"):
+                attrs["icartt_units"] = attrs["units"]
+            attrs["units"] = "cm-3"
             w.scatter3d(gpath, f"dndlogd_{tag}",
                         (df[c].to_numpy(float) for c in cols), dim, attrs=attrs)
 
@@ -692,20 +717,42 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
     w.group_attrs("/windowed/retrievals", {
         "long_name": "ISARA retrieval outputs (MOPSMAP grid search)"})
 
-    # shared retrieval coordinates (wavelength dim lives at root)
-    w.dim("psd_bin", len(grid))
-    w.raw_var(gp, "dp_mid", ("psd_bin",), grid.dpg_um, dtype=np.float64,
+    # shared retrieval coordinates (wavelength dim lives at root). The size
+    # dimension is named "dp_mid" so the bin-center-diameter variable is a
+    # true coordinate variable and plots come out against diameter.
+    w.dim("dp_mid", len(grid))
+    w.raw_var(gp, "dp_mid", ("dp_mid",), grid.dpg_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin center diameter"})
-    w.raw_var(gp, "radius_mid", ("psd_bin",), grid.dpg_um / 2.0,
+    w.raw_var(gp, "radius_mid", ("dp_mid",), grid.dpg_um / 2.0,
               dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin center radius"})
-    w.raw_var(gp, "dp_lower", ("psd_bin",), grid.dpl_um, dtype=np.float64,
+    w.raw_var(gp, "dp_lower", ("dp_mid",), grid.dpl_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin lower-bound diameter"})
-    w.raw_var(gp, "dp_upper", ("psd_bin",), grid.dpu_um, dtype=np.float64,
+    w.raw_var(gp, "dp_upper", ("dp_mid",), grid.dpu_um, dtype=np.float64,
               attrs={"units": "um", "long_name": "retrieval PSD bin upper-bound diameter"})
-    w.raw_var(gp, "psd_instrument", ("psd_bin",),
+    w.raw_var(gp, "psd_instrument", ("dp_mid",),
               np.array(grid.instrument), dtype=str,
               attrs={"long_name": "source instrument of each retrieval PSD bin"})
+    if grid.penetration is not None:
+        w.raw_var(gp, "impactor_penetration", ("dp_mid",),
+                  np.asarray(grid.penetration, float), dtype=np.float64, attrs={
+                      "units": "1",
+                      "long_name": ("impactor penetration applied to the PSD "
+                                    "fed to the retrieval (reported dndlogdp "
+                                    "is NOT weighted)"),
+                      "comment": ("log-logistic P(D_a)=1/(1+(D_a/D50)^s), "
+                                  f"D50={cfg.psd.impactor_d50_aero_um} um "
+                                  "aerodynamic (Schlosser et al. 2025), "
+                                  f"16-84% gsd={cfg.psd.impactor_gsd}, "
+                                  "D_a=dpg*sqrt("
+                                  f"{cfg.psd.impactor_rho_gcm3} g cm-3); "
+                                  "all ones when no impactor is configured. "
+                                  "Absorption channels are bulk (no "
+                                  "impactor) but are forward-modeled with "
+                                  "the same weighted PSD; the resulting "
+                                  "inconsistency is small (abs carries "
+                                  "<10% of the fit chi^2)."),
+                  })
 
     flag = _broadcast(results_df["window_qc_flag"].to_numpy(float), win_idx)
     w.scatter2d(gp, "window_qc_flag", flag, dtype=np.int32, fill=-1, attrs={
@@ -816,7 +863,7 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                         attrs={"units": units, "long_name": long_name, "cell_methods": cm})
 
     w.scatter3d(go, "dndlogdp",
-                (col_rows(psd_col_name(d)) for d in grid.dpg_um), "psd_bin", attrs={
+                (col_rows(psd_col_name(d)) for d in grid.dpg_um), "dp_mid", attrs={
         "units": "cm-3", "cell_methods": cm, "measurement_conditions": "STP",
         "long_name": "window-mean dry number size distribution dN/dlogDp (SMPS+LAS)"})
 
@@ -833,13 +880,24 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
          "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk value)"),
         ("cri_n_accepted", "dry_CRI_n_accepted_unitless",
          "number of CRI grid candidates matching the measurements within "
-         "tolerance; the reported CRI is their mean"),
+         "tolerance (reduced chi^2 <= 1 under the chi2-wmean estimator)"),
         ("refractive_index_real_accepted_std", "dry_RRI_accepted_std_unitless",
-         "standard deviation of the real refractive index over accepted grid "
-         "candidates (retrieval-spread proxy, not a full uncertainty)"),
+         "spread of the real refractive index over the grid (posterior-"
+         "weighted std under the chi2-wmean estimator; retrieval-spread "
+         "proxy, not a full uncertainty)"),
         ("refractive_index_imag_accepted_std", "dry_IRI_accepted_std_unitless",
-         "standard deviation of the imaginary refractive index over accepted "
-         "grid candidates (retrieval-spread proxy, not a full uncertainty)"),
+         "spread of the imaginary refractive index over the grid (posterior-"
+         "weighted std under the chi2-wmean estimator; retrieval-spread "
+         "proxy, not a full uncertainty)"),
+        ("cri_min_chi2", "dry_CRI_min_chi2_unitless",
+         "minimum reduced chi^2 over the CRI grid (sigma: 20% scattering, "
+         "1 Mm-1 absorption; success requires <= 1)"),
+        ("kappa_min_chi2", "kappa_min_chi2_unitless",
+         "minimum reduced chi^2 over the kappa grid (sigma: 1% humidified "
+         "scattering; success requires <= 1)"),
+        ("kappa_std", "kappa_std_unitless",
+         "posterior-weighted standard deviation of kappa over the grid "
+         "(retrieval-spread proxy, not a full uncertainty)"),
         ("refractive_index_real_wet", "wet_RRI_unitless",
          f"real refractive index of the wet state; {mix_note}"),
         ("refractive_index_imag_wet", "wet_IRI_unitless",
@@ -892,7 +950,7 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                         psd[i], grid.dpg_um, grid.dpl_um, grid.dpu_um, gf[i])
             w.scatter3d(gp, f"dndlogdp_{tag}",
                         (_broadcast(dnd[:, k], win_idx) for k in range(psd.shape[1])),
-                        "psd_bin", attrs={
+                        "dp_mid", attrs={
                 "units": "cm-3", "cell_methods": cm,
                 "long_name": (f"{tag}-state number size distribution dN/dlogDp "
                               "on the dry bin grid"),
@@ -940,6 +998,130 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                              + ("; humidified absorption is model-derived "
                                 "(absorption is only measured dry)"
                                 if state != "dry" and quant == "abs_coef" else ""))},
+                scale=_MM_PER_M if is_coef else 1.0)
+
+
+def _write_uncertainty(w, unc_df, grid, cfg, win_idx):
+    """/windowed_uncertainty: 1-sigma uncertainties mirroring /windowed.
+
+    Variable names and dims match their /windowed counterparts so users can
+    difference the groups directly; values are 1-sigma. Built by
+    uncertainty_propagation.py (see UNCERTAINTY_MODULE_PLAN.md).
+    """
+    ch = cfg.channels
+    cm = _WINDOW_CM.format(w=cfg.window.window_s)
+    go = "/windowed_uncertainty/observations"
+    gp = "/windowed_uncertainty/retrievals"
+    wvls = wavelength_union(ch)
+    um_doc = "ACMAP_Meloe/ISARA/aerosol_insitu_uncertainty_models.md"
+    w.group_attrs("/windowed_uncertainty", {
+        "comment": (
+            "1-sigma uncertainties for the like-named variables under "
+            "/windowed. Noise term: chi2-wmean posterior over the CRI grid "
+            "(instrument sigma models) through product Jacobians; correlated "
+            "nuisances (PSD diameter scale 0.10 lnD, PSD concentration "
+            "scale, impactor D50/steepness/density, nephelometer and PSAP "
+            "common-mode calibration terms) via the ensemble-gain "
+            "linearization; quadrature total. v1 simplifications: kappa "
+            "sigma is the grid-posterior std only (PSD-side nuisances "
+            "largely cancel in the wet/dry ratio and are not propagated "
+            "into kappa); nuisances treated independent; sigma models "
+            "evaluated on MEASURED window means. Source error models: "
+            + um_doc),
+        "sigma_convention": "1-sigma, symmetric",
+    })
+
+    def col_rows(col, scale=1.0):
+        return _broadcast(unc_df[col].to_numpy(float) * scale, win_idx)
+
+    def add_wvl(gpath, name, col_by_wvl, attrs, scale=1.0):
+        w.scatter3d(gpath, name,
+                    (col_rows(col_by_wvl[x], scale)
+                     if col_by_wvl.get(x) in unc_df else None
+                     for x in wvls), "wavelength", attrs=attrs)
+
+    sig = "1-sigma uncertainty of "
+    add_wvl(go, "scattering_dry_measured",
+            {x: f"Sc{x}_dry_sigma" for x in ch.dry_wvl_sca},
+            {"units": "Mm-1", "cell_methods": cm,
+             "long_name": sig + "the window-mean dry scattering coefficient "
+             "(TSI 3563 model)"})
+    add_wvl(go, "absorption_measured",
+            {x: f"Abs{x}_sigma" for x in ch.dry_wvl_abs},
+            {"units": "Mm-1", "cell_methods": cm,
+             "long_name": sig + "the window-mean absorption coefficient "
+             "(PSAP model incl. the 0.016*b_sp scattering-subtraction term "
+             "with the measured scattering)"})
+    if "Sc_wet_sigma" in unc_df:
+        w.scatter2d(go, "scattering_humidified_synthesized",
+                    col_rows("Sc_wet_sigma"), attrs={
+            "units": "Mm-1", "cell_methods": cm,
+            "long_name": sig + "the synthesized humidified scattering "
+            "(v1: nephelometer model only; gamma-parameterization term "
+            "not yet included)"})
+    psd_cols = [f"psd_sigma_{psd_col_name(d)}" for d in grid.dpg_um]
+    if all(c in unc_df for c in psd_cols):
+        w.scatter3d(go, "dndlogdp",
+                    (col_rows(c) for c in psd_cols), "dp_mid", attrs={
+            "units": "cm-3", "cell_methods": cm,
+            "long_name": sig + "the window-mean dN/dlogDp (per-bin diagonal "
+            "term: Poisson + relative; the correlated 0.10 lnD diameter-"
+            "scale term is NOT representable per bin and is instead "
+            "propagated into the retrieval uncertainties)"})
+
+    for var, col, long_name in [
+        ("refractive_index_real", "dry_RRI_unitless",
+         sig + "the retrieved dry real refractive index (full budget)"),
+        ("refractive_index_imag", "dry_IRI_unitless",
+         sig + "the retrieved dry imaginary refractive index (full budget)"),
+        ("kappa", "kappa_unitless",
+         sig + "kappa (v1: grid-posterior std only)"),
+        ("refractive_index_real_wet", "wet_RRI_unitless", sig + "the wet-state RRI"),
+        ("refractive_index_imag_wet", "wet_IRI_unitless", sig + "the wet-state IRI"),
+        ("growth_factor_wet", "wet_gf_unitless", sig + "the wet growth factor"),
+        ("refractive_index_real_ambient", "amb_RRI_unitless", sig + "the ambient RRI"),
+        ("refractive_index_imag_ambient", "amb_IRI_unitless", sig + "the ambient IRI"),
+        ("growth_factor_ambient", "amb_gf_unitless", sig + "the ambient growth factor"),
+        ("angstrom_exponent_dry_calculated", "dry_AE_unitless",
+         sig + "the dry calculated 450-700 nm scattering Angstrom exponent "
+         "(correlations between wavelengths included)"),
+        ("angstrom_exponent_ambient_calculated", "amb_AE_unitless",
+         sig + "the ambient calculated 450-700 nm scattering Angstrom exponent "
+         "(correlations between wavelengths included)"),
+    ]:
+        if col in unc_df:
+            w.scatter2d(gp, var, col_rows(col),
+                        attrs={"units": "1", "long_name": long_name,
+                               "cell_methods": cm})
+
+    if "uncertainty_flag" in unc_df:
+        vals = _broadcast(unc_df["uncertainty_flag"].to_numpy(float), win_idx)
+        w.scatter2d(gp, "uncertainty_flag", vals, dtype=np.int32, fill=-1, attrs={
+            "units": "1",
+            "long_name": ("linearization-stress flags for the gain-based "
+                          "sigmas (bitmask)"),
+            "flag_masks": np.array([1, 2, 4, 8], np.int32),
+            "flag_meanings": ("rri_near_grid_edge iri_near_grid_edge "
+                              "min_chi2_near_gate large_ambient_growth"),
+            "cell_methods": cm})
+
+    quant_name = {"sca_coef": "scattering", "abs_coef": "absorption",
+                  "ext_coef": "extinction", "SSA": "ssa"}
+    calc = {}
+    for col in unc_df.columns:
+        m = _RETR_KEY.match(str(col))
+        if not m or m.group("kind") == "meas":
+            continue
+        calc.setdefault((m.group("state"), m.group("quant")), {})[
+            int(m.group("wvl"))] = str(col)
+    for (state, quant), col_by_wvl in calc.items():
+        is_coef = quant != "SSA"
+        add_wvl(gp, f"{quant_name[quant]}_{_STATE_NAME[state]}_calculated",
+                col_by_wvl,
+                {"units": "Mm-1" if is_coef else "1", "cell_methods": cm,
+                 "long_name": (sig + f"the calculated {_STATE_NAME[state]} "
+                               f"{quant_name[quant]}"
+                               + (" coefficient" if is_coef else ""))},
                 scale=_MM_PER_M if is_coef else 1.0)
 
 
@@ -1016,7 +1198,7 @@ def _clock_alignment_ds(cfg):
 # --------------------------------------------------------------------------- #
 # assembly
 # --------------------------------------------------------------------------- #
-def export(df, masks, results_df, grid, cfg, meta=None, path=None):
+def export(df, masks, results_df, grid, cfg, meta=None, path=None, uncertainty=None):
     """Write the full grouped v3 netCDF; returns the output Path."""
     if path is None:
         path = Path(cfg.paths.output_dir) / output_filename(cfg)
@@ -1045,6 +1227,8 @@ def export(df, masks, results_df, grid, cfg, meta=None, path=None):
             _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables)
         _write_windowed_parent(w, results_df, grid, cfg, win_idx)
         _write_retrievals(w, results_df, grid, cfg, win_idx)
+        if uncertainty is not None and len(uncertainty):
+            _write_uncertainty(w, uncertainty, grid, cfg, win_idx)
     finally:
         w.close()
 

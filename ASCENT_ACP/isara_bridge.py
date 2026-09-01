@@ -13,6 +13,7 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 import pandas as pd
 
+from . import uncertainty_models as um
 from .windows import psd_col_name
 
 # Set per-process by _worker_init (workers) or import_isara (serial path)
@@ -130,6 +131,11 @@ def build_retr_kwargs(row, grid, cfg):
     """
     ch = cfg.channels
     dndlogdp = np.array([row[psd_col_name(d)] for d in grid.dpg_um], dtype=float)
+    if grid.penetration is not None:
+        # weight the RETRIEVAL input by the impactor penetration so the
+        # forward model sees what the (impactored) nephelometer saw; the
+        # reported windowed PSD stays unweighted
+        dndlogdp = dndlogdp * grid.penetration
     kwargs = {
         "radii_um": grid.dpg_um / 2.0,
         "dndlogdp_cm3": dndlogdp,
@@ -163,8 +169,37 @@ def build_retr_kwargs(row, grid, cfg):
         "num_theta": cfg.isara.num_theta,
         "path_optical_dataset": cfg.paths.optical_dataset_dir,
         "path_mopsmap_executable": cfg.paths.mopsmap_executable,
+        "forward_engine": cfg.isara.forward_engine,
+        "estimator": cfg.isara.estimator,
     }
+    if cfg.isara.chi2_sigma == "instrument":
+        kwargs.update(instrument_sigmas(row, cfg))
     return kwargs
+
+
+def instrument_sigmas(row, cfg):
+    # Per-window 1-sigma arrays (m^-1) from the UM instrument models,
+    # evaluated on the MEASURED window means (never retrieved values); the
+    # PSAP model takes the measured scattering at the nearest nephelometer
+    # wavelength for its scattering-subtraction term.
+    ch = cfg.channels
+    t = float(cfg.window.window_s)
+    regime = cfg.isara.neph_regime or (
+        "pm1" if cfg.psd.impactor_d50_aero_um > 0 else "pm10")
+    sca_meas = {w: float(row[f"Sc{w}_dry_mean"]) for w in ch.dry_wvl_sca}
+    sca_sigma = np.array([um.sigma_scattering(sca_meas[w], t, w, regime)
+                          for w in ch.dry_wvl_sca])
+    abs_sigma = []
+    for w in ch.dry_wvl_abs:
+        near = min(ch.dry_wvl_sca, key=lambda ws: abs(ws - w))
+        abs_sigma.append(um.sigma_absorption(float(row[f"Abs{w}_mean"]),
+                                             sca_meas[near], t))
+    wet_sigma = np.array([um.sigma_scattering(float(row[f"Sc{w}_wet_mean"]),
+                                              t, w, regime)
+                          for w in ch.wet_wvl_sca])
+    return {"sca_sigma": sca_sigma * 1e-6,
+            "abs_sigma": np.array(abs_sigma) * 1e-6,
+            "wet_sigma": wet_sigma * 1e-6}
 
 
 def _retrieve_one(item):
@@ -207,7 +242,7 @@ def run_all_windows(windows_df, grid, cfg, progress=True):
         return pd.DataFrame()
 
     lut_states = {}
-    if cfg.isara.use_lut:
+    if cfg.isara.use_lut and cfg.isara.forward_engine == "mopsmap":
         lut_states = prepare_luts(good, grid, cfg, verbose=progress)
     items = []
     for ts, row in good.iterrows():

@@ -88,6 +88,25 @@ def test_cloud_mask_padding():
     assert not cloudy.iloc[:10].any() and not cloudy.iloc[21:].any()
 
 
+def test_cloud_mask_fcdp_native_units():
+    cfg = make_cfg()
+    # FCDP reports #/m^3: 2e5 #/m^3 = 0.2 cm-3 of coarse particles in clear
+    # air must NOT trip the 1 cm-3 threshold (the pre-fix bug flagged this)
+    df = make_df(**{P_FCDP + "N_FCDP": np.full(30, 2.0e5)})
+    assert not filtering.cloud_mask(df, cfg).any()
+    # a real cloud (5e7 #/m^3 = 50 cm-3) must trip
+    n_f = np.zeros(30)
+    n_f[15] = 5.0e7
+    df = make_df(**{P_FCDP + "N_FCDP": n_f})
+    assert filtering.cloud_mask(df, cfg).iloc[15]
+    # FCDP LWC is kg/m^3: 5e-4 kg/m^3 = 0.5 g/m^3 must trip the 1e-3 g/m^3
+    # threshold (the pre-fix bug required an impossible 1000 g/m^3)
+    lwc = np.zeros(30)
+    lwc[15] = 5.0e-4
+    df = make_df(**{P_FCDP + "LWC_FCDP": lwc})
+    assert filtering.cloud_mask(df, cfg).iloc[15]
+
+
 def test_row_qc_masks():
     cfg = make_cfg()
     sc450 = np.full(30, 50.0)

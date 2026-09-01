@@ -1,0 +1,66 @@
+netCDF V5 planning list (Reed + Claude, updated 2026-08-26)
+Status: PENDING 
+This all builds on the todo_reed.txt (v4) list, and numbering builds on those items, including a copy over of remaining open ones
+
+REMAINING OPEN ITEMS (not code):
+- Visually confirm Geo2D classification in Panoply (root lat/lon + CF
+  coordinates attrs are in place; xarray decodes them correctly).
+- Email LARGE PI: confirm the ~96% ambient-RH ceiling and ask about the
+  ~2-3% RH offset between their effective RH and published RHw_DLH.
+- Item 8 HIGH-IMPORTANCE todo: per-wavelength CRI retrieval (see below).
+- Item 10: ISARA chi^2 solution selection (see below).
+- 2020 note: the V3 file's retrievals came from an older ISARA revision;
+  the fresh V4 run has ~3% fewer successes on the old grid (documented in
+  processing_logs/V4_regression_notes.txt). V4 values are authoritative.
+
+8. Full optical set (CRI, sca, abs, ext) x 3 RH states x wavelength dim
+   ANSWER (how ISARA fits): single spectrally-FLAT (RRI, IRI) pair; grid
+   search RRI 1.51-1.54 (0.01 step) x IRI 0-0.030; forward-models ALL six
+   channels (sca 450/550/700, abs 470/532/660) with that one CRI; candidate
+   accepted only if all 3 sca within 20% AND all 3 abs within 1 Mm^-1;
+   final = mean of accepted candidates, re-verified. So all wavelengths are
+   in the fit criteria, but there is no spectral RI freedom — reporting CRI
+   on the wavelength dim = same value repeated (document flatness).
+   - TODO [HIGH IMPORTANCE]: per-wavelength CRI retrieval (pair adjacent
+     sca/abs channels 450/470, 550/532, 700/660 -> 2 obs per band, 2
+     unknowns). The flat-RI assumption drives systematic error in the
+     retrieved spectral properties AND systematically prevents retrieval
+     (all-channel 20% criterion unmatchable) exactly in the
+     high-spectral-dependence cases where it matters most. Caveats to
+     design around: exactly-determined per band (noise maps 1:1 into CRI);
+     needs Angstrom interpolation between sca and abs wavelengths. Not in
+     this round, but next in line after V4.
+   - CRI grid findings: the 1.51-1.54 grid is DRY-ONLY. Wet/ambient RI is
+     derived by volume mixing with water (RRI_w=(RRI_d+(gf^3-1)*1.33)/gf^3)
+     and floats freely below 1.51 (-> 1.33 as gf grows), so no wet-side
+     restriction. DECIDED: expand dry grid to ~1.47-1.56. Costs (all
+     acceptable): LUT rebuild (~2.5x candidates, one-time, cache
+     auto-invalidates via fingerprint); mean-of-accepted estimator can
+     shift even for windows that retrieved fine before (new edge candidates
+     pass the 20%/1 Mm^-1 tests and pull the mean) -> do the grid change as
+     its own final step and quantify the before/after shift; more windows
+     will retrieve successfully (previously edge-clipped). Consider also
+     reporting n_accepted / std of accepted candidates as an uncertainty
+     proxy.
+   - Wet/ambient CRI: derive by kappa volume-mixing with water (1.33+0i),
+     gf at 80% and at RH_amb_used. Also spectrally flat. Report it.
+   - Humidified sca/ext/SSA at all wavelengths: extend ISARA wet forward
+     calc to full wavelength list (same MOPSMAP call, cheap); run it at both
+     80% and ambient RH. Humidified absorption = ext - sca; document that it
+     is purely model-derived (absorption only measured dry).
+   - NOTE: narrow RRI grid (1.51-1.54) bounds everything downstream; worth a
+     mention in file metadata.
+  - TODO The convention seems to be GV_dry for all variables but RI. There is RI_wet ad RI_ambient but dry RI is just RI
+
+10. TODO (future, ISARA): try alternative solution-selection methods instead
+    of averaging all candidates inside the error window — e.g., minimum
+    chi^2 under the same error assumptions (20% sca, 1 Mm^-1 abs), or a
+    chi^2-weighted mean. Pairs naturally with the wider CRI grid and with
+    reporting n_accepted / candidate spread as uncertainty.
+
+11. For the PSD diameter index we should just use the dp_mid variable so that plots in Panolopy are quick, easy and sane.
+
+12. Which filters are removing the bulk of our windowed data? Lets explore relaxing these.
+
+13. windowed/observations/dndlogdp has units "cm-3" vs "#/cm^3" for  observations/aerosol_size_dist/dndlogd_smp and las. Should be consistent string so as not to confuse the user....
+

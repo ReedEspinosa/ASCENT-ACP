@@ -40,7 +40,7 @@ driver (`ASCENT_ACP.run`). All decisions in §2 are as-built; run
    `scattering_ambient_synthesized` is the per-second gamma adjustment to
    ambient RH, window-averaged — directly comparable to LARGE
    `Sc550_submicron_amb` (see `scripts/validate_ambient.py`).
-6. **Humidified PSDs** `dndlogdp_{wet,ambient}` on the dry `psd_bin` grid:
+6. **Humidified PSDs** `dndlogdp_{wet,ambient}` on the dry bin grid (dim `dp_mid`):
    bulk-kappa growth is a uniform log-diameter shift, remapped back onto the
    dry bin edges conserving **surface area** exactly (number/volume only
    approximately); surface grown past the last bin edge is reported in
@@ -55,6 +55,12 @@ driver (`ASCENT_ACP.run`). All decisions in §2 are as-built; run
 9. Regression tooling: `scripts/compare_nc_versions.py` (dump/diff with an
    explicit rename/scale/wavelength-slice map) verified every V3 variable maps
    into V4; `baselines/` holds the V3 reference dumps and the V3→V4 map.
+10. **Size dimensions are coordinate variables** (2026-08-26, pending rerun):
+    the windowed PSD dim is `dp_mid` (was `psd_bin`) and the native PSD dims
+    are `diameter_smps`/`diameter_las` (were `size_*`), each named after its
+    bin-center-diameter variable so plots come out against diameter, not bin
+    index. All `dN/dlogDp` variables share the units string `cm-3`; where the
+    ICARTT original differed (`#/cm^3`) it is kept in `icartt_units`.
 
 ## v3 addendum (2026-07) — layout changes on top of the v2 design below
 
@@ -176,7 +182,7 @@ under a common `/windowed` parent (DataTree children inherit parent coords).
 │   ├── n_valid, n_cloudy, n_inlet_bad, n_low_signal, n_low_ssa
 │   │
 │   ├── retrievals/                ISARA + QC-valid-only measured optical means
-│   │   ├── wavelength_sca/abs, psd_bin, dp_mid/lower/upper  (coords/labels)
+│   │   ├── wavelength_sca/abs, dp_mid (size coord), dp_lower/upper  (coords/labels)
 │   │   ├── scattering_dry(+std), absorption(+std), ssa, scattering_humidified, …
 │   │   ├── dndlogdp               window-mean PSD
 │   │   ├── refractive_index_real/imag, kappa

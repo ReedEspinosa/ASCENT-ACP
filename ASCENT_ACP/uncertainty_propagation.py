@@ -1,0 +1,339 @@
+"""Propagate instrument + structural uncertainties into retrieved products.
+
+Implements the ensemble-gain design of UNCERTAINTY_MODULE_PLAN.md (v1):
+
+* noise term: the chi2-wmean posterior over the CRI grid (recomputed here
+  from the candidate cloud with the same instrument sigmas the retrieval
+  used) mapped through local Jacobians of every product w.r.t.
+  (RRI, IRI, kappa);
+* correlated nuisances: coefficient shifts dy from cheap forward
+  evaluations, mapped through the Kalman-style gain
+  G = Cov_w(x,y) [Cov_w(y,y) + Sigma]^-1 built from the same candidate
+  cloud, plus each nuisance's direct effect on the product at fixed CRI;
+  evaluated at +/-1 sigma (secant) and averaged.
+
+v1 simplifications (documented in the group attributes): kappa's response
+to the PSD-side nuisances is not propagated (wet/dry ratio largely cancels
+them); the nephelometer common-mode calibration cancels in the kappa fit
+by construction (the wet target is derived from the same instrument);
+nuisances are treated as independent.
+
+Output: one row per window of 1-sigma columns using the same key
+conventions as Retr_PSD outputs (m^-1 for coefficients), plus sigmas of
+the measured window means and an ``uncertainty_flag``.
+"""
+
+import os
+import sys
+from concurrent.futures import ProcessPoolExecutor
+
+import numpy as np
+import pandas as pd
+
+from . import uncertainty_models as um
+from .windows import psd_col_name
+
+WVL_UNION = None  # set per-run from cfg
+
+FLAG_RRI_RAIL = 1
+FLAG_IRI_RAIL = 2
+FLAG_NEAR_GATE = 4
+FLAG_LARGE_GF = 8
+
+_SO = None  # sphere_optics module, per process
+
+
+def _import_sphere_optics(isara_dir):
+    global _SO
+    if _SO is None:
+        if isara_dir not in sys.path:
+            sys.path.insert(0, isara_dir)
+        import sphere_optics  # noqa: PLC0415
+        _SO = sphere_optics
+    return _SO
+
+
+def _coeffs(dpg_um, dnd_cm3, rri, iri, wvls):
+    """{wvl: (sca, abs, ext, ssa)} in Mm^-1 for one CRI (finite bins only)."""
+    r = _SO.Model(np.asarray(wvls), size_equ={'m': 'cs'},
+                  dndlogdp={'m': dnd_cm3 * 1e6}, dpg={'m': dpg_um},
+                  RRI={'m': rri}, IRI={'m': iri}, nonabs_fraction={'m': 0},
+                  shape={'m': 'sphere'}, density={'m': 1.0}, RH=0, kappa=0,
+                  num_theta=2)
+    out = {}
+    for wv in wvls:
+        ext = r[f'ext_coeff_{wv}_m-1'] * 1e6
+        ssa = r[f'ssa_{wv}']
+        out[wv] = (ssa * ext, (1 - ssa) * ext, ext, ssa)
+    return out
+
+
+def _grown(dpg, rri, iri, kappa, rh):
+    gf = (1 + kappa * rh / (100 - rh)) ** (1 / 3)
+    rri_w = (rri + (gf ** 3 - 1) * 1.33) / gf ** 3
+    iri_w = iri / gf ** 3
+    return dpg * gf, rri_w, iri_w, gf
+
+
+def _products(dpg, dnd, rri, iri, kappa, rh_wet, rh_amb, wvls):
+    """Flat dict of every product, keyed like Retr_PSD outputs (coeffs Mm^-1
+    here; converted to m^-1 at assembly)."""
+    P = {"dry_RRI_unitless": rri, "dry_IRI_unitless": iri}
+    states = [("dry", None)]
+    if np.isfinite(kappa):
+        P["kappa_unitless"] = kappa
+        states.append(("wet", rh_wet))
+        if rh_amb is not None and np.isfinite(rh_amb) and 0 < rh_amb < 100:
+            states.append(("amb", rh_amb))
+    for st, rh in states:
+        if st == "dry":
+            d, rr, ii = dpg, rri, iri
+        else:
+            d, rr, ii, gf = _grown(dpg, rri, iri, kappa, rh)
+            P[f"{st}_gf_unitless"] = gf
+            P[f"{st}_RRI_unitless"] = rr
+            P[f"{st}_IRI_unitless"] = ii
+        c = _coeffs(d, dnd, rr, ii, wvls)
+        for wv, (sca, ab, ext, ssa) in c.items():
+            P[f"{st}_cal_sca_coef_{wv}_m-1"] = sca
+            P[f"{st}_cal_abs_coef_{wv}_m-1"] = ab
+            P[f"{st}_cal_ext_coef_{wv}_m-1"] = ext
+            P[f"{st}_cal_SSA_{wv}_unitless"] = ssa
+        P[f"{st}_AE_unitless"] = (np.log(c[450][0] / c[700][0])
+                                  / np.log(700 / 450))
+    return P
+
+
+def _pvec(P, keys):
+    return np.array([P.get(k, np.nan) for k in keys])
+
+
+def _window_uncertainty(item):
+    """Compute all 1-sigma columns for one window. Never raises."""
+    ts = item["ts"]
+    try:
+        return ts, _window_uncertainty_inner(item)
+    except Exception as err:  # noqa: BLE001 - per-window robustness
+        return ts, {"uncertainty_error": str(err)}
+
+
+def _window_uncertainty_inner(it):
+    _import_sphere_optics(it["isara_dir"])
+    wvls = it["wvls"]
+    dpg_all = it["dpg"]
+    raw = it["dnd_raw"]
+    pen = it["pen"]
+    fin = np.isfinite(raw) & (dpg_all > 0)
+    out = {}
+
+    # ---- sigmas of the measured means (always available) -------------------
+    t = it["window_s"]
+    for wv, v in it["sca_meas"].items():
+        out[f"Sc{wv}_dry_sigma"] = float(um.sigma_scattering(
+            v, t, wv, it["regime"]))
+    for wv, v in it["abs_meas"].items():
+        near = min(it["sca_meas"], key=lambda ws: abs(ws - wv))
+        out[f"Abs{wv}_sigma"] = float(um.sigma_absorption(
+            v, it["sca_meas"][near], t))
+    out["Sc_wet_sigma"] = float(um.sigma_scattering(
+        it["wet_meas"], t, it["wet_wvl"], it["regime"]))
+    n_eff = max(float(it["n_valid"]), 1.0)
+    sig_bins = um.sigma_number(np.where(fin, raw, np.nan), n_eff,
+                               Q=1.0, edge_bins=2)
+    for d, sg in zip(dpg_all, sig_bins):
+        out[f"psd_sigma_{psd_col_name(d)}"] = float(sg)
+
+    if not np.isfinite(it["rri"]) or fin.sum() < 10:
+        return out
+
+    dpg = dpg_all[fin]
+    dnd = (raw * pen)[fin]
+    rri, iri, kappa = it["rri"], it["iri"], it["kappa"]
+    rh_wet, rh_amb = it["rh_wet"], it["rh_amb"]
+
+    # ---- candidate cloud, posterior, gain ----------------------------------
+    grid_cri = it["cri_grid"]
+    sca_w = it["sca_wvls"]
+    abs_w = it["abs_wvls"]
+    y = np.empty((len(grid_cri), 6))
+    for k, (rr, ii) in enumerate(grid_cri):
+        c = _coeffs(dpg, dnd, rr, ii, wvls)
+        y[k] = [c[w][0] for w in sca_w] + [c[w][1] for w in abs_w]
+    y_meas = np.array([it["sca_meas"][w] for w in sca_w]
+                      + [it["abs_meas"][w] for w in abs_w])
+    sig = np.array([out[f"Sc{w}_dry_sigma"] for w in sca_w]
+                   + [out[f"Abs{w}_sigma"] for w in abs_w])
+    chi2 = (((y - y_meas) / sig) ** 2).sum(axis=1)
+    w = np.exp(-0.5 * (chi2 - chi2.min()))
+    w /= w.sum()
+    x = grid_cri
+    xbar = w @ x
+    dxc = x - xbar
+    dyc = y - w @ y
+    cov_x = (w[:, None] * dxc).T @ dxc                      # 2x2
+    cov_xy = (w[:, None] * dxc).T @ dyc                     # 2x6
+    cov_yy = (w[:, None] * dyc).T @ dyc                     # 6x6
+    G = cov_xy @ np.linalg.inv(cov_yy + np.diag(sig ** 2))  # 2x6
+
+    # ---- product Jacobians -------------------------------------------------
+    base = _products(dpg, dnd, rri, iri, kappa, rh_wet, rh_amb, wvls)
+    keys = sorted(base)
+    p0 = _pvec(base, keys)
+    dR, dI, dK = 0.01, 0.002, 0.02
+    sR = -dR if rri + dR > it["rri_max"] else dR
+    sI = -dI if iri + dI > 0.030 else dI
+    Jr = (_pvec(_products(dpg, dnd, rri + sR, iri, kappa, rh_wet, rh_amb,
+                          wvls), keys) - p0) / sR
+    Ji = (_pvec(_products(dpg, dnd, rri, iri + sI, kappa, rh_wet, rh_amb,
+                          wvls), keys) - p0) / sI
+    Jx = np.stack([Jr, Ji])                                  # 2 x P
+    var_noise = np.einsum("ip,ij,jp->p", Jx, cov_x, Jx)
+    if np.isfinite(kappa):
+        Jk = (_pvec(_products(dpg, dnd, rri, iri, kappa + dK, rh_wet, rh_amb,
+                              wvls), keys) - p0) / dK
+        var_noise = var_noise + (Jk * it["kappa_std"]) ** 2
+
+    # ---- nuisances ---------------------------------------------------------
+    def y_of(dpg_n, dnd_n):
+        c = _coeffs(dpg_n, dnd_n, rri, iri, wvls)
+        return np.array([c[w][0] for w in sca_w] + [c[w][1] for w in abs_w])
+
+    y0 = y_of(dpg, dnd)
+    var_nuis = np.zeros_like(p0)
+
+    def add_model_nuisance(dpg_p, dnd_p, dpg_m, dnd_m):
+        tot = np.zeros_like(p0)
+        for dpg_n, dnd_n, in ((dpg_p, dnd_p), (dpg_m, dnd_m)):
+            dy = y_of(dpg_n, dnd_n) - y0
+            dx = -G @ dy
+            direct = _pvec(_products(dpg_n, dnd_n, rri, iri, kappa, rh_wet,
+                                     rh_amb, wvls), keys) - p0
+            tot += np.abs(direct + Jx.T @ dx)
+        return (tot / 2.0) ** 2
+
+    # PSD diameter scale (correlated lnD = 0.10; kappa response deferred)
+    s = np.exp(um.OPC_DLND)
+    var_nuis += add_model_nuisance(dpg * s, dnd, dpg / s, dnd)
+    # PSD concentration common-mode (10%)
+    var_nuis += add_model_nuisance(dpg, dnd * 1.10, dpg, dnd * 0.90)
+    # impactor parameters (submicron variant only)
+    if it["d50"] > 0:
+        rawf = raw[fin]
+
+        def pen_of(d50, gsd, rho):
+            sexp = np.log(5.25) / np.log(gsd)
+            return 1.0 / (1.0 + ((dpg * np.sqrt(rho)) / d50) ** sexp)
+
+        b = (it["d50"], it["gsd"], it["rho"])
+        for hi, lo in [((b[0] * 1.1, b[1], b[2]), (b[0] * 0.9, b[1], b[2])),
+                       ((b[0], b[1] * 1.09, b[2]), (b[0], max(b[1] / 1.09, 1.01), b[2])),
+                       ((b[0], b[1], b[2] + 0.2), (b[0], b[1], b[2] - 0.2))]:
+            var_nuis += add_model_nuisance(dpg, rawf * pen_of(*hi),
+                                           dpg, rawf * pen_of(*lo))
+
+    # data-side common modes (no direct product term)
+    for dy_meas in (np.r_[um.NEPH_FREL[it["regime"]] * y_meas[:3], 0, 0, 0],
+                    np.r_[0, 0, 0, um.PSAP_FSCA_ERR
+                          * np.array([it["sca_meas"][min(it["sca_meas"],
+                                      key=lambda ws: abs(ws - wv))]
+                                      for wv in abs_w])]):
+        dx = G @ dy_meas
+        var_nuis += (Jx.T @ dx) ** 2
+
+    sigma = np.sqrt(var_noise + var_nuis)
+    for k, sg in zip(keys, sigma):
+        if k.endswith("_m-1"):
+            sg = sg * 1e-6   # store coefficient sigmas in m^-1 like Retr_PSD
+        out[k] = float(sg)
+    # kappa sigma: posterior only (v1; see module docstring)
+    if np.isfinite(kappa):
+        out["kappa_unitless"] = float(it["kappa_std"])
+
+    flag = 0
+    if rri > it["rri_max"] - 0.015 or rri < it["rri_min"] + 0.015:
+        flag |= FLAG_RRI_RAIL
+    if iri > 0.028:
+        flag |= FLAG_IRI_RAIL
+    if it["min_chi2"] > 0.8:
+        flag |= FLAG_NEAR_GATE
+    if np.isfinite(kappa) and base.get("amb_gf_unitless", 1.0) > 1.5:
+        flag |= FLAG_LARGE_GF
+    out["uncertainty_flag"] = flag
+    return out
+
+
+def _worker_init(isara_dir):
+    _import_sphere_optics(isara_dir)
+
+
+def run_all(results_df, grid, cfg, progress=True):
+    """Uncertainty columns for every window in ``results_df`` (the assembled
+    windows+retrievals frame). Returns a DataFrame indexed like it."""
+    from . import isara_bridge  # noqa: PLC0415 (grid helpers)
+
+    ch = cfg.channels
+    wvls = sorted({*ch.dry_wvl_sca, *ch.dry_wvl_abs, *ch.wet_wvl_sca,
+                   *(ch.val_wvl or [])})
+    regime = cfg.isara.neph_regime or (
+        "pm1" if cfg.psd.impactor_d50_aero_um > 0 else "pm10")
+    cri_grid = isara_bridge._cri_grid(cfg)
+    pen = (grid.penetration if grid.penetration is not None
+           else np.ones(len(grid)))
+
+    items = []
+    for ts, row in results_df.iterrows():
+        items.append({
+            "ts": ts,
+            "isara_dir": cfg.paths.isara_code_dir,
+            "wvls": wvls,
+            "sca_wvls": list(ch.dry_wvl_sca),
+            "abs_wvls": list(ch.dry_wvl_abs),
+            "dpg": grid.dpg_um,
+            "pen": pen,
+            "dnd_raw": np.array([row.get(psd_col_name(d), np.nan)
+                                 for d in grid.dpg_um], float),
+            "sca_meas": {wv: float(row.get(f"Sc{wv}_dry_mean", np.nan))
+                         for wv in ch.dry_wvl_sca},
+            "abs_meas": {wv: float(row.get(f"Abs{wv}_mean", np.nan))
+                         for wv in ch.dry_wvl_abs},
+            "wet_meas": float(row.get(f"Sc{ch.wet_wvl_sca[0]}_wet_mean", np.nan)),
+            "wet_wvl": ch.wet_wvl_sca[0],
+            "n_valid": float(row.get("n_valid", np.nan)),
+            "window_s": float(cfg.window.window_s),
+            "regime": regime,
+            "cri_grid": cri_grid,
+            "rri": float(row.get("dry_RRI_unitless", np.nan)),
+            "iri": float(row.get("dry_IRI_unitless", np.nan)),
+            "kappa": float(row.get("kappa_unitless", np.nan)),
+            "kappa_std": float(row.get("kappa_std_unitless", np.nan)),
+            "min_chi2": float(row.get("dry_CRI_min_chi2_unitless", np.nan)),
+            "rh_wet": float(cfg.filters.wet_rh),
+            "rh_amb": float(row.get("RH_amb_mean", np.nan)),
+            "rri_min": cfg.isara.rri_min,
+            "rri_max": cfg.isara.rri_max,
+            "d50": cfg.psd.impactor_d50_aero_um,
+            "gsd": cfg.psd.impactor_gsd,
+            "rho": cfg.psd.impactor_rho_gcm3,
+        })
+
+    results = {}
+    n_workers = cfg.isara.n_workers
+    if n_workers <= 1:
+        _import_sphere_optics(cfg.paths.isara_code_dir)
+        for i, item in enumerate(items):
+            ts, res = _window_uncertainty(item)
+            results[ts] = res
+    else:
+        with ProcessPoolExecutor(max_workers=n_workers,
+                                 initializer=_worker_init,
+                                 initargs=(cfg.paths.isara_code_dir,)) as pool:
+            for i, (ts, res) in enumerate(
+                    pool.map(_window_uncertainty, items, chunksize=8)):
+                results[ts] = res
+                if progress and (i + 1) % 500 == 0:
+                    print(f"  uncertainty {i + 1}/{len(items)} windows",
+                          flush=True)
+
+    out = pd.DataFrame.from_dict(results, orient="index")
+    out.index.name = "time"
+    return out.reindex(results_df.index)

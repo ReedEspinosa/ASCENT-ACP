@@ -11,9 +11,21 @@
     "scratch_dir": "/tmp/ascent_acp_scratch"
   },
   "channels": {
-    "sca_suffixes": {"450": "Sc450_submicron", "550": "Sc550_submicron", "700": "Sc700_submicron"},
-    "abs_suffixes": {"470": "Abs470_total", "532": "Abs532_total", "660": "Abs660_total"},
-    "ssa_suffixes": {"450": "SSA_450nm", "550": "SSA_550nm", "700": "SSA_700nm"},
+    "sca_suffixes": {
+      "450": "Sc450_submicron",
+      "550": "Sc550_submicron",
+      "700": "Sc700_submicron"
+    },
+    "abs_suffixes": {
+      "470": "Abs470_total",
+      "532": "Abs532_total",
+      "660": "Abs660_total"
+    },
+    "ssa_suffixes": {
+      "450": "SSA_450nm",
+      "550": "SSA_550nm",
+      "700": "SSA_700nm"
+    },
     "rh_sc_suffix": "RH_Sc_submicron",
     "gamma_suffix": "gamma550",
     "frh_suffix": "fRH550_RH20to80",
@@ -26,10 +38,22 @@
     "lat_suffix": "Latitude",
     "lon_suffix": "Longitude",
     "alt_suffix": "GPS_altitude",
-    "dry_wvl_sca": [450, 550, 700],
-    "dry_wvl_abs": [470, 532, 660],
-    "wet_wvl_sca": [550],
-    "val_wvl": [532]
+    "dry_wvl_sca": [
+      450,
+      550,
+      700
+    ],
+    "dry_wvl_abs": [
+      470,
+      532,
+      660
+    ],
+    "wet_wvl_sca": [
+      550
+    ],
+    "val_wvl": [
+      532
+    ]
   },
   "filters": {
     "cloud_n_max_cm3": 1.0,
@@ -46,15 +70,16 @@
   "window": {
     "window_s": 60,
     "min_valid_points": 20,
-    "ae_max_relstd": 0.30,
+    "ae_max_relstd": 0.3,
     "ae_std_mode": "relative",
     "min_valid_points_per_bin": 10
   },
   "psd": {
     "variant_name": "submicron",
-    "psd_max_um": 1.0,
+    "psd_max_um": 2.0,
     "inlet_cutoff_um": 5.0,
-    "smps_min_dp_um": 0.0
+    "smps_min_dp_um": 0.0,
+    "impactor_d50_aero_um": 1.0
   },
   "isara": {
     "size_equ": "cs",

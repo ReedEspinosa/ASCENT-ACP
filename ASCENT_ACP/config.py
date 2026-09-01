@@ -92,6 +92,11 @@ class FilterConfig:
     cloud_n_max_cm3: float = 1.0  # CDP/FCDP droplet number above this = cloud
     cloud_lwc_max_gm3: float = 1.0e-3  # LWC above this = cloud
     use_fcdp: bool = True
+    # The thresholds above are in the CDP's ICARTT units (#/cm3, g/m3). The
+    # FCDP files report N_FCDP in #/m^3 and LWC_FCDP in kg/m^3; its values are
+    # multiplied by these factors before the same thresholds are applied.
+    fcdp_n_scale_to_cm3: float = 1.0e-6
+    fcdp_lwc_scale_to_gm3: float = 1.0e3
     cloud_pad_s: int = 5  # dilate cloud mask +/- this many seconds
     require_inlet_flag_zero: bool = True  # keep only isokinetic-inlet samples
     min_dry_sc450_Mm: float = 10.0  # drop rows with dry Sc450 <= this (Mm-1)
@@ -121,8 +126,27 @@ class PSDConfig:
     smps_bins_csv: str = str(_PACKAGE_DATA / "ACTIVATE_SMPS_bins.csv")
     las_bins_csv: str = str(_PACKAGE_DATA / "ACTIVATE_LAS_bins.csv")
     variant_name: str = "submicron"  # label recorded in output
-    psd_max_um: float = 1.0  # truncate PSD at this diameter (1.0 submicron cut;
-    #                          set to inlet_cutoff_um for the total variant)
+    # Hard cap on the PSD grid (bin centers kept while dpg <= psd_max_um).
+    # Since V6 the submicron variant is realized by the impactor PENETRATION
+    # weighting below, not by this cap: a D50 impactor transmits ~50% of
+    # particles AT its cut size and rolls off gradually, so any sharp
+    # truncation misrepresents the sampled PSD (V5 sharp cuts at 0.75 or
+    # 1.0 um both under-predicted red scattering). Keep this cap safely
+    # above where the penetration reaches ~0 (2.0 um for submicron); set it
+    # to inlet_cutoff_um for the total variant.
+    psd_max_um: float = 2.0
+    # LARGE nephelometer impactor model (submicron variant; Schlosser et al.
+    # 2025 gives D50 = 1.0 um AERODYNAMIC). Retrieval-side only: the PSD fed
+    # to ISARA is multiplied by the log-logistic penetration
+    #   P(D_a) = 1 / (1 + (D_a/D50)^s),  s = ln(5.25)/ln(impactor_gsd),
+    # with D_a = dpg * sqrt(impactor_rho_gcm3) (spheres; AmmSO4 density
+    # consistent with the LAS sizing). impactor_gsd is the 16-84% steepness
+    # (P=0.84 at D50/gsd, 0.16 at D50*gsd). The reported windowed PSD stays
+    # unweighted. Set impactor_d50_aero_um = 0 to disable (total variant).
+    impactor_d50_aero_um: float = 0.0
+    impactor_gsd: float = 1.15
+    impactor_rho_gcm3: float = 1.77
+    impactor_min_penetration: float = 0.005  # drop bins below this P
     inlet_cutoff_um: float = 5.0  # aircraft inlet 50% cutoff; hard upper limit
     smps_min_dp_um: float = 0.0  # optionally trim smallest SMPS bins
 
@@ -145,6 +169,24 @@ class IsaraConfig:
     n_workers: int = 8
     use_lut: bool = True  # precomputed-optics CRI search (falls back per window)
     lut_min_pattern_count: int = 5  # build a LUT only for bin patterns this common
+    # 'mopsmap' = Fortran subprocess per forward call (historical); 'table' =
+    # in-process integration over the mopsmap_sphere_table extract in
+    # ISARA_code (~100x faster, spheres only, <=0.21% vs exact Mie). The LUT
+    # machinery above is only relevant to the 'mopsmap' engine.
+    forward_engine: str = "table"
+    # chi^2 sigmas: "instrument" = per-window UM error models (neph/PSAP;
+    # see uncertainty_models.py) drive gating AND weighting; "legacy" = the
+    # historical fixed tolerances (20% sca, 1 Mm-1 abs, 1% wet sca).
+    chi2_sigma: str = "instrument"
+    # nephelometer f_rel regime for sigma_scattering; "" = auto: "pm1" when
+    # an impactor is configured (submicron variant), else "pm10".
+    neph_regime: str = ""
+    # 'chi2-wmean' = Gaussian-posterior weighted mean over the CRI and kappa
+    # grids (sigma = the historical tolerances; gate min reduced chi^2 <= 1):
+    # best RMSE, ~+30% more successful retrievals, continuous weights (see
+    # scripts/estimator_study.py). 'linf-mean' = historical ISARA selection
+    # (all channels inside tolerance / first-kappa-within-1%).
+    estimator: str = "chi2-wmean"
 
 
 @dataclass
@@ -177,7 +219,7 @@ class MergeConfig:
 class OutputConfig:
     """Controls the grouped netCDF export (ASCENT_ACP.netcdf_export)."""
 
-    version: str = "V4"             # filename version tag
+    version: str = "V7"             # filename version tag
     emit_observations: bool = True  # /observations native-cadence passthrough
     float32: bool = True            # store float vars as float32
     compression_level: int = 4      # zlib complevel (0 = off)

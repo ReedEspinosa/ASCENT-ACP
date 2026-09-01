@@ -26,7 +26,8 @@ import sys
 import time
 from pathlib import Path
 
-from . import filtering, isara_bridge, merge, netcdf_export, pipeline, results, sizebins, windows
+from . import (filtering, isara_bridge, merge, netcdf_export, pipeline,
+               results, sizebins, uncertainty_propagation, windows)
 from .config import PipelineConfig
 
 STAGES = ["merge", "align", "retrieve", "export"]
@@ -96,10 +97,13 @@ def stage_retrieve(cfg, dates, max_windows):
 
     retr = isara_bridge.run_all_windows(wdf, grid, cfg)
     res = results.assemble(wdf, retr, grid, cfg)
+    print("  propagating uncertainties (ensemble-gain)", flush=True)
+    unc = uncertainty_propagation.run_all(res, grid, cfg)
     bundle = _paths(cfg)["bundle"]
-    results.save_checkpoint(res, grid, cfg, bundle)
+    results.save_checkpoint(res, grid, cfg, bundle, uncertainty=unc)
     print(f"  saved bundle {bundle}", flush=True)
-    return {"res": res, "grid": grid, "df": df, "masks": masks, "meta": meta}
+    return {"res": res, "grid": grid, "df": df, "masks": masks, "meta": meta,
+            "unc": unc}
 
 
 def stage_export(cfg, state=None):
@@ -111,14 +115,16 @@ def stage_export(cfg, state=None):
         with open(bundle, "rb") as f:
             b = pickle.load(f)
         res, grid = b["results"], b["grid"]
+        unc = b.get("uncertainty")
         df, meta = pipeline.load_inputs(cfg)
         optical = filtering.derive_optical_columns(df, cfg)
         masks = filtering.row_qc(df, optical, cfg)
     else:
         res, grid, df, masks, meta = (state[k] for k in ("res", "grid", "df", "masks", "meta"))
+        unc = state.get("unc")
 
     out = netcdf_export.export(df, masks, res, grid, cfg, meta=meta,
-                               path=_paths(cfg)["netcdf"])
+                               path=_paths(cfg)["netcdf"], uncertainty=unc)
     print(f"  wrote {out}", flush=True)
     return out
 

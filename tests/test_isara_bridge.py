@@ -128,6 +128,7 @@ def test_lut_built_per_pattern_and_passed(monkeypatch, tmp_path):
 
     cfg = make_cfg(tmp_path)
     cfg.isara.use_lut = True
+    cfg.isara.forward_engine = "mopsmap"  # the LUT path only exists for this engine
     cfg.isara.lut_min_pattern_count = 1
     cfg.paths.output_dir = str(tmp_path)
     wdf, grid = make_windows(cfg)

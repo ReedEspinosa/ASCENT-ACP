@@ -83,7 +83,9 @@ def test_psd_compacted_with_radius(exported):
     # synthetic SMPS/LAS columns have unknown titles -> land in 'other'
     ds = o["/observations/other"].to_dataset()
     assert "dndlogd_smps" in ds and "dndlogd_las" in ds
-    assert ds.dndlogd_smps.dims == ("flight", "time", "size_smps")
+    # the size dim is named after diameter_smps so it is a coordinate variable
+    assert ds.dndlogd_smps.dims == ("flight", "time", "diameter_smps")
+    assert ds.dndlogd_smps.attrs["units"] == "cm-3"
     # radius = diameter/2, ascending, from the packaged bin CSVs
     r = ds.radius_smps.values
     assert np.all(np.diff(r) > 0)

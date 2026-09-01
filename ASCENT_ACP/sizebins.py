@@ -31,9 +31,31 @@ class PSDGrid:
     dpu_um: np.ndarray
     columns: list  # merged-DataFrame column per slot, same order
     instrument: np.ndarray  # 'SMPS' or 'LAS' per slot
+    # impactor penetration per bin (1.0 everywhere when no impactor is
+    # configured); applied to the PSD fed to the RETRIEVAL only
+    penetration: np.ndarray = None
 
     def __len__(self):
         return len(self.dpg_um)
+
+
+def impactor_penetration(dpg_um, psd_cfg):
+    """Log-logistic impactor penetration evaluated at geometric diameters.
+
+    P(D_a) = 1/(1 + (D_a/D50)^s) with s = ln(5.25)/ln(gsd), so P = 0.5 at
+    D50 and 0.84/0.16 at D50/gsd and D50*gsd (a slope expressed as the
+    16-84% geometric standard deviation). Aerodynamic diameter from the
+    geometric/optical grid via D_a = dpg*sqrt(rho) (spheres, slip neglected).
+    Returns ones when impactor_d50_aero_um is 0 (no impactor).
+    """
+    dpg_um = np.asarray(dpg_um, float)
+    if psd_cfg.impactor_d50_aero_um <= 0:
+        return np.ones_like(dpg_um)
+    if psd_cfg.impactor_gsd <= 1.0:
+        raise ValueError("impactor_gsd must be > 1 (16-84% steepness)")
+    d_aero = dpg_um * np.sqrt(psd_cfg.impactor_rho_gcm3)
+    s = np.log(5.25) / np.log(psd_cfg.impactor_gsd)
+    return 1.0 / (1.0 + (d_aero / psd_cfg.impactor_d50_aero_um) ** s)
 
 
 def build_grid(df, psd_cfg):
@@ -65,7 +87,9 @@ def build_grid(df, psd_cfg):
         raise ValueError("Merged bin centers are not strictly increasing")
 
     cut = min(psd_cfg.psd_max_um, psd_cfg.inlet_cutoff_um)
-    keep = (dpg <= cut) & (dpg >= psd_cfg.smps_min_dp_um)
+    pen = impactor_penetration(dpg, psd_cfg)
+    keep = ((dpg <= cut) & (dpg >= psd_cfg.smps_min_dp_um)
+            & (pen >= psd_cfg.impactor_min_penetration))
     if keep.sum() < 2:
         raise ValueError(f"Fewer than 2 bins survive the {cut} um cut")
     return PSDGrid(
@@ -74,4 +98,5 @@ def build_grid(df, psd_cfg):
         dpu_um=dpu[keep],
         columns=[c for c, k in zip(cols, keep) if k],
         instrument=instr[keep],
+        penetration=pen[keep],
     )
