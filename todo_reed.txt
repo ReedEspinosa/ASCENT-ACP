@@ -391,3 +391,23 @@ GENERAL
   between); (c) dry-RRI dynamic range remains posterior-limited while a
   sizing nuisance stays in S -> NEXT STructural step: JOINT LAS+UHSAS
   retrieval to constrain sizing per window.
+
+- RRI INFORMATION CONTENT DIAGNOSED (2026-09-01, see
+  RRI_INFORMATION_CONTENT.md): per-window absolute dry-RRI is not
+  retrievable from magnitude closure (nuisances parallel to signal;
+  V8+ flat posterior is honest; V5/V7 dynamic range = relative contrast
+  on an uncertain absolute scale ~0.1 face value / ~0.035 anchored).
+  NOTE: dry_RRI_accepted_std in the netCDFs is grid-clipped (~0.0286)
+  and understates absolute uncertainty — document in NETCDF_OUTPUT_SPEC.
+  Path forward (ranked): (1) TSI backscatter fraction b — near-pure RRI
+  channel (+5% per half grid vs -0.7% per 5% sizing at 550) — request
+  raw Bs + uncorrected Sc from LARGE (email drafted); (2) forward-model
+  truncated TSI signal directly (drop A&O98 correction; invertible if
+  only corrected data available — confirm coefficient set with LARGE);
+  (3) SMPS-OPC overlap sizing check: confirmed SEAC4RS LAS bias
+  independently (+0.145 vs predicted +0.155) but UHSAS contradiction
+  (+0.27 overlap vs -0.03 closure) implies size-dependent error near
+  threshold — needs efficiency curves before use as anchor; (4) joint
+  LAS+UHSAS gated on (3). AMS-derived RI excluded (circular with the
+  project's optical-vs-chemical comparison goal). Hierarchical
+  common-vs-per-window error split HELD as an option, not implemented.
