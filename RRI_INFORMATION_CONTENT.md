@@ -93,14 +93,24 @@ truncated geometry give the same answer):
 | sizing +2% lnD      | -1.5%, -0.1%, -0.2%    |
 | concentration +10%  |  0, 0, 0               |
 
-At 550/700, b is a nearly pure RRI channel (strong response, opposite-sign
-weak sizing crosstalk, exact concentration immunity, calibration mostly
-cancelling in the ratio); the blue-heavy sizing response means the SPECTRAL
-SHAPE of b additionally separates sizing from RRI. Caveats: b is maximally
-sensitive to non-sphericity (needs a coarse/dust screen) and to IRI
-(well-constrained by PSAP; retrieve jointly). BLOCKER: neither ACTIVATE nor
-SEAC4RS archived the Bs channels — raw backscatter must be requested from
-LARGE.
+In THIS window, b at 550/700 is a nearly pure RRI channel (strong response,
+opposite-sign weak sizing crosstalk, exact concentration immunity,
+calibration mostly cancelling in the ratio). POPULATION CAVEAT
+(`scripts/backscatter_population.py`, 200 windows spanning the ACTIVATE
+Deff distribution 0.16-0.27 um): this window is an optimistic outlier. By
+size-parameter scaling (b depends on x = pi*D/lambda), a PSD ~20% coarser
+moves the sizing response from the blue into the green/red channels, and
+PSD shape matters beyond Deff. Across the population, sizing +5% lnD moves
+b at 550/700 by -4.7% in the median window (93% of windows exceed 2% at
+550), and the median RRI response at 550 is +2.1% per +0.04 (IQR
++1.2 to +3.9), not this window's +5.4%. The lever survives anyway because
+the SIGN structure is robust: sizing moves b OPPOSITE to RRI while moving
+the magnitude channels WITH RRI, so the joint [Sc, b] system separates
+them even where b alone cannot (see Fisher population stats below).
+Caveats: b is maximally sensitive to non-sphericity (needs a coarse/dust
+screen) and to IRI (well-constrained by PSAP; retrieve jointly). BLOCKER:
+neither ACTIVATE nor SEAC4RS archived the Bs channels — raw backscatter
+must be requested from LARGE.
 
 Three-way linear Fisher comparison (`scripts/fisher_three_way.py`; median
 ACTIVATE window Jacobians from the tables above; marginal
@@ -116,17 +126,23 @@ result ~0.067, anchoring the linearization):
 |                                          | (SEAC4RS LAS 12.5% lnD)       |
 | current V10 (honest covariance)          | 0.078 ACTIVATE / 0.114        |
 |                                          | SEAC4RS (grid-clips to 0.0286)|
-| current + 3-lambda backscatter fraction  | 0.020-0.026 (b noise 3-5%),   |
+| current + 3-lambda backscatter fraction  | 0.028 median, IQR 0.024-0.033 |
+|                                          | over 200 windows (b noise 4%);|
 |                                          | ~identical for both campaigns |
 
 Reading: rows 1-2 are the SAME information honestly vs dishonestly
 accounted — original ISARA's 0.012 launders the unmodeled commons into
 false precision (and up to ~0.21 of silent bias for the SEAC4RS LAS).
-Row 3 is genuinely new information: the b channels alone (full PSD forward
-model, magnitude channels dropped, all nuisances retained — 5% lnD sizing,
-10% conc, 8% cal, 2% b-common) give sigma_RRI = 0.024/0.028/0.032 at
-b noise 3/4/5%, and doubling the sizing residual to SEAC4RS's 10% moves
-the combined answer by only ~0.0001 because b is sizing-immune at 550/700.
+Row 3 is genuinely new information. Population Fisher over 200 windows
+(per-window Jacobians, all nuisances retained — 5% lnD sizing, 10% conc,
+8% cal, 2% b-common, b noise 4%): sigma_RRI(sca+b) p5/p50/p95 =
+0.017/0.028/0.039 vs sca-only 0.060/0.074/0.080; 15% of windows exceed
+0.035; coarser PSDs do BETTER (corr(Deff, sigma) = -0.78). On the
+single optimistic fingerprint window, b channels alone give 0.024-0.032
+(b noise 3-5%) and doubling the sizing residual to SEAC4RS's 10% moves
+the answer by ~0.0001; across the population the joint system (not b
+alone) is what carries the separation — see the sign-structure note in
+the fingerprint discussion above.
 
 NEW SOFT DIRECTION: the RRI response in b is itself nearly spectrally
 flat, so a COMMON b-calibration error plays the role the neph magnitude
