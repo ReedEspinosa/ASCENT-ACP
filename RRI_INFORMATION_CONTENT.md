@@ -96,12 +96,52 @@ truncated geometry give the same answer):
 At 550/700, b is a nearly pure RRI channel (strong response, opposite-sign
 weak sizing crosstalk, exact concentration immunity, calibration mostly
 cancelling in the ratio); the blue-heavy sizing response means the SPECTRAL
-SHAPE of b additionally separates sizing from RRI. Rough IC: b measured to
-3-5% per window -> per-window absolute sigma_RRI ~0.02-0.03, independent of
-the magnitude commons. Caveats: b is maximally sensitive to non-sphericity
-(needs a coarse/dust screen) and to IRI (well-constrained by PSAP; retrieve
-jointly). BLOCKER: neither ACTIVATE nor SEAC4RS archived the Bs channels —
-raw backscatter must be requested from LARGE.
+SHAPE of b additionally separates sizing from RRI. Caveats: b is maximally
+sensitive to non-sphericity (needs a coarse/dust screen) and to IRI
+(well-constrained by PSAP; retrieve jointly). BLOCKER: neither ACTIVATE nor
+SEAC4RS archived the Bs channels — raw backscatter must be requested from
+LARGE.
+
+Three-way linear Fisher comparison (`scripts/fisher_three_way.py`; median
+ACTIVATE window Jacobians from the tables above; marginal
+sigma_RRI = 1/sqrt(g' S^-1 g) with nuisance outer products in S; the
+sca-only current-method row reproduces the posterior_ic_study whitened
+result ~0.067, anchoring the linearization):
+
+| method                                   | per-window sigma_RRI          |
+|------------------------------------------|-------------------------------|
+| original ISARA (diagonal, fixed cal-RI)  | 0.012 reported; hidden        |
+|                                          | systematic ~0.07 (ACTIVATE,   |
+|                                          | 3% lnD cal-RI) to ~0.21       |
+|                                          | (SEAC4RS LAS 12.5% lnD)       |
+| current V10 (honest covariance)          | 0.078 ACTIVATE / 0.114        |
+|                                          | SEAC4RS (grid-clips to 0.0286)|
+| current + 3-lambda backscatter fraction  | 0.020-0.026 (b noise 3-5%),   |
+|                                          | ~identical for both campaigns |
+
+Reading: rows 1-2 are the SAME information honestly vs dishonestly
+accounted — original ISARA's 0.012 launders the unmodeled commons into
+false precision (and up to ~0.21 of silent bias for the SEAC4RS LAS).
+Row 3 is genuinely new information: the b channels alone (full PSD forward
+model, magnitude channels dropped, all nuisances retained — 5% lnD sizing,
+10% conc, 8% cal, 2% b-common) give sigma_RRI = 0.024/0.028/0.032 at
+b noise 3/4/5%, and doubling the sizing residual to SEAC4RS's 10% moves
+the combined answer by only ~0.0001 because b is sizing-immune at 550/700.
+
+NEW SOFT DIRECTION: the RRI response in b is itself nearly spectrally
+flat, so a COMMON b-calibration error plays the role the neph magnitude
+calibration plays for total scattering. Sweep (b noise 4%): sigma_RRI =
+0.019 / 0.023 / 0.027 / 0.037 / 0.048 at b-common 1/2/3/5/8%. So the
+backscatter plan delivers ~0.02 only if the backscatter-shutter common
+mode is held to ~2%. There is a strong instrument argument that it can
+be: for Rayleigh scatterers b = 0.5 exactly by symmetry, so the span-gas
+calibrations LARGE already runs constrain b ABSOLUTELY on theoretical
+grounds — a check that does not exist for the magnitude channels. Ask
+LARGE whether their span-gas records include the Bs channels.
+
+Fisher caveats: linearized about one median window; single-parameter
+marginal (IRI cross-talk assumed PSAP-handled, non-sphericity assumed
+screened); b measurement noise 3-5% is an estimate pending real Bs data.
 
 ### 4.2 Direct instrument-signal forward modeling (no truncation correction)
 
@@ -147,8 +187,13 @@ SEAC4RS LAS bias would otherwise poison the joint fit.
 ## 5. Data requests to LARGE
 
 1. Raw (uncorrected) TSI-3563 total scattering AND backscatter channels
-   (Bs450/550/700), dry and humidified, ACTIVATE + SEAC4RS.
-2. Which A&O98 coefficient set was applied to the archived data.
+   (Bs450/550/700), dry and humidified, ACTIVATE + SEAC4RS. Also whether
+   span-gas calibration records include the Bs channels (Rayleigh b = 0.5
+   exactly -> absolute constraint on the b common mode, see 4.1).
+2. The exact A&O98 recipe applied to the archived data: which coefficient
+   set (sub-um vs no-cut, per channel for SEAC4RS where both total and sub
+   were archived), which Angstrom wavelength pair, corrected-vs-uncorrected
+   Angstrom convention, and low-signal handling.
 3. Any LAS/UHSAS threshold-region (0.10-0.25 um) counting-efficiency or
    sizing characterization; SMPS top-of-scan behavior.
 4. Measured impactor penetration curve (existing todo item).
