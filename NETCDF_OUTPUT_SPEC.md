@@ -89,6 +89,22 @@ yet)**. Supersedes the flat single-group v1 file formerly produced by
     carries a comment documenting the sign convention. 2-flight test:
     kappa success 56 -> 133/133; 83 windows in [-0.032, 0), all with
     E < 1; no pile-up at the -0.1 floor.
+14. **IRI posterior fix (2026-09-03, code only, ISARA_code)**: chi2-wmean
+    weights are corrected by the per-candidate grid cell width (uniform
+    quadrature measure) so the quasi-zero IRI decade points no longer act
+    as a density-spike prior; IRI is reported as the posterior MEDIAN
+    (boundary-robust for the one-sided IRI >= 0 axis); IRI ladder gains
+    2.5e-4/5e-4/7.5e-4. Diagnosed from absorption closure stratified by
+    IRI (ACTIVATE 2020: 0.56 low-IRI tercile vs 0.87 high — the pulled
+    mean under-forecast absorption in clean air; same truncation disease
+    as kappa-at-0). RRI/kappa stay posterior means (uniform grids,
+    no-op). 2-flight SEAC4RS: abs closure 0.558 -> 0.638, low-IRI
+    depression eliminated. Context: RRI posterior std per window is
+    0.0286 vs uniform-grid prior std 0.0287 — the per-window likelihood
+    is flat in RRI (nuisance-parallel), so the reported RRI is the grid
+    prior mean (rri_min+rri_max)/2 with ~±0.002 tilt; the SSA offsets in
+    the v4 files are the sca-vs-abs closure differential, not spectral-
+    flatness or IRI errors.
 
 ## v4 addendum (2026-08) — layout + science changes on top of v3
 
