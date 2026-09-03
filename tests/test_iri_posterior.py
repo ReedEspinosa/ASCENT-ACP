@@ -79,6 +79,18 @@ def test_interior_iri_recovered(isara):
     assert res["dry_IRI_unitless"] == pytest.approx(5e-3, abs=1e-3)
 
 
+def test_iri_median_is_continuous_not_grid_snapped(isara):
+    # the continuous (interpolated) median must track sub-grid-step changes
+    # in the truth and must not return grid nodes for off-node truths
+    grid = np.hstack((0, 1e-7, 1e-6, 1e-5, 1e-4, 2.5e-4, 5e-4, 7.5e-4,
+                      np.arange(0.001, 0.031, 0.001)))
+    outs = [run_cri(isara, iri_true=t, sigma_iri=5e-4)["dry_IRI_unitless"]
+            for t in (4.3e-3, 4.6e-3)]
+    assert outs[0] != outs[1]                      # sub-step sensitivity
+    for o in outs:
+        assert not np.isclose(grid, o, rtol=0, atol=1e-9).any()  # off-node
+
+
 def test_flat_rri_posterior_stays_at_prior_mean(isara):
     # scattering is CRI-independent in this model -> RRI likelihood flat ->
     # posterior mean = uniform-grid prior mean (1.515), std ~ prior std

@@ -58,8 +58,11 @@ per-candidate GRID CELL WIDTH (quadrature measure), so grid density is
 resolution, not prior — without this, the five quasi-zero IRI points
 acted as a density spike that pulled the posterior-mean IRI low and left
 absorption under-forecast in clean air (ACTIVATE 2020 low-IRI tercile
-closed at 0.56). Point estimates: RRI and kappa = posterior mean; IRI =
-posterior MEDIAN (boundary-robust on the one-sided IRI >= 0 axis).
+closed at 0.56). Point estimates: RRI and kappa = posterior mean; IRI = CONTINUOUS posterior
+median (piecewise-linear CDF over the grid cells, interpolated 0.5
+crossing — boundary-robust on the one-sided IRI >= 0 axis without
+snapping to grid nodes; a discrete quantile had quantized IRI at the
+0.001 grid spacing).
 
 The implicit priors this creates: RRI uniform on [rri_min, rri_max]
 (mean 1.515, std 0.0287) — and since the per-window likelihood is flat
