@@ -1134,9 +1134,13 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                       "parameterization (synthesized, not directly measured)"),
         "comment": ("SC_calcRH = SC_measRH / exp(gamma*ln((100-calcRH)/(100-measRH))); "
                     "gamma is the LARGE-derived hygroscopic growth exponent. This "
-                    "variable is the fitting target of the kappa retrieval, so "
-                    "wet_calculated scattering matches it within 1% by construction "
-                    "wherever kappa succeeded (not an independent validation).")})
+                    "variable is the fitting target of the kappa retrieval (not an "
+                    "independent validation). Under kappa_objective='ratio' (see "
+                    "/windowed/retrievals) the fitted quantity is the enhancement: "
+                    "scattering_wet_calculated/scattering_dry_calculated matches "
+                    "this variable divided by scattering_dry_measured; under "
+                    "'absolute' the wet_calculated coefficient matched it "
+                    "directly.")})
 
     if f"Sc{wet_w}_amb_mean" in results_df:
         w.scatter2d(go, "scattering_ambient_synthesized",
@@ -1184,7 +1188,8 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
         ("refractive_index_imag", "dry_IRI_unitless",
          f"ISARA-retrieved imaginary part of the dry complex refractive index; {cri_note}"),
         ("kappa", "kappa_unitless",
-         "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk value)"),
+         "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk "
+         "value; fit objective in group attribute kappa_objective)"),
         ("cri_n_accepted", "dry_CRI_n_accepted_unitless",
          "number of CRI grid candidates matching the measurements within "
          "tolerance (reduced chi^2 <= 1 under the chi2-wmean estimator)"),
@@ -1306,6 +1311,41 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                                 "(absorption is only measured dry)"
                                 if state != "dry" and quant == "abs_coef" else ""))},
                 scale=_MM_PER_M if is_coef else 1.0)
+
+    # dry scattering closure ratio: forward-modeled (retrieved CRI, sizing-
+    # corrected PSD) over measured, per dry scattering channel. Diagnoses the
+    # PSD amplitude error the optical closure sees (sizer under/overcounting).
+    def closure_rows(x):
+        cal = results_df[f"dry_cal_sca_coef_{x}_m-1"].to_numpy(float) * _MM_PER_M
+        meas = results_df[f"Sc{x}_dry_mean"].to_numpy(float)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            ratio = np.where(meas > 0, cal / meas, np.nan)
+        return _broadcast(ratio, win_idx)
+
+    kappa_objective = ("ratio" if any(str(c).startswith("kappa_dry_closure_")
+                                      for c in results_df.columns) else "absolute")
+    w.scatter3d(gp, "scattering_dry_closure_ratio",
+                (closure_rows(x)
+                 if (x in ch.dry_wvl_sca
+                     and f"dry_cal_sca_coef_{x}_m-1" in results_df
+                     and f"Sc{x}_dry_mean" in results_df) else None
+                 for x in wvls), "wavelength", attrs={
+        "units": "1", "cell_methods": cm,
+        "long_name": ("dry scattering closure ratio "
+                      "(MOPSMAP-calculated / measured)"),
+        "comment": ("QC diagnostic: the forward-modeled dry scattering from "
+                    "the (sizing-corrected) PSD at the retrieved CRI, divided "
+                    "by the nephelometer measurement. Values far from 1 "
+                    "indicate PSD amplitude errors (optical-sizer counting/"
+                    "sizing biases) that the bounded CRI grid cannot absorb. "
+                    f"kappa_objective='{kappa_objective}': "
+                    + ("kappa fits the wet/dry scattering ENHANCEMENT, so "
+                       "this amplitude error cancels out of kappa"
+                       if kappa_objective == "ratio" else
+                       "kappa fit the ABSOLUTE humidified coefficient, so "
+                       "this amplitude error leaked directly into kappa "
+                       "(closure < 1 inflates kappa, > 1 deflates it)"))})
+    w.group_attrs(gp, {"kappa_objective": kappa_objective})
 
 
 def _write_uncertainty(w, unc_df, grid, cfg, win_idx):

@@ -55,6 +55,25 @@ yet)**. Supersedes the flat single-group v1 file formerly produced by
     next pipeline run to recover AMS composition.
 11. Deferred (in todo_reed.txt): replacing the repeat-at-cadence windowed
     representation with a true `window` dimension.
+12. **Ratio kappa objective (2026-09-03, code only — no campaign reprocessed
+    yet)**: `isara.kappa_objective = "ratio"` (new default) makes the kappa
+    stage fit the forward-modeled scattering ENHANCEMENT (wet/dry at the
+    retrieved CRI) to the synthesized-wet/measured-dry target instead of
+    the absolute wet coefficient. Under the old absolute fit, with the CRI
+    posterior bounded by its grid/prior, kappa was the only remaining
+    amplitude degree of freedom and absorbed the full dry-closure error:
+    SEAC4RS LAS closure ~0.61 inflated kappa to ~0.30 median while UHSAS
+    closure ~1.06 gave ~0.05 — the entire LAS/UHSAS kappa split. The ratio
+    framing is what the wet_sigma budget and the uncertainty module already
+    assumed (calibration and PSD nuisances cancel in the wet/dry pair), so
+    it also makes the retrieval self-consistent. New QC diagnostic
+    `/windowed/retrievals/scattering_dry_closure_ratio(flight, time,
+    wavelength)` = MOPSMAP-calculated/measured dry scattering; group attr
+    `kappa_objective` records which fit produced the file (derived from
+    bundle evidence, so old absolute bundles re-exported with new code are
+    labeled correctly). ISARA_code: `Retr_PSD(kappa_fit=...)`,
+    `Retr_kappa(dry_closure=...)`, output key
+    `kappa_dry_closure_{wvl}_unitless`.
 
 ## v4 addendum (2026-08) — layout + science changes on top of v3
 

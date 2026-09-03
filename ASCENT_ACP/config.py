@@ -212,6 +212,17 @@ class IsaraConfig:
     # scripts/estimator_study.py). 'linf-mean' = historical ISARA selection
     # (all channels inside tolerance / first-kappa-within-1%).
     estimator: str = "chi2-wmean"
+    # Kappa fit objective. 'ratio' (default) fits the forward-modeled
+    # scattering ENHANCEMENT (wet/dry at the retrieved CRI) to the
+    # synthesized-wet/measured-dry target, so PSD amplitude errors (sizer
+    # under/overcounting) cancel out of kappa. 'absolute' = pre-V3 behavior,
+    # fitting the wet coefficient directly: with the CRI bounded by its
+    # grid, kappa was the only remaining amplitude degree of freedom and
+    # absorbed the full dry-closure error (SEAC4RS 2026-09: LAS closure
+    # ~0.61 inflated kappa to ~0.30; UHSAS closure ~1.06 gave ~0.05).
+    # 'ratio' is also the framing the wet_sigma budget and the uncertainty
+    # module already assume (calibration/PSD nuisances cancel in the ratio).
+    kappa_objective: str = "ratio"
 
 
 @dataclass

@@ -183,6 +183,7 @@ def build_retr_kwargs(row, grid, cfg):
         "path_mopsmap_executable": cfg.paths.mopsmap_executable,
         "forward_engine": cfg.isara.forward_engine,
         "estimator": cfg.isara.estimator,
+        "kappa_fit": cfg.isara.kappa_objective,
     }
     if cfg.isara.chi2_sigma in ("instrument", "instrument-cov"):
         kwargs.update(instrument_sigmas(row, cfg))

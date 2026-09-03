@@ -432,3 +432,17 @@ GENERAL
   losing trivial second-by-second alignment with /observations (would
   need an index variable mapping windows->time, and all downstream
   readers/plots updated). Revisit at the next breaking format bump.
+- RATIO KAPPA OBJECTIVE SHIPPED IN CODE (2026-09-03, no files reprocessed
+  yet): isara.kappa_objective='ratio' (new default) fits the modeled
+  wet/dry scattering ENHANCEMENT to the synthesized-wet/measured-dry
+  target, so PSD amplitude errors cancel out of kappa (under 'absolute'
+  they leaked in whole: SEAC4RS LAS dry closure ~0.61 -> kappa ~0.30 vs
+  UHSAS ~1.06 -> ~0.05). 2-flight A/B (Aug 6+8, Rim Fire smoke): LAS and
+  UHSAS kappa now agree to |diff| ~0.001, r=1.000 (was 0.11, r=0.80).
+  New QC: /windowed/retrievals/scattering_dry_closure_ratio + group attr
+  kappa_objective. NOTE: kappa "success" counts DROP under 'ratio' —
+  windows whose synthesized target has E = wet/dry < 1 (negative gamma;
+  common in thick smoke) now honestly fail instead of being absorbed by
+  the amplitude gap. FUTURE: for E slightly < 1, consider reporting a
+  kappa=0 posterior upper limit (widen wet_sigma by the gamma-
+  parameterization noise near f~1) instead of a hard failure.
