@@ -449,3 +449,17 @@ GENERAL
   pile-up at the floor); humidified-state products gated at kappa >= 0;
   gf^3 >= 0.3 candidate guard in ISARA excludes complex/divergent
   growth at any RH.]
+- v5 REPROCESSED 2026-09-03: SEAC4RS V3 (both variants; re-merged V2
+  pickle WITH AMS species) + ACTIVATE 2020/2021 V11. Second merge bug
+  found during the rerun: the campaign merge prefixes columns with the
+  instrument title BEFORE time parsing, so the header-units veto/rescue
+  never fired (species eaten as Local Time again despite the single-file
+  fix verifying clean) -> suffix-aware units lookup + regression tests
+  (icartt_read_and_merge 3087a97). Campaign kappa: LAS 0.090 / UHSAS
+  0.084 medians; both vs DASH-SP r~0.4, common -0.10 offset (gamma-vs-GF
+  question, not retrieval). MINOR: run.py evaluates stage checkpoints up
+  front, so a fresh SEAC4RS merge in the same invocation force-runs the
+  align stage which crashes (KeyError 'peak_r' -- clock alignment was
+  never configured for SEAC4RS); workaround is a second plain
+  invocation. Consider an align-skip config flag or lazy checkpoint
+  re-evaluation.
