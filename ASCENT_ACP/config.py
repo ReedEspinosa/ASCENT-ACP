@@ -223,6 +223,18 @@ class IsaraConfig:
     # 'ratio' is also the framing the wet_sigma budget and the uncertainty
     # module already assume (calibration/PSD nuisances cancel in the ratio).
     kappa_objective: str = "ratio"
+    # Lower edge of the kappa search grid (upper edge 1.4, step 0.001).
+    # Slightly negative (default -0.10) so windows whose synthesized
+    # wet/dry enhancement target is < 1 (gamma noise around f~1; common in
+    # thick smoke) retrieve an honest near-zero/negative EFFECTIVE kappa
+    # instead of hard-failing, and so the chi2-wmean posterior is not
+    # truncated at 0 (truncation biases near-zero kappa high). Negative
+    # kappa is statistical, not literal water loss: humidified-state
+    # products (wet/ambient PSDs, CRI, growth factors) are only computed
+    # for kappa >= 0, and ISARA excludes grid candidates whose gf^3 would
+    # fall below 0.3 at the fit RH (complex/divergent growth). At the 80%
+    # fit RH, kappa = -0.1 gives gf^3 = 0.6 -- safely real.
+    kappa_min: float = -0.10
 
 
 @dataclass

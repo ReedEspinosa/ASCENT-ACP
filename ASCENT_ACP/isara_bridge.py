@@ -184,6 +184,9 @@ def build_retr_kwargs(row, grid, cfg):
         "forward_engine": cfg.isara.forward_engine,
         "estimator": cfg.isara.estimator,
         "kappa_fit": cfg.isara.kappa_objective,
+        # slightly-negative floor (see IsaraConfig.kappa_min); same upper
+        # edge/step as ISARA.default_kappa_grid
+        "kappa_p": np.arange(cfg.isara.kappa_min, 1.40, 0.001),
     }
     if cfg.isara.chi2_sigma in ("instrument", "instrument-cov"):
         kwargs.update(instrument_sigmas(row, cfg))

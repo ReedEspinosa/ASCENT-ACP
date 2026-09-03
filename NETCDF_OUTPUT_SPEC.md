@@ -74,6 +74,21 @@ yet)**. Supersedes the flat single-group v1 file formerly produced by
     labeled correctly). ISARA_code: `Retr_PSD(kappa_fit=...)`,
     `Retr_kappa(dry_closure=...)`, output key
     `kappa_dry_closure_{wvl}_unitless`.
+13. **Negative-kappa grid extension (2026-09-03, code only)**:
+    `isara.kappa_min = -0.10` (new default) extends the kappa search grid
+    slightly negative so windows whose synthesized wet/dry enhancement
+    target is < 1 (gamma noise around f~1; thick smoke) retrieve an
+    honest EFFECTIVE near-zero/negative kappa instead of hard-failing,
+    and so the chi2-wmean posterior is not truncated (biased high) at 0.
+    Negative kappa is statistical, not literal water loss: humidified-
+    state products (dndlogdp_wet/ambient, wet/ambient CRI, growth
+    factors) are computed only for kappa >= 0 (NaN otherwise, attempt
+    flag still 2), and ISARA excludes grid candidates whose kappa-Kohler
+    gf^3 falls below 0.3 at the fit RH (gf^3 <= 0 would be complex; small
+    gf^3 diverges in the water-volume-mixing RI). The kappa variable
+    carries a comment documenting the sign convention. 2-flight test:
+    kappa success 56 -> 133/133; 83 windows in [-0.032, 0), all with
+    E < 1; no pile-up at the -0.1 floor.
 
 ## v4 addendum (2026-08) — layout + science changes on top of v3
 

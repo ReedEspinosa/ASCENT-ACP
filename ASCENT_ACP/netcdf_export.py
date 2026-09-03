@@ -1224,8 +1224,19 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
          "kappa-Kohler diameter growth factor of the ambient state (at rh_ambient)"),
     ]:
         if col in results_df:
-            w.scatter2d(gp, var, col_rows(col),
-                        attrs={"units": "1", "long_name": long_name, "cell_methods": cm})
+            attrs = {"units": "1", "long_name": long_name, "cell_methods": cm}
+            if var == "kappa":
+                attrs["comment"] = (
+                    "the search grid extends slightly negative (floor "
+                    "isara.kappa_min, default -0.1): negative values are "
+                    "EFFECTIVE, capturing windows whose synthesized wet/dry "
+                    "enhancement target is below 1 (gamma-parameterization "
+                    "noise around f~1, particle restructuring); they are "
+                    "consistent with zero hygroscopic growth, not literal "
+                    "water loss. Humidified-state products (dndlogdp_wet/"
+                    "ambient, wet/ambient CRI and growth factors) are only "
+                    "computed for kappa >= 0.")
+            w.scatter2d(gp, var, col_rows(col), attrs=attrs)
 
     for col, var in [("attempt_flag_CRI_unitless", "attempt_flag_cri"),
                      ("attempt_flag_kappa_unitless", "attempt_flag_kappa")]:
@@ -1238,9 +1249,11 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                 "flag_meanings": "not_attempted attempted_but_failed success",
                 "cell_methods": cm})
 
-    # humidified PSDs, remapped onto the dry bin grid (surface-conserving)
+    # humidified PSDs, remapped onto the dry bin grid (surface-conserving);
+    # negative (effective) kappa is not literal water uptake -> no grown PSD
     if "kappa_unitless" in results_df:
         kappa = results_df["kappa_unitless"].to_numpy(float)
+        kappa = np.where(kappa < 0, np.nan, kappa)
         psd = results_df[[psd_col_name(d) for d in grid.dpg_um]].to_numpy(float)
         psd_states = [("wet", np.full(len(results_df), float(cfg.filters.wet_rh)))]
         if "RH_amb_mean" in results_df:

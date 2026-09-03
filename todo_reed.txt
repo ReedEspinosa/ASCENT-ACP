@@ -443,6 +443,9 @@ GENERAL
   kappa_objective. NOTE: kappa "success" counts DROP under 'ratio' —
   windows whose synthesized target has E = wet/dry < 1 (negative gamma;
   common in thick smoke) now honestly fail instead of being absorbed by
-  the amplitude gap. FUTURE: for E slightly < 1, consider reporting a
-  kappa=0 posterior upper limit (widen wet_sigma by the gamma-
-  parameterization noise near f~1) instead of a hard failure.
+  the amplitude gap. [RESOLVED 2026-09-03: isara.kappa_min = -0.10 grid
+  extension -- E<1 windows now retrieve an effective negative kappa
+  (2-flight test: 133/133 success, 83 windows kappa in [-0.032, 0), no
+  pile-up at the floor); humidified-state products gated at kappa >= 0;
+  gf^3 >= 0.3 candidate guard in ISARA excludes complex/divergent
+  growth at any RH.]
