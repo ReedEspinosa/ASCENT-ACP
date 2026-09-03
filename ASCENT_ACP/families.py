@@ -38,14 +38,28 @@ def _sanitize(title):
 def assign_families(columns, family_map, titles=None):
     """Map each column to (family, title) by longest-prefix instrument title.
 
-    Title candidates come from ``family_map``'s ``title_to_family`` keys when a
-    map is given, otherwise from ``titles`` (e.g. the meta ``Data_Info`` keys).
-    ``family`` is the mapped family (map present), the sanitized title (no map
-    but title matched), or ``"other"`` with the column's leading token when no
-    title prefixes the column.
+    Title candidates are the union of ``family_map``'s ``title_to_family``
+    keys and ``titles`` (the FULL cleaned instrument titles, e.g. the meta
+    ``Data_Info`` keys / header title_cleans). Map keys may be abbreviations
+    of the full title ("Non-refractory" for "Non-refractory__chemical_
+    speciated_..."): a full title inherits the family of the longest map key
+    that prefixes it. Returning the FULL matched title lets the exporter
+    strip the complete instrument prefix from variable names (a map-key-only
+    match used to leave residue like 'chemical_speciated_..._AMS_Starttime').
+
+    ``family`` is the mapped family (map present), the sanitized title (no
+    map but title matched), or ``"other"`` with the column's leading token
+    when no title prefixes the column.
     """
     if family_map:
-        candidates = list(family_map.get("title_to_family", {}))
+        keys = sorted(family_map.get("title_to_family", {}), key=len,
+                      reverse=True)
+        fam_of = {}
+        for t in set(keys) | set(titles or []):
+            key = next((k for k in keys if t == k or t.startswith(k)), None)
+            if key is not None:
+                fam_of[t] = family_map["title_to_family"][key]
+        candidates = list(fam_of)
     else:
         candidates = list(titles or [])
     candidates.sort(key=len, reverse=True)
@@ -56,7 +70,7 @@ def assign_families(columns, family_map, titles=None):
         if title is None:
             out[col] = ("other", col.split("_")[0])
         elif family_map:
-            out[col] = (family_map["title_to_family"][title], title)
+            out[col] = (fam_of[title], title)
         else:
             out[col] = (_sanitize(title), title)
     return out

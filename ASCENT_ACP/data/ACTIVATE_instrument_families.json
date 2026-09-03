@@ -3,7 +3,6 @@
   "family_order": [
     "optical",
     "microphysical",
-    "aerosol_size_dist",
     "aerosol_composition",
     "ccn",
     "cloud_probes",
@@ -12,8 +11,7 @@
   ],
   "family_long_name": {
     "optical": "In-situ aerosol optical measurements (TSI-3563 nephelometer, PSAP)",
-    "microphysical": "In-situ microphysical aerosol measurements",
-    "aerosol_size_dist": "In-situ dry aerosol size distributions (SMPS, TSI-3340 LAS)",
+    "microphysical": "In-situ aerosol microphysics: number concentrations and dry size distributions (CPCs; SMPS, TSI-3340 LAS)",
     "ccn": "Cloud condensation nuclei concentrations (DMT CCN counter)",
     "cloud_probes": "Cloud and aerosol size distributions (DMT CDP, DMT CAS, SPEC FCDP)",
     "trace_gas": "Trace-gas and water-vapor measurements (CO2, CH4, CO, O3, DLH H2O)",
@@ -21,11 +19,14 @@
     "other": "Unclassified instruments",
     "aerosol_composition": "In-situ aerosol composition (Aerodyne HR-ToF-AMS, PILS-IC)"
   },
+  "family_comment": {
+    "state_nav": "Latitude/longitude/altitude variables here duplicate the root latitude/longitude/altitude coordinates and are kept for provenance; the root variables are canonical."
+  },
   "title_to_family": {
     "In-situ_optical_aerosol_measurements_from_the_NASA_HU-25": "optical",
     "In-situ_microphysical_aerosol_measurements_from_the_NASA_HU-25": "microphysical",
-    "In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25": "aerosol_size_dist",
-    "In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25": "aerosol_size_dist",
+    "In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_HU-25": "microphysical",
+    "In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_HU-25": "microphysical",
     "Aerodyne_High-Resolution_Time-of-Flight_Mass_Spectrometer": "aerosol_composition",
     "Particle-into-Liquid_Sampler_+_Offline_Ion_Chromatography": "aerosol_composition",
     "In-situ_Cloud_Condensation_Nuclei_Concentrations_From_the_DMT_CCN_Counter_on_the_NASA_HU-25_Falcon": "ccn",

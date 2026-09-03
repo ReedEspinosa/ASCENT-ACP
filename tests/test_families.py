@@ -25,8 +25,8 @@ def test_every_column_in_exactly_one_family():
     assigned = families.assign_families(cols, fm)
     assert set(assigned) == set(cols)  # exactly one entry per column
     assert assigned[OPT + "_Sc550_submicron"][0] == "optical"
-    assert assigned[SMPS + "_SMPS_Bin01"][0] == "aerosol_size_dist"
-    assert assigned[LAS + "_LAS_Bin01"][0] == "aerosol_size_dist"
+    assert assigned[SMPS + "_SMPS_Bin01"][0] == "microphysical"  # sizers merged into microphysical (v5)
+    assert assigned[LAS + "_LAS_Bin01"][0] == "microphysical"
 
 
 def test_unknown_column_goes_to_other():

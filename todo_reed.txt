@@ -411,3 +411,24 @@ GENERAL
   LAS+UHSAS gated on (3). AMS-derived RI excluded (circular with the
   project's optical-vs-chemical comparison goal). Hierarchical
   common-vs-per-window error split HELD as an option, not implemented.
+
+- netCDF V5 LAYOUT SHIPPED IN CODE (2026-09-02, no files reprocessed yet):
+  group-local wavelength/size axes under /observations (PI-Neph
+  refractive_index_real/imag/ssa on a 473/532/671 axis + psd_dndlogr on a
+  GRASP radius axis), full instrument-title prefix stripping (restores
+  ICARTT units/descriptions for CRDS/AMS/SAGA/HDSP2/DLH), units
+  normalization (original kept in icartt_units), FCDP cbin/nbin folded
+  onto bin dims, aerosol_size_dist merged into microphysical, and
+  /windowed/observations/window_index for direct window-block recovery.
+  ALSO: icartt_read_and_merge fix — AMS-60S species (OA/SO4/NO3/NH4/Chl
+  *_lt_1um_* + prec/DL, 15 cols) were being silently dropped ('lt'
+  matched as Local Time) AND the AMS time base was garbage (a species
+  column picked as time); header-units veto + start/stop rescue fixed.
+  SEAC4RS requires a RE-MERGE, then rerun all campaigns -> V3/V11 files.
+- FUTURE (bigger windowed-layout option, deliberately deferred): replace
+  the repeat-at-native-cadence /windowed* representation with a true
+  'window' dimension (n_windows) carrying window_start/window_center
+  coordinates. Smaller files and direct window indexing, at the cost of
+  losing trivial second-by-second alignment with /observations (would
+  need an index variable mapping windows->time, and all downstream
+  readers/plots updated). Revisit at the next breaking format bump.
