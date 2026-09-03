@@ -2,8 +2,8 @@
   "campaign": "SEAC4RS",
   "year": "2013",
   "paths": {
-    "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/merged1sec_SEAC4RS_2013_V1.pkl",
-    "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/merged1sec_SEAC4RS_2013_V1_meta.pickle",
+    "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/merged1sec_SEAC4RS_2013_V2.pkl",
+    "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/merged1sec_SEAC4RS_2013_V2_meta.pickle",
     "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS/isara_output",
     "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
     "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
@@ -59,7 +59,7 @@
     "optical_cal_ri": 1.58
   },
   "output": {
-    "version": "V2"
+    "version": "V3"
   },
   "merge": {
     "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/SEAC4RS",

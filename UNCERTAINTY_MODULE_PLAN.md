@@ -207,3 +207,24 @@ measured-values rule, and the caveats above verbatim-ish.
 6. 2020 neph regime: fixed "pm10" f_rel = 0.09, or leg-dependent inflation
    to 0.15-0.25 when coarse-dominated (AE-based switch)?
 ```
+
+## Addendum 2026-09-03 (shipped in code; see THEORY.md secs 4-6)
+
+- `isara.n_scale_sigma`: the concentration-scale nuisance sigma is now
+  configurable and sizer-specific (LAS campaign configs 0.20 after the
+  SEAC4RS LAS dry-closure ~0.6 finding; UHSAS/default 0.10). It feeds
+  both the CRI-stage obs_cov and this module's secants/MAP.
+- MAP-fit PSD outputs: theta_hat (already computed here for the V9
+  joint-posterior accounting) is now also exported as point diagnostics
+  under /windowed/retrievals: `psd_scale_factor_fit` and
+  `scattering/absorption_dry_fit` = y0 + D' theta_hat (retrieved CRI +
+  MAP-adjusted PSD). Archived PSDs are never modified.
+- Kappa objective is now `ratio` (ISARA `kappa_fit`), so the wet/dry
+  cancellation this plan ASSUMED for the kappa sigma budget is enforced
+  by construction; the kappa grid extends to -0.10 (effective negative
+  kappa for enhancement targets < 1; humidified states gated at
+  kappa >= 0).
+- chi2-wmean posteriors now use quadrature (grid-cell-width) weights and
+  IRI is the posterior median — removes the quasi-zero IRI grid-density
+  prior that biased clean-air IRI low (absorption closure was
+  IRI-tercile-dependent before the fix).
