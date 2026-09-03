@@ -87,6 +87,7 @@
   },
   "isara": {
     "sizing_correction": true,
-    "sizing_residual_lnd": 0.1
+    "sizing_residual_lnd": 0.1,
+    "n_scale_sigma": 0.2
   }
 }

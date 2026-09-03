@@ -1460,6 +1460,49 @@ def _write_uncertainty(w, unc_df, grid, cfg, win_idx):
                         attrs={"units": "1", "long_name": long_name,
                                "cell_methods": cm})
 
+    # MAP-fit PSD point estimates -> /windowed/retrievals (they are fit
+    # diagnostics, not sigmas; sourced from the uncertainty stage's
+    # nuisance-MAP solve)
+    grt = "/windowed/retrievals"
+    fit_note = (
+        "first-order forward state at the MAP nuisance amplitudes: the "
+        "measured PSD adjusted by the concentration-scale factor "
+        "(psd_scale_factor_fit), the lnD shift (/windowed_uncertainty/"
+        "retrievals/sizing_scale_shift) and the impactor-parameter terms, "
+        "each conditioned on the fit residual under its prior "
+        f"(n_scale_sigma={cfg.isara.n_scale_sigma:g}, "
+        f"lnD sigma={cfg.isara.sizing_residual_lnd if cfg.isara.sizing_correction else 0.10:g}). "
+        "This is the coefficient the retrieval attributes to the aerosol; "
+        "its residual vs the measured coefficient should be at instrument "
+        "level when the nuisance model is adequate. The archived dndlogdp "
+        "is NOT modified.")
+    if "psd_scale_factor_unitless" in unc_df:
+        w.scatter2d(grt, "psd_scale_factor_fit",
+                    col_rows("psd_scale_factor_unitless"), attrs={
+            "units": "1", "cell_methods": cm,
+            "long_name": ("MAP multiplicative concentration-scale factor of "
+                          "the PSD inferred from the fit residual"),
+            "comment": ("1 + theta*sigma_N with prior sigma_N = "
+                        f"{cfg.isara.n_scale_sigma:g} (isara.n_scale_sigma); "
+                        "values below 1 mean the sizer counts more particles "
+                        "than the optical closure supports (and vice versa). "
+                        "Diagnostic only -- the archived PSD is not rescaled.")})
+    for name, col_by_wvl, quant in [
+            ("scattering_dry_fit", {x: f"Sc{x}_dry_fit" for x in ch.dry_wvl_sca},
+             "scattering"),
+            ("absorption_dry_fit", {x: f"Abs{x}_fit" for x in ch.dry_wvl_abs},
+             "absorption")]:
+        if any(c in unc_df for c in col_by_wvl.values()):
+            w.scatter3d(grt, name,
+                        (col_rows(col_by_wvl[x])
+                         if col_by_wvl.get(x) in unc_df else None
+                         for x in wvls), "wavelength", attrs={
+                "units": "Mm-1", "cell_methods": cm,
+                "long_name": (f"forward-modeled dry {quant} coefficient at "
+                              "the retrieved CRI and the MAP-adjusted (fit) "
+                              "PSD"),
+                "comment": fit_note})
+
     if "uncertainty_flag" in unc_df:
         vals = _broadcast(unc_df["uncertainty_flag"].to_numpy(float), win_idx)
         w.scatter2d(gp, "uncertainty_flag", vals, dtype=np.int32, fill=-1, attrs={

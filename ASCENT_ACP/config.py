@@ -203,6 +203,14 @@ class IsaraConfig:
     # geometry + convention residuals).
     sizing_correction: bool = False
     sizing_residual_lnd: float = 0.05
+    # 1-sigma of the correlated PSD concentration-scale nuisance (fraction
+    # of the forward coefficients). Sizer-specific: the LAS campaign
+    # configs set 0.20 (the SEAC4RS LAS dry closure of ~0.6 showed 0.10 is
+    # optimistic for LAS, though three campaigns cannot pin the true value
+    # and SEAC4RS may be a calibration outlier); UHSAS variants keep the
+    # 0.10 default. Feeds both the CRI-stage obs_cov and the uncertainty
+    # stage's nuisance MAP (psd_scale_factor_fit / *_dry_fit outputs).
+    n_scale_sigma: float = 0.10
     # nephelometer f_rel regime for sigma_scattering; "" = auto: "pm1" when
     # an impactor is configured (submicron variant), else "pm10".
     neph_regime: str = ""

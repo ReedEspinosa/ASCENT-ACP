@@ -105,6 +105,23 @@ yet)**. Supersedes the flat single-group v1 file formerly produced by
     prior mean (rri_min+rri_max)/2 with ~±0.002 tilt; the SSA offsets in
     the v4 files are the sca-vs-abs closure differential, not spectral-
     flatness or IRI errors.
+15. **Sizer-specific N-scale prior + MAP-fit PSD outputs (2026-09-03,
+    code only)**: `isara.n_scale_sigma` (default 0.10 = the old hard-
+    coded value; LAS campaign configs — SEAC4RS submicron, ACTIVATE
+    2020/2021 — set 0.20 after the SEAC4RS LAS dry-closure ~0.6 finding;
+    UHSAS keeps 0.10). Threads into the CRI-stage obs_cov and the
+    uncertainty stage (whose nuisance secants previously hard-coded
+    10%). New /windowed/retrievals outputs from the uncertainty stage's
+    existing nuisance-MAP solve (theta_hat): `psd_scale_factor_fit`
+    (MAP multiplicative concentration factor, 1 + theta*sigma_N),
+    `scattering_dry_fit` and `absorption_dry_fit` (first-order forward
+    coefficients at the retrieved CRI and the MAP-adjusted PSD — the
+    "fit PSD" state; residual vs measured should be at instrument level
+    when the nuisance model is adequate). Makes the implicit joint
+    retrieval over (CRI, PSD amplitude, lnD shift, impactor params)
+    explicit; the archived dndlogdp is never modified. The lnD MAP was
+    already exported as /windowed_uncertainty/retrievals/
+    sizing_scale_shift.
 
 ## v4 addendum (2026-08) — layout + science changes on top of v3
 

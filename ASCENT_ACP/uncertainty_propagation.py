@@ -71,7 +71,7 @@ def _coeffs(dpg_um, dnd_cm3, rri, iri, wvls):
 
 def cov_parts(dpg, dnd_weighted, raw_dnd, pen_params, sca_meas, abs_meas,
               sca_wvls, abs_wvls, wvls, window_s, regime,
-              ref_cri=(1.52, 0.005), lnd_sigma=None):
+              ref_cri=(1.52, 0.005), lnd_sigma=None, n_scale_sigma=None):
     """Full observation+model covariance S [(Mm^-1)^2], channel order
     [sca..., abs...]. Measurement part: per-channel white+floor diagonals
     plus rank-1 common-mode calibration terms (neph f_rel across the sca
@@ -120,8 +120,9 @@ def cov_parts(dpg, dnd_weighted, raw_dnd, pen_params, sca_meas, abs_meas,
     S += np.outer(v, v)
     # model nuisances (secant dy at the reference CRI)
     sD = np.exp(um.OPC_DLND if lnd_sigma is None else lnd_sigma)
+    sN = um.OPC_DN_SCALE if n_scale_sigma is None else n_scale_sigma
     dys = [(yvec(dpg * sD, dnd_weighted) - yvec(dpg / sD, dnd_weighted)) / 2,
-           0.10 * y0]
+           sN * y0]
     d50, gsd, rho = pen_params
     if d50 > 0:
         def pen_of(d50_, gsd_, rho_):
@@ -228,6 +229,7 @@ def _window_uncertainty_inner(it):
     rri, iri, kappa = it["rri"], it["iri"], it["kappa"]
     cols_fin = np.where(fin)[0]
     lnd_sigma = it.get("lnd_sigma") or um.OPC_DLND
+    n_scale = it.get("n_scale_sigma") or um.OPC_DN_SCALE
     rh_wet, rh_amb = it["rh_wet"], it["rh_amb"]
 
     # ---- candidate cloud, posterior, gain ----------------------------------
@@ -261,7 +263,7 @@ def _window_uncertainty_inner(it):
                               (it["d50"], it["gsd"], it["rho"]),
                               it["sca_meas"], it["abs_meas"], sca_w, abs_w,
                               wvls, it["window_s"], it["regime"],
-                              lnd_sigma=lnd_sigma)
+                              lnd_sigma=lnd_sigma, n_scale_sigma=n_scale)
         S = S_meas + D.T @ D
         S_inv = np.linalg.inv(S)
         r = y - y_meas
@@ -317,7 +319,7 @@ def _window_uncertainty_inner(it):
     # nuisance perturbation pairs, ORDER MATCHING cov_parts' D rows
     sDn = np.exp(lnd_sigma)
     pairs = [((dpg * sDn, dnd), (dpg / sDn, dnd)),
-             ((dpg, dnd * 1.10), (dpg, dnd * 0.90))]
+             ((dpg, dnd * (1.0 + n_scale)), (dpg, dnd * (1.0 - n_scale)))]
     if it["d50"] > 0:
         rawf = raw_fin_corr
 
@@ -350,6 +352,19 @@ def _window_uncertainty_inner(it):
         E2 = Sig_theta + np.outer(theta_hat, theta_hat)
         var_nuis = var_nuis + np.einsum("kp,kl,lp->p", dPmat, E2, dPmat)
         out["sizing_lnD_shift_unitless"] = float(theta_hat[0] * lnd_sigma)
+        ## MAP-fit PSD diagnostics: the nuisance-adjusted forward state at the
+        ## reported CRI. theta_hat is in 1-sigma units; row 1 of D is the
+        ## concentration-scale pattern (n_scale * y0), so the implied
+        ## multiplicative PSD factor is 1 + theta_hat[1]*n_scale. y_fit is the
+        ## first-order forward state at the MAP nuisances (all rows: lnD,
+        ## N-scale, impactor parameters) -- "the scattering the retrieval
+        ## actually attributes to the aerosol" given the PSD priors.
+        out["psd_scale_factor_unitless"] = float(1.0 + theta_hat[1] * n_scale)
+        y_fit = y0 + D.T @ theta_hat
+        for i2, wv in enumerate(sca_w):
+            out[f"Sc{wv}_dry_fit"] = float(y_fit[i2])
+        for j2, wv in enumerate(abs_w):
+            out[f"Abs{wv}_fit"] = float(y_fit[len(sca_w) + j2])
     else:
         for (pp, pm) in pairs:
             tot = np.zeros_like(p0)
@@ -451,6 +466,7 @@ def run_all(results_df, grid, cfg, progress=True):
             "rri_max": cfg.isara.rri_max,
             "marginalized": cfg.isara.chi2_sigma == "instrument-cov",
             "lnd_sigma": lnd_sigma,
+            "n_scale_sigma": cfg.isara.n_scale_sigma,
             "d50": cfg.psd.impactor_d50_aero_um,
             "gsd": cfg.psd.impactor_gsd,
             "rho": cfg.psd.impactor_rho_gcm3,

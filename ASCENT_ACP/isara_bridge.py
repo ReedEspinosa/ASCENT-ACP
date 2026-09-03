@@ -235,7 +235,8 @@ def observation_covariance(row, dndlogdp_weighted, grid, cfg):
         (cfg.psd.impactor_d50_aero_um, cfg.psd.impactor_gsd,
          cfg.psd.impactor_rho_gcm3),
         sca_meas, abs_meas, list(ch.dry_wvl_sca), list(ch.dry_wvl_abs),
-        wvls, float(cfg.window.window_s), regime, lnd_sigma=lnd_sigma)
+        wvls, float(cfg.window.window_s), regime, lnd_sigma=lnd_sigma,
+        n_scale_sigma=cfg.isara.n_scale_sigma)
     return S * 1e-12  # (Mm^-1)^2 -> (m^-1)^2
 
 
