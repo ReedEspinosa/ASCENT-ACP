@@ -68,6 +68,10 @@ def test_kwargs_units_and_shapes(fake_isara, tmp_path):
     assert kw["wet_sca_coef"][0] > 35.0e-6
     assert kw["dry_wvl"] == {"sca": [450, 550, 700], "abs": [470, 532, 660]}
     assert kw["RH_wet"] == 80.0
+    assert kw["kappa_fit"] == "ratio"  # default kappa objective
+    # kappa grid extends slightly negative (default floor -0.1)
+    assert kw["kappa_p"][0] == pytest.approx(-0.10)
+    assert kw["kappa_p"][-1] == pytest.approx(1.399, abs=1e-6)
     assert (res["dry_RRI_unitless"] == 1.53).all()
 
 

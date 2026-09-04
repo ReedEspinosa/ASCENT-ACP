@@ -1,4 +1,4 @@
-# ASCENT-ACP pipeline: theory basis (as implemented, V9, 2026-08-31)
+# ASCENT-ACP pipeline: theory basis (as implemented, v5-layout era, 2026-09-03)
 
 The algorithm as it stands, end to end, with pointers to the deeper
 documents: `GRASP_KERNEL_PLAN.md` (forward-engine investigation),
@@ -47,9 +47,47 @@ bit-exactly); grid to the LAS top (3.16 um centers) vs a ~5 um inlet.
 Forward engine `table` (in-process Mie over the MOPSMAP single-sphere
 efficiency extract; <= 0.21% vs exact Mie; ~100x faster than the
 subprocess — both engines and the full ground-truth analysis in
-`GRASP_KERNEL_PLAN.md`). Estimator `chi2-wmean` (posterior mean over the
-CRI and kappa grids; `scripts/estimator_study.py`). Dry RRI grid
-1.47-1.56 step 0.01; IRI 0-0.030.
+`GRASP_KERNEL_PLAN.md`). Estimator `chi2-wmean` (posterior estimates
+over the CRI and kappa grids; `scripts/estimator_study.py`). Dry RRI
+grid 1.47-1.56 step 0.01; IRI 0-0.030 (decade points near zero,
+2.5/5/7.5e-4, then 0.001 steps); kappa grid `kappa_min` (default -0.10)
+to 1.4 step 0.001.
+
+Posterior mechanics (2026-09-03): weights are exp(-n chi^2/2) times the
+per-candidate GRID CELL WIDTH (quadrature measure), so grid density is
+resolution, not prior — without this, the five quasi-zero IRI points
+acted as a density spike that pulled the posterior-mean IRI low and left
+absorption under-forecast in clean air (ACTIVATE 2020 low-IRI tercile
+closed at 0.56). Point estimates: RRI and kappa = posterior mean; IRI = CONTINUOUS posterior
+median (piecewise-linear CDF over the grid cells, interpolated 0.5
+crossing — boundary-robust on the one-sided IRI >= 0 axis without
+snapping to grid nodes; a discrete quantile had quantized IRI at the
+0.001 grid spacing).
+
+The implicit priors this creates: RRI uniform on [rri_min, rri_max]
+(mean 1.515, std 0.0287) — and since the per-window likelihood is flat
+in RRI (nuisance-parallel; measured posterior std 0.0286), the reported
+RRI IS the prior mean with a ~+/-0.002 data tilt. The grid choice is
+therefore the RRI prior statement. IRI, by contrast, is well-posed: it
+is constrained by the sca/abs RATIO, which is immune to PSD amplitude
+error (LAS vs UHSAS IRI agree at r = 0.98 despite a 1.8x amplitude
+disagreement between the sizers).
+
+Kappa objective (`isara.kappa_objective`, default `ratio`, 2026-09-03):
+the kappa stage fits the forward-modeled scattering ENHANCEMENT
+(wet/dry at the retrieved CRI) to the synthesized-wet/measured-dry
+target, not the absolute wet coefficient. Under the old absolute fit,
+with RRI prior-bound, kappa was the only remaining amplitude degree of
+freedom and absorbed the full dry-closure error (SEAC4RS: LAS closure
+~0.61 inflated kappa to ~0.30 while UHSAS ~1.06 gave ~0.05 — the entire
+sizer split; under `ratio` the two agree to |diff| ~0.001). Negative
+kappa (floor `kappa_min = -0.10`): windows whose target enhancement is
+< 1 (gamma noise around f ~ 1; thick smoke) retrieve an honest EFFECTIVE
+negative kappa instead of hard-failing, and the posterior is not
+truncated (biased high) at 0. Negative kappa is statistical, not water
+loss: humidified-state products are computed only for kappa >= 0, and
+candidates with kappa-Kohler gf^3 < 0.3 at the fit RH are excluded
+(complex/divergent growth).
 
 ## 5. The chi^2: instrument sigmas + marginalized model uncertainty (V7-V9)
 
@@ -71,9 +109,11 @@ The CRI-stage misfit is the generalized chi^2 = r' S^-1 r / 6 with
   correlation; the even split preserves each channel's marginal sigma.
 - dy_k: secant coefficient signatures of the correlated MODEL nuisances,
   evaluated per window at a reference CRI: PSD diameter scale
-  (lnD +/- 0.10, fully correlated — the dominant term), PSD
-  concentration scale (+/-10%), and (submicron) impactor D50 +/-10%,
-  gsd, rho +/- 0.2.
+  (lnD +/- `sizing_residual_lnd`, fully correlated — the dominant term),
+  PSD concentration scale (+/- `n_scale_sigma`: sizer-specific since
+  2026-09-03 — 0.20 in the LAS campaign configs after the SEAC4RS LAS
+  dry-closure ~0.6 finding, 0.10 for UHSAS/default), and (submicron)
+  impactor D50 +/-10%, gsd, rho +/- 0.2.
 
 This makes the gate (min reduced chi^2 <= 1) and the posterior weights
 MARGINAL over known model uncertainty: residuals along a known nuisance
@@ -85,7 +125,22 @@ to 1.516.
 
 The kappa-stage sigma is ratio-based (the target is synthesized from the
 same dry channel, so calibration cancels): 1% gamma-parameterization
-term + the non-cancelling noise floor.
+term + the non-cancelling noise floor. Since the `ratio` kappa objective
+(sec. 4) the RESIDUAL is ratio-based too, so the sigma budget and the
+fit are finally the same framing — previously the sigma assumed
+cancellation the absolute fit did not deliver.
+
+Interpretation (2026-09-03): this marginalized chi^2 is the PROFILE
+LIKELIHOOD of a joint retrieval over (CRI, N-scale, lnD shift, impactor
+parameters) with Gaussian priors — the PSD amplitude is retrieved
+implicitly; we simply report the measured-PSD forward state and carry
+the nuisance MAP separately (sec. 6). A large calc-vs-measured
+scattering gap is therefore not an unexplained residual: it is the
+retrieved sizer amplitude error displayed in scattering space
+(`scattering_dry_closure_ratio`). The SSA closure offsets in the v4
+files are exactly the sca-vs-abs closure DIFFERENTIAL (common-mode
+amplitude cancels in SSA); letting CRI or kappa absorb that amplitude
+error is the leak class this design exists to prevent.
 
 ## 6. Uncertainty propagation (V9; `ASCENT_ACP/uncertainty_propagation.py`)
 
@@ -119,9 +174,21 @@ forward evaluations):
    +0.006, centered on zero); `uncertainty_flag` bitmask marking windows
    where the linearization is stressed (RRI/IRI near a grid edge,
    min chi^2 near the gate, large ambient growth).
+4. **MAP-fit PSD outputs (2026-09-03):** the same theta_hat is exported
+   as point diagnostics under `/windowed/retrievals`:
+   `psd_scale_factor_fit` (1 + theta*sigma_N) and
+   `scattering/absorption_dry_fit` = y0 + D' theta_hat, the first-order
+   forward state at the retrieved CRI and the MAP-adjusted PSD. This
+   makes the implicit joint retrieval explicit: the residual of
+   `*_dry_fit` vs measured should sit at instrument level when the
+   nuisance model is adequate (SEAC4RS LAS 2-flight: raw closure 0.60 ->
+   fit 0.98, decomposed as scale 1.14 x lnD +0.11). The archived
+   dndlogdp is never modified.
 
 Documented v1 simplifications: kappa sigma is the grid-posterior std
-only (PSD nuisances largely cancel in the wet/dry ratio); nuisances
+only (PSD nuisances cancel in the wet/dry ratio — an assumption under
+the old absolute kappa fit, a construction under the `ratio` objective);
+nuisances
 independent; theta conditioning uses the posterior (not prior) CRI
 spread; PSD gap-filling unmodeled. One-off OAT re-retrieval validation
 of the linearization is on the todo list (not release-gating).
@@ -153,3 +220,24 @@ mirroring `/windowed` names and dims (1-sigma values; see
 - sigma(AE) is dominated by the sizing nuisance (~90%), rising with
   AE-vs-size sensitivity; after V9 conditioning it is flat-to-decreasing
   with ambient extinction.
+- Kappa amplitude leak (2026-09-03, SEAC4RS): with RRI prior-bound,
+  the ABSOLUTE kappa fit made kappa the only amplitude knob — the
+  LAS/UHSAS kappa split (0.30 vs 0.05, DASH-SP ~0.18 between) was
+  entirely the dry-closure ratio (0.61 vs 1.06) leaking into kappa
+  (kappa vs ln-closure r ~ -0.4 within each run). The `ratio` objective
+  collapses the split to |diff| ~0.001, r = 1.000. Remaining
+  ISARA-vs-DASH offset = LARGE-gamma-vs-DASH-GF disagreement + size
+  selection, not retrieval error.
+- IRI zero-boundary bias (2026-09-03): absorption closure was
+  IRI-tercile-dependent (ACTIVATE 2020: 0.56 low tercile vs 0.87 high)
+  — the quasi-zero IRI grid cluster + one-sided posterior mean pulled
+  IRI low in clean air. Fixed by quadrature weights + posterior-median
+  IRI; SEAC4RS LAS low tercile 0.51 -> 0.64, stratification gone.
+- RRI prior dominance measured: per-window posterior std 0.0286 vs
+  uniform-grid prior std 0.0287 (<1% narrowing); LAS and UHSAS retrieve
+  identical RRI despite opposite amplitude errors. The reported RRI is
+  the grid-center prior with a ~+/-0.002 tilt; choose [rri_min,rri_max]
+  accordingly.
+- LAS-vs-UHSAS amplitude: in the 110-700 nm overlap band LAS carries
+  ~69% of UHSAS's surface (median; number ~84%) in SEAC4RS — the basis
+  for the sizer-specific `n_scale_sigma` (LAS 0.20 vs UHSAS 0.10).

@@ -16,6 +16,33 @@ and written back at the native cadence, redundant against /observations. Only
 the ISARA retrieval inputs/outputs (which genuinely need a windowed form) live
 under /windowed.
 
+v5 layout changes vs v4:
+
+* GROUP-LOCAL axes under /observations: each instrument family folds its
+  per-wavelength variables onto its own ``wavelength`` dimension (exactly
+  the wavelengths it archives — PI-Neph 473/532/671 nm, CRDS 405/532/662,
+  LARGE 450..700), instead of the root union with fill at foreign
+  wavelengths. Size-bin dimensions (``diameter_<tag>``) are likewise
+  created inside the owning family group. The root ``wavelength`` union
+  remains and serves the /windowed* products.
+* PI-Neph GRASP products restructured: Real_*/Imag_*/SSA_* fold to
+  refractive_index_real/imag/ssa on the local wavelength axis, and the
+  15 'PSD-dNdlogr<N>' columns become one psd_dndlogr(flight, time, radius)
+  with the GRASP radii (parsed from the header descriptions) as coordinate.
+* FCDP 'cbinNN'/'nbinNN' columns fold onto bin dimensions with edges parsed
+  from the header descriptions; non-dN/dlogDp bin series keep their own
+  name and units instead of being written as ``dndlogd_*``.
+* Full instrument-title prefixes are stripped from variable names (fixes
+  'chemical_speciated_..._AMS_Starttime' residue) which also restores the
+  ICARTT units/descriptions lookup for those variables.
+* ICARTT units are normalized to one CF/udunits spelling per quantity
+  ('none'/'unitless' -> '1', '#/cm3' -> 'cm-3', ...); the original string
+  is kept in ``icartt_units`` when it differed.
+* /windowed/observations/window_index: sequential window id at native
+  cadence for direct window-block recovery.
+* Start/stop/mid time-of-day bookkeeping columns are omitted (recorded in
+  the family group's ``omitted_time_bookkeeping_columns`` attribute).
+
 v4 layout changes vs v3:
 
 * One shared root ``wavelength`` dimension (union of all measured/calculated
@@ -111,20 +138,72 @@ _UNIT_SUFFIX = [
 
 _WINDOW_CM = "time: mean within {w} s window (value repeated at native cadence)"
 
-# size-distribution bin columns: '<TAG>_BinNN' or 'dNdlogD_NNN_<TAG>'
-# three bin-column conventions: '<TAG>_BinNN' (ACTIVATE), 'dNdlogD_NNN_<TAG>',
-# and center-diameter-named '<TAG>_<NNN>nm[_<CAL>]' (SEAC4RS LARGE, where CAL
-# is a calibration token like PSL/AmmSO4). The nm form can false-match
+# ICARTT units strings -> one CF/udunits spelling per quantity. Matching is
+# case-insensitive on the stripped string; unmapped strings pass through
+# unchanged. When a mapping fires, the archive's original spelling is kept in
+# the ``icartt_units`` attribute.
+_UNITS_NORM = {
+    "none": "1", "unitless": "1", "no units": "1", "dimensionless": "1",
+    "%": "percent", "percent": "percent", "pct": "percent",
+    "#/cm3": "cm-3", "#/cm^3": "cm-3", "1/cm3": "cm-3", "1/cm^3": "cm-3",
+    "cm-3": "cm-3", "/cm3": "cm-3", "#/scm3": "cm-3",
+    "#/l": "L-1", "#/liter": "L-1", "1/l": "L-1",
+    "#/liter/um": "L-1 um-1", "#/l/um": "L-1 um-1",
+    "um2/cm3": "um2 cm-3", "um^2/cm^3": "um2 cm-3",
+    "um3/cm3": "um3 cm-3", "um^3/cm^3": "um3 cm-3",
+    "g/m^3": "g m-3", "g/m3": "g m-3",
+    "ug/m3": "ug m-3", "ug/m^3": "ug m-3", "ug m-3": "ug m-3",
+    "1/km": "km-1", "1/mm": "Mm-1", "1/m": "m-1",
+    "celsius": "degC", "deg c": "degC", "degrees c": "degC",
+    "kelvin": "K", "mb": "hPa", "hpa": "hPa",
+    "feet": "ft", "kts": "knot", "knots": "knot",
+    "deg": "degree", "degrees": "degree",
+    "deg (0-360)": "degree", "deg (+-180)": "degree",
+    "seconds": "s", "sec": "s", "s": "s",
+    "meters": "m", "m/s": "m s-1", "g/kg": "g kg-1",
+    "nm": "nm", "um": "um", "mach": "1",
+    "#": "1", "liter": "L",
+}
+
+
+def _normalize_units(units):
+    """(normalized, original-or-None): CF/udunits spelling for an ICARTT
+    units string; original returned only when a rewrite actually happened."""
+    if units is None:
+        return None, None
+    key = str(units).strip()
+    norm = _UNITS_NORM.get(key.lower())
+    if norm is None or norm == key:
+        return key, None
+    return norm, key
+
+# size-distribution bin columns, four conventions: '<TAG>_BinNN' (ACTIVATE),
+# 'dNdlogD_NNN_<TAG>', center-diameter-named '<TAG>_<NNN>nm[_<CAL>]'
+# (SEAC4RS LARGE, where CAL is a calibration token like PSL/AmmSO4), and
+# bare 'cbinNN'/'nbinNN' (SPEC FCDP). The nm form can false-match
 # per-wavelength scalars, so _split_bin_columns demotes tags with < 4 columns.
 _BIN_SHORT = re.compile(
     r"(?:^|_)([A-Za-z0-9]+)_Bin(\d+)$|^dNdlogD_0*(\d+)_([A-Za-z0-9]+)$"
-    r"|(?:^|_)([A-Za-z0-9]+)_(\d+)nm(?:_([A-Za-z0-9]+))?$")
+    r"|(?:^|_)([A-Za-z0-9]+)_(\d+)nm(?:_([A-Za-z0-9]+))?$"
+    r"|^([cn]bin)0*(\d+)$")
+
+# ordinal PSD series with sizes only in the header descriptions, e.g.
+# PI-Neph GRASP 'PSD-dNdlogr1'..'PSD-dNdlogr15' ("... at r=0.05um");
+# folded onto a group-local radius (r) / diameter (d) dimension.
+_ORDINAL_PSD = re.compile(r"^(?P<base>.*dndlog(?P<rd>[rd]))0*(?P<num>\d+)$",
+                          re.IGNORECASE)
+_SIZE_IN_DESC = re.compile(r"at\s*(?P<rd>[rd])\s*=\s*(?P<val>[0-9.]+)\s*um",
+                           re.IGNORECASE)
 
 # Observation variables that are per-wavelength copies of one quantity
-# (Sc550_submicron, Abs470_total, SSA_450nm, Ext532_submicron_amb, ...);
-# merged onto the shared wavelength dimension at export.
-_WVL_BASES = {"Sc": "scattering", "Abs": "absorption",
-              "Ext": "extinction", "SSA": "ssa"}
+# (Sc550_submicron, Abs470_total, SSA_450nm, Ext532_submicron_amb,
+# Real_532/Imag_532 [PI-Neph GRASP], ext_TD_405nm [CRDS], ...); merged onto
+# the owning family's group-local wavelength dimension at export. Base
+# tokens match case-insensitively (CRDS names are lowercase).
+_WVL_BASES = {"sc": "scattering", "abs": "absorption",
+              "ext": "extinction", "ssa": "ssa",
+              "real": "refractive_index_real",
+              "imag": "refractive_index_imag"}
 _WVL_SHORT = re.compile(
     r"^(?P<pre>[A-Za-z]+(?:_[A-Za-z]+)*_?)(?P<wvl>\d{3})(?P<post>nm|_[A-Za-z0-9_]+)?$")
 
@@ -136,9 +215,10 @@ def _parse_wvl_short(short):
     if not m:
         return None
     tokens = m.group("pre").rstrip("_").split("_")
-    if tokens[0] not in _WVL_BASES:
+    base = _WVL_BASES.get(tokens[0].lower())
+    if base is None:
         return None
-    parts = [_WVL_BASES[tokens[0]]] + tokens[1:]
+    parts = [base] + tokens[1:]
     post = m.group("post") or ""
     if post and post != "nm":
         parts.append(post.lstrip("_"))
@@ -222,6 +302,8 @@ def _bin_tag(short):
         return m.group(1).lower(), int(m.group(2))
     if m.group(3) is not None:
         return m.group(4).lower(), int(m.group(3))
+    if m.group(8) is not None:                # cbinNN / nbinNN (FCDP)
+        return m.group(8).lower(), int(m.group(9))
     tag = m.group(5).lower()
     if m.group(7):
         tag = f"{tag}_{m.group(7).lower()}"   # e.g. uhsas_ammso4
@@ -242,25 +324,42 @@ class ColumnMeta:
     def header_for_title(self, title):
         return self._by_title.get(title)
 
+    def titles(self):
+        """Cleaned titles of every scanned header (== merged column prefixes)."""
+        return list(self._by_title)
+
     def attrs(self, col, title, fam, short=None):
         short = short if short is not None else _short_name(col, title)
         out = {"long_name": short, "source_column": col}
+        # '/' in ICARTT names is sanitized to '_per_' for netCDF (SAGA
+        # 'Cl_ug/m3'); look the header variable up under both spellings
+        lookups = [short]
+        if "_per_" in short:
+            lookups.append(short.replace("_per_", "/"))
         hdr = self._by_title.get(title)
-        vi = hdr.var(short) if hdr else None
+        vi = next((v for s in lookups for v in [hdr.var(s)] if v), None) \
+            if hdr else None
         if vi is None:
             # titles can drift between the header and the merged prefix
             # (e.g. DLH), and AMS/AMS-CVI share one title; fall back to the
             # header that actually defines this variable name
             for h in self._headers:
-                v2 = h.var(short)
+                v2 = next((v for s in lookups for v in [h.var(s)] if v), None)
                 if v2 is not None:
                     hdr, vi = h, v2
                     break
         if vi is not None:
             if vi.units:
-                out["units"] = vi.units
+                norm, orig = _normalize_units(vi.units)
+                out["units"] = norm
+                if orig:
+                    out["icartt_units"] = orig
             if vi.description:
                 out["long_name"] = vi.description
+            elif vi.standard:
+                # 3-field ICARTT variable lines put their prose in the
+                # standardized-name slot (DASH-SP, PI-Neph, stdPT/Inlet)
+                out["long_name"] = vi.standard
             if vi.standard:
                 out["icartt_standard_name"] = vi.standard
         elif _guess_units(short):
@@ -275,15 +374,20 @@ class ColumnMeta:
 
 
 def _bin_tables_from_headers(headers):
-    """{tag: (BinTable, Header)} for every header that has bin columns."""
+    """{tag: (BinTable, Header)} for every header that has bin columns.
+
+    One header can carry several bin series (FCDP cbinNN + nbinNN); the
+    table is registered under each tag so both series find their sizes.
+    """
     out = {}
     for hdr in headers.values():
         bt = icartt_headers.bin_table(hdr)
         if bt is None:
             continue
-        tag, _ = _bin_tag(bt.columns[0])
-        if tag:
-            out[tag] = (bt, hdr)
+        for name in bt.columns:
+            tag, _ = _bin_tag(name)
+            if tag and tag not in out:
+                out[tag] = (bt, hdr)
     return out
 
 
@@ -327,9 +431,13 @@ class _Writer:
                 g = g.groups.get(part) or g.createGroup(part)
         return g
 
-    def dim(self, name, size):
-        if name not in self.nc.dimensions:
-            self.nc.createDimension(name, size)
+    def dim(self, name, size, gpath=None):
+        """Create a dimension; ``gpath`` scopes it to that group (netCDF
+        resolves dimension names from the variable's group upward, so a
+        group-local axis shadows a root one of the same name)."""
+        g = self.group(gpath) if gpath else self.nc
+        if name not in g.dimensions:
+            g.createDimension(name, size)
 
     # ---- low-level variable creation --------------------------------------
     def raw_var(self, gpath, name, dims, data, attrs=None, dtype=None, fill=None):
@@ -450,18 +558,21 @@ def _write_root(w, df, cfg, fgrid, meta):
               attrs={"units": "s",
                      "long_name": "last data time, seconds since takeoff-day midnight"})
 
-    # single shared wavelength axis for every optical variable in the file
+    # shared wavelength axis for the /windowed* retrieval products
+    # (observation families carry their own group-local wavelength axes)
     wvls = wavelength_union(ch)
     w.dim("wavelength", len(wvls))
     w.raw_var("", "wavelength", ("wavelength",), np.array(wvls, float),
               dtype=np.float64, attrs={
-        "units": "nm", "long_name": "optical wavelength",
-        "comment": (f"union of all wavelengths in the file; scattering measured at "
+        "units": "nm", "long_name": "optical wavelength (retrieval products)",
+        "comment": (f"union of the retrieval wavelengths; scattering measured at "
                     f"{ch.dry_wvl_sca} nm, absorption at {ch.dry_wvl_abs} nm, "
                     f"humidified scattering constraint at {ch.wet_wvl_sca} nm"
                     + (f", extra calculated output at {ch.val_wvl} nm"
                        if ch.val_wvl else "")
-                    + "; variables hold fill at wavelengths they do not cover")})
+                    + "; variables hold fill at wavelengths they do not cover. "
+                    "Groups under /observations define their own wavelength "
+                    "axes covering what each instrument family archives")})
 
     # root georeferencing coordinates (1 Hz aircraft nav), referenced by the
     # CF "coordinates" attribute of every (flight, time) data variable
@@ -582,9 +693,24 @@ def _split_bin_columns(pairs):
             titles.setdefault(tag, {})[col] = title
         else:
             scalars.append((col, title, short))
+    # names caught by the <NNN>nm pattern that ALSO parse as per-wavelength
+    # optical quantities (ext_dry_405nm, SSA_dry_700nm, ...) are wavelength
+    # copies, not size bins — demote them individually. Before this check,
+    # SEAC4RS V2 wrote the CRDS/LARGE *_dry_<wvl>nm family as a bogus
+    # 6-"bin" size distribution with 0.405-0.7 um "diameters".
+    for tag in list(bins):
+        keep = []
+        for col, short, n in bins[tag]:
+            if short.endswith("nm") and _parse_wvl_short(short):
+                scalars.append((col, titles[tag][col], short))
+            else:
+                keep.append((col, short, n))
+        if keep:
+            bins[tag] = keep
+        else:
+            del bins[tag]
     # a "tag" with only a few members is almost certainly a per-wavelength
-    # scalar caught by the <NNN>nm pattern (ext_dry_405nm, ...), not a size
-    # distribution — demote it
+    # scalar caught by the <NNN>nm pattern, not a size distribution — demote
     for tag in [t for t, e in bins.items() if len(e) < 4]:
         for col, short, _ in bins.pop(tag):
             scalars.append((col, titles[tag][col], short))
@@ -616,10 +742,11 @@ def _write_size_coords(w, gpath, tag, bt, order):
 
     The dimension is named after the bin-center-diameter variable so that
     ``diameter_<tag>`` is a true coordinate variable (plotting tools then put
-    diameter on the axis instead of a bare bin index).
+    diameter on the axis instead of a bare bin index). The dimension lives in
+    the instrument-family group itself (v5): size axes are group-local.
     """
     dim = f"diameter_{tag}"
-    w.dim(dim, len(order))
+    w.dim(dim, len(order), gpath=gpath)
     center = bt.center_um[order] if bt is not None else np.full(len(order), np.nan)
     lower = bt.lower_um[order] if bt is not None else np.full(len(order), np.nan)
     upper = bt.upper_um[order] if bt is not None else np.full(len(order), np.nan)
@@ -650,6 +777,59 @@ def _match_bin_table(bt, shorts):
     return None
 
 
+_TIME_BOOKKEEPING = re.compile(
+    r"(?:^|_)(?:(?:start|stop|end|mid(?:point)?)_?(?:utc|time)"
+    r"|(?:utc|time)_?(?:start|stop|end|mid))", re.IGNORECASE)
+
+
+def _is_time_bookkeeping(short, units):
+    """True for start/stop/midpoint time-of-day columns that survived the
+    merge as data (their content duplicates the row time base). Units are
+    checked when archived; a column whose units the header does not resolve
+    (independent-variable lines) is judged on the strict name pattern."""
+    if units is not None and not re.search(r"sec|sfm|past_midnight|utc",
+                                           str(units), re.IGNORECASE):
+        return False
+    return bool(_TIME_BOOKKEEPING.search(short))
+
+
+def _split_ordinal_series(scalars, colmeta, fam):
+    """Split ordinal PSD columns ('PSD-dNdlogr1'..'PSD-dNdlogr15') out of
+    [(col, title, short)].
+
+    Returns ([(base, rd, [(col, title, short, num, size_um)])], rest).
+    A series folds only when it has >= 4 members and every member's header
+    description carries its size ('... at r=0.05um'); otherwise the columns
+    stay scalars.
+    """
+    groups, rest = {}, []
+    for col, title, short in scalars:
+        m = _ORDINAL_PSD.match(short)
+        if m:
+            groups.setdefault((m.group("base"), m.group("rd").lower()),
+                              []).append((col, title, short,
+                                          int(m.group("num"))))
+        else:
+            rest.append((col, title, short))
+    series = []
+    for (base, rd), members in sorted(groups.items()):
+        members.sort(key=lambda t: t[3])
+        sized = []
+        for col, title, short, num in members:
+            a = colmeta.attrs(col, title, fam, short)
+            # ICARTT variable lines with only 3 fields land the description
+            # in the standardized-name slot (PI-Neph), so search both
+            desc = f"{a.get('long_name', '')} {a.get('icartt_standard_name', '')}"
+            sm = _SIZE_IN_DESC.search(desc)
+            sized.append((col, title, short, num,
+                          float(sm.group("val")) if sm else None))
+        if len(sized) >= 4 and all(s[4] is not None for s in sized):
+            series.append((base, rd, sized))
+        else:
+            rest.extend((c, t, s) for c, t, s, _, _ in sized)
+    return series, rest
+
+
 def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
     fg = w.fg
     shift_groups = _shift_group_map(cfg)
@@ -665,18 +845,29 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
         "_FillValue_meaning": "no merged data at this second",
         "comment": "Kacenelenbogen et al. (2022) A1.1 row screening; see QA_CRITERIA.md"})
 
-    wvl_set = set(wavelength_union(cfg.channels))
-    by_family = _family_split(df.columns, fammap, _meta_titles(meta))
+    by_family = _family_split(
+        df.columns, fammap,
+        list(dict.fromkeys(_meta_titles(meta) + colmeta.titles())))
     title_meta = meta or {}
     for fam in families.family_order(fammap, by_family):
         gpath = f"/observations/{fam}"
         bins, scalars = _split_bin_columns(by_family[fam])
+        series, scalars = _split_ordinal_series(scalars, colmeta, fam)
 
-        # pull per-wavelength copies of one quantity onto the wavelength dim
+        # start/stop/mid time-of-day bookkeeping duplicates the row time
+        # base; omit it (recorded in a group attribute for provenance)
+        omitted = [(col, title, short) for col, title, short in scalars
+                   if _is_time_bookkeeping(
+                       short, colmeta.attrs(col, title, fam, short).get("units"))]
+        scalars = [e for e in scalars if e not in omitted]
+
+        # pull per-wavelength copies of one quantity onto a GROUP-LOCAL
+        # wavelength axis (v5): each family's axis holds exactly the
+        # wavelengths that family archives (PI-Neph 473/532/671 nm, ...)
         wvl_groups, rest = {}, []
         for col, title, short in scalars:
             parsed = _parse_wvl_short(short)
-            if parsed and parsed[1] in wvl_set:
+            if parsed:
                 name, wvl = parsed
                 if wvl in wvl_groups.get(name, {}):  # cross-instrument clash
                     rest.append((col, title, short))
@@ -685,23 +876,66 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
             else:
                 rest.append((col, title, short))
 
+        fam_wvls = sorted({x for m in wvl_groups.values() for x in m})
+        if len(fam_wvls) < 2:  # a 1-wavelength axis is noise; keep scalars
+            rest.extend(v for m in wvl_groups.values() for v in m.values())
+            wvl_groups = {}
+        if wvl_groups:
+            w.dim("wavelength", len(fam_wvls), gpath=gpath)
+            w.raw_var(gpath, "wavelength", ("wavelength",),
+                      np.array(fam_wvls, float), dtype=np.float64, attrs={
+                "units": "nm",
+                "long_name": f"optical wavelength ({fam} instruments)",
+                "comment": ("group-local axis: the wavelengths archived by "
+                            "this instrument family")})
         for name, members in sorted(wvl_groups.items()):
             col0, title0, short0 = members[min(members)]
             attrs = colmeta.attrs(col0, title0, fam, short0)
+            if attrs["long_name"] == short0 and "icartt_standard_name" in attrs:
+                attrs["long_name"] = attrs["icartt_standard_name"]
             attrs["long_name"] = re.sub(
-                r"\s*(?:at\s*)?\b\d{3}\s?nm\b", "", attrs["long_name"]).strip()
+                r"\s*(?:at\s*)?(?:wavelength=)?\b\d{3}\s?(?:nm|um)\b"
+                r"|(?:_at)?_\d{3}nm", "",
+                attrs["long_name"]).strip()
             if "icartt_standard_name" in attrs:
                 attrs["icartt_standard_name"] = re.sub(
                     r"_(Blue|Green|Red)(?=_)", "", attrs["icartt_standard_name"])
             attrs["source_column"] = ", ".join(
                 members[x][0] for x in sorted(members))
             attrs["shift_group"] = shift_groups.get(col0, "none")
-            attrs["comment"] = (f"values at {sorted(members)} nm of the shared "
-                                "wavelength axis; fill elsewhere")
+            attrs["comment"] = (f"values at {sorted(members)} nm of this "
+                                "group's wavelength axis; fill elsewhere")
             w.scatter3d(gpath, name,
                         (df[members[x][0]].to_numpy(float) if x in members
-                         else None for x in sorted(wvl_set)),
+                         else None for x in fam_wvls),
                         "wavelength", attrs=attrs)
+
+        # ordinal PSD series with sizes from the header descriptions
+        # (PI-Neph GRASP 15-bin dN/dlogr) -> group-local radius/diameter axis
+        for base, rd, members in series:
+            dim = {"r": "radius", "d": "diameter"}[rd]
+            while dim in w.group(gpath).dimensions:
+                dim += "_"
+            sizes = np.array([s for _, _, _, _, s in members], float)
+            w.dim(dim, len(members), gpath=gpath)
+            w.raw_var(gpath, dim, (dim,), sizes, dtype=np.float64, attrs={
+                "units": "um",
+                "long_name": f"bin center {dim.rstrip('_')}",
+                "comment": ("bin centers parsed from the ICARTT variable "
+                            "descriptions; edges not archived")})
+            col0, title0, short0, _, _ = members[0]
+            attrs = colmeta.attrs(col0, title0, fam, short0)
+            if attrs["long_name"] == short0 and "icartt_standard_name" in attrs:
+                attrs["long_name"] = attrs["icartt_standard_name"]
+            attrs["long_name"] = _SIZE_IN_DESC.sub(
+                "", attrs["long_name"]).strip(" ,;")
+            attrs["source_column"] = (f"{len(members)} columns "
+                                      f"{members[0][2]}..{members[-1][2]}")
+            attrs["shift_group"] = shift_groups.get(col0, "none")
+            name = re.sub(r"[^0-9a-z]+", "_", base.lower()).strip("_")
+            w.scatter3d(gpath, name,
+                        (df[c].to_numpy(float) for c, _, _, _, _ in members),
+                        dim, attrs=attrs)
 
         for col, title, short, name in _dedupe_shorts(rest):
             attrs = colmeta.attrs(col, title, fam, short)
@@ -728,18 +962,33 @@ def _write_observations(w, df, masks, cfg, meta, colmeta, fammap, bin_tables):
             title = next(t for c, t in by_family[fam] if c == cols[0])
             attrs = colmeta.attrs(cols[0], title, fam, shorts[0])
             attrs.update(
-                long_name=f"{tag.upper()} number size distribution dN/dlogDp",
                 source_column=f"{len(cols)} columns {shorts[0]}..{shorts[-1]}",
                 shift_group=shift_groups.get(cols[0], "none"))
-            # one units string for every dN/dlogDp in the file ("cm-3", also
-            # udunits-parseable); keep the ICARTT original when it differed
-            if attrs.get("units") not in (None, "cm-3"):
-                attrs["icartt_units"] = attrs["units"]
-            attrs["units"] = "cm-3"
-            w.scatter3d(gpath, f"dndlogd_{tag}",
+            if attrs.get("units") in (None, "cm-3", "#/cm3", "#/cm^3",
+                                      "1/cm3", "1/cm^3"):
+                # aerosol sizers: one dN/dlogDp convention for the file
+                attrs["long_name"] = (f"{tag.upper()} number size "
+                                      "distribution dN/dlogDp")
+                if attrs.get("units") not in (None, "cm-3"):
+                    attrs["icartt_units"] = attrs["units"]
+                attrs["units"] = "cm-3"
+                name = f"dndlogd_{tag}"
+            else:
+                # per-bin series in other units (FCDP cbin '#/liter/um',
+                # nbin counts): keep the tag name and the archived quantity
+                attrs["long_name"] = re.sub(
+                    r"\(\s*[0-9.]+\s*-\s*[0-9.]+\s*um\s*\)", "",
+                    attrs["long_name"]).strip(" ,;") + " (per size bin)"
+                name = tag
+            w.scatter3d(gpath, name,
                         (df[c].to_numpy(float) for c in cols), dim, attrs=attrs)
 
         gattrs = {"long_name": families.family_long_name(fammap, fam) or None}
+        if fammap:
+            gattrs["comment"] = fammap.get("family_comment", {}).get(fam)
+        if omitted:
+            gattrs["omitted_time_bookkeeping_columns"] = ", ".join(
+                s for _, _, s in omitted)
         titles = sorted({t for _, t in by_family[fam]})
         for fld in ("PI_Info", "Institution_Info", "Uncertainty", "Revision", "Stipulations"):
             vals = [f"{t}: {title_meta.get(fld, {}).get(t)}" for t in titles
@@ -799,6 +1048,18 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
                                   "inconsistency is small (abs carries "
                                   "<10% of the fit chi^2)."),
                   })
+
+    w.scatter2d(gp, "window_index", win_idx.astype(float), dtype=np.int32,
+                fill=-1, attrs={
+        "units": "1",
+        "long_name": ("sequential id of the 60 s window this sample belongs "
+                      "to (fill where no window)"),
+        "comment": ("Every /windowed* variable repeats its window's value at "
+                    "the native cadence; equal window_index = same window. "
+                    "Use this to recover window blocks (e.g. one scatter "
+                    "point per window) without run-length heuristics. Ids "
+                    "index the ISARA results bundle rows, ordered by window "
+                    "center time across the whole campaign.")})
 
     flag = _broadcast(results_df["window_qc_flag"].to_numpy(float), win_idx)
     w.scatter2d(gp, "window_qc_flag", flag, dtype=np.int32, fill=-1, attrs={
@@ -873,9 +1134,13 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                       "parameterization (synthesized, not directly measured)"),
         "comment": ("SC_calcRH = SC_measRH / exp(gamma*ln((100-calcRH)/(100-measRH))); "
                     "gamma is the LARGE-derived hygroscopic growth exponent. This "
-                    "variable is the fitting target of the kappa retrieval, so "
-                    "wet_calculated scattering matches it within 1% by construction "
-                    "wherever kappa succeeded (not an independent validation).")})
+                    "variable is the fitting target of the kappa retrieval (not an "
+                    "independent validation). Under kappa_objective='ratio' (see "
+                    "/windowed/retrievals) the fitted quantity is the enhancement: "
+                    "scattering_wet_calculated/scattering_dry_calculated matches "
+                    "this variable divided by scattering_dry_measured; under "
+                    "'absolute' the wet_calculated coefficient matched it "
+                    "directly.")})
 
     if f"Sc{wet_w}_amb_mean" in results_df:
         w.scatter2d(go, "scattering_ambient_synthesized",
@@ -923,7 +1188,8 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
         ("refractive_index_imag", "dry_IRI_unitless",
          f"ISARA-retrieved imaginary part of the dry complex refractive index; {cri_note}"),
         ("kappa", "kappa_unitless",
-         "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk value)"),
+         "ISARA-retrieved hygroscopicity parameter (kappa-Kohler, single bulk "
+         "value; fit objective in group attribute kappa_objective)"),
         ("cri_n_accepted", "dry_CRI_n_accepted_unitless",
          "number of CRI grid candidates matching the measurements within "
          "tolerance (reduced chi^2 <= 1 under the chi2-wmean estimator)"),
@@ -958,8 +1224,19 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
          "kappa-Kohler diameter growth factor of the ambient state (at rh_ambient)"),
     ]:
         if col in results_df:
-            w.scatter2d(gp, var, col_rows(col),
-                        attrs={"units": "1", "long_name": long_name, "cell_methods": cm})
+            attrs = {"units": "1", "long_name": long_name, "cell_methods": cm}
+            if var == "kappa":
+                attrs["comment"] = (
+                    "the search grid extends slightly negative (floor "
+                    "isara.kappa_min, default -0.1): negative values are "
+                    "EFFECTIVE, capturing windows whose synthesized wet/dry "
+                    "enhancement target is below 1 (gamma-parameterization "
+                    "noise around f~1, particle restructuring); they are "
+                    "consistent with zero hygroscopic growth, not literal "
+                    "water loss. Humidified-state products (dndlogdp_wet/"
+                    "ambient, wet/ambient CRI and growth factors) are only "
+                    "computed for kappa >= 0.")
+            w.scatter2d(gp, var, col_rows(col), attrs=attrs)
 
     for col, var in [("attempt_flag_CRI_unitless", "attempt_flag_cri"),
                      ("attempt_flag_kappa_unitless", "attempt_flag_kappa")]:
@@ -972,9 +1249,11 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                 "flag_meanings": "not_attempted attempted_but_failed success",
                 "cell_methods": cm})
 
-    # humidified PSDs, remapped onto the dry bin grid (surface-conserving)
+    # humidified PSDs, remapped onto the dry bin grid (surface-conserving);
+    # negative (effective) kappa is not literal water uptake -> no grown PSD
     if "kappa_unitless" in results_df:
         kappa = results_df["kappa_unitless"].to_numpy(float)
+        kappa = np.where(kappa < 0, np.nan, kappa)
         psd = results_df[[psd_col_name(d) for d in grid.dpg_um]].to_numpy(float)
         psd_states = [("wet", np.full(len(results_df), float(cfg.filters.wet_rh)))]
         if "RH_amb_mean" in results_df:
@@ -1045,6 +1324,41 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
                                 "(absorption is only measured dry)"
                                 if state != "dry" and quant == "abs_coef" else ""))},
                 scale=_MM_PER_M if is_coef else 1.0)
+
+    # dry scattering closure ratio: forward-modeled (retrieved CRI, sizing-
+    # corrected PSD) over measured, per dry scattering channel. Diagnoses the
+    # PSD amplitude error the optical closure sees (sizer under/overcounting).
+    def closure_rows(x):
+        cal = results_df[f"dry_cal_sca_coef_{x}_m-1"].to_numpy(float) * _MM_PER_M
+        meas = results_df[f"Sc{x}_dry_mean"].to_numpy(float)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            ratio = np.where(meas > 0, cal / meas, np.nan)
+        return _broadcast(ratio, win_idx)
+
+    kappa_objective = ("ratio" if any(str(c).startswith("kappa_dry_closure_")
+                                      for c in results_df.columns) else "absolute")
+    w.scatter3d(gp, "scattering_dry_closure_ratio",
+                (closure_rows(x)
+                 if (x in ch.dry_wvl_sca
+                     and f"dry_cal_sca_coef_{x}_m-1" in results_df
+                     and f"Sc{x}_dry_mean" in results_df) else None
+                 for x in wvls), "wavelength", attrs={
+        "units": "1", "cell_methods": cm,
+        "long_name": ("dry scattering closure ratio "
+                      "(MOPSMAP-calculated / measured)"),
+        "comment": ("QC diagnostic: the forward-modeled dry scattering from "
+                    "the (sizing-corrected) PSD at the retrieved CRI, divided "
+                    "by the nephelometer measurement. Values far from 1 "
+                    "indicate PSD amplitude errors (optical-sizer counting/"
+                    "sizing biases) that the bounded CRI grid cannot absorb. "
+                    f"kappa_objective='{kappa_objective}': "
+                    + ("kappa fits the wet/dry scattering ENHANCEMENT, so "
+                       "this amplitude error cancels out of kappa"
+                       if kappa_objective == "ratio" else
+                       "kappa fit the ABSOLUTE humidified coefficient, so "
+                       "this amplitude error leaked directly into kappa "
+                       "(closure < 1 inflates kappa, > 1 deflates it)"))})
+    w.group_attrs(gp, {"kappa_objective": kappa_objective})
 
 
 def _write_uncertainty(w, unc_df, grid, cfg, win_idx):
@@ -1145,6 +1459,49 @@ def _write_uncertainty(w, unc_df, grid, cfg, win_idx):
             w.scatter2d(gp, var, col_rows(col),
                         attrs={"units": "1", "long_name": long_name,
                                "cell_methods": cm})
+
+    # MAP-fit PSD point estimates -> /windowed/retrievals (they are fit
+    # diagnostics, not sigmas; sourced from the uncertainty stage's
+    # nuisance-MAP solve)
+    grt = "/windowed/retrievals"
+    fit_note = (
+        "first-order forward state at the MAP nuisance amplitudes: the "
+        "measured PSD adjusted by the concentration-scale factor "
+        "(psd_scale_factor_fit), the lnD shift (/windowed_uncertainty/"
+        "retrievals/sizing_scale_shift) and the impactor-parameter terms, "
+        "each conditioned on the fit residual under its prior "
+        f"(n_scale_sigma={cfg.isara.n_scale_sigma:g}, "
+        f"lnD sigma={cfg.isara.sizing_residual_lnd if cfg.isara.sizing_correction else 0.10:g}). "
+        "This is the coefficient the retrieval attributes to the aerosol; "
+        "its residual vs the measured coefficient should be at instrument "
+        "level when the nuisance model is adequate. The archived dndlogdp "
+        "is NOT modified.")
+    if "psd_scale_factor_unitless" in unc_df:
+        w.scatter2d(grt, "psd_scale_factor_fit",
+                    col_rows("psd_scale_factor_unitless"), attrs={
+            "units": "1", "cell_methods": cm,
+            "long_name": ("MAP multiplicative concentration-scale factor of "
+                          "the PSD inferred from the fit residual"),
+            "comment": ("1 + theta*sigma_N with prior sigma_N = "
+                        f"{cfg.isara.n_scale_sigma:g} (isara.n_scale_sigma); "
+                        "values below 1 mean the sizer counts more particles "
+                        "than the optical closure supports (and vice versa). "
+                        "Diagnostic only -- the archived PSD is not rescaled.")})
+    for name, col_by_wvl, quant in [
+            ("scattering_dry_fit", {x: f"Sc{x}_dry_fit" for x in ch.dry_wvl_sca},
+             "scattering"),
+            ("absorption_dry_fit", {x: f"Abs{x}_fit" for x in ch.dry_wvl_abs},
+             "absorption")]:
+        if any(c in unc_df for c in col_by_wvl.values()):
+            w.scatter3d(grt, name,
+                        (col_rows(col_by_wvl[x])
+                         if col_by_wvl.get(x) in unc_df else None
+                         for x in wvls), "wavelength", attrs={
+                "units": "Mm-1", "cell_methods": cm,
+                "long_name": (f"forward-modeled dry {quant} coefficient at "
+                              "the retrieved CRI and the MAP-adjusted (fit) "
+                              "PSD"),
+                "comment": fit_note})
 
     if "uncertainty_flag" in unc_df:
         vals = _broadcast(unc_df["uncertainty_flag"].to_numpy(float), win_idx)

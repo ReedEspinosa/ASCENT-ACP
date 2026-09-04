@@ -71,6 +71,11 @@ def sigma_absorption_from_ssa(omega):
 OPC_FREL = 0.10        # flow, coincidence, inlet transmission
 OPC_FREL_EDGE = 0.30   # lowest 2-3 bins (counting-efficiency roll-off)
 OPC_DLND = 0.10        # 1-sigma on ln(D), FULLY CORRELATED across bins
+OPC_DN_SCALE = 0.10    # 1-sigma concentration-scale (counting-efficiency)
+                       # nuisance, FULLY CORRELATED across bins; sizer-
+                       # specific override via isara.n_scale_sigma (LAS
+                       # campaign configs use 0.20 after the SEAC4RS dry-
+                       # closure ~0.6 finding; UHSAS keeps 0.10)
 
 
 def sigma_number(N, t, Q=1.0, density_ratio=1.0, edge_bins=0):

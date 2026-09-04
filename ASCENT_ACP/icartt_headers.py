@@ -198,8 +198,10 @@ def measurement_conditions(varinfo, instrument_data_info=""):
 # --------------------------------------------------------------------------- #
 # size-distribution bin tables
 # --------------------------------------------------------------------------- #
-_BIN_NAME = re.compile(r"(?:^|_)(?:Bin|bin)0*(\d+)$|^dNdlogD_0*(\d+)_")
+_BIN_NAME = re.compile(r"(?:^|_|^[cn])(?:Bin|bin)0*(\d+)$|^dNdlogD_0*(\d+)_")
 _CENTER_IN_DESC = re.compile(r"bin_center_([0-9.]+)\s*um", re.IGNORECASE)
+_RANGE_IN_DESC = re.compile(
+    r"\(\s*([0-9.]+)\s*-\s*([0-9.]+)\s*um\s*\)", re.IGNORECASE)
 _EDGE_LIST = re.compile(
     r"Bin\s+(Lower|Upper)\s+Edges?\s*\(in\s*um\)\s*=\s*\[([^\]]*)\]", re.IGNORECASE)
 _BOUNDS_NM = re.compile(
@@ -265,6 +267,17 @@ def bin_table(header):
         if all(len(a) == len(names) for a in arrs.values()):
             return BinTable(names, arrs["mid points"], arrs["lower bounds"],
                             arrs["upper bounds"], "nm bounds lines in OTHER_COMMENTS")
+
+    ranges = [_RANGE_IN_DESC.search(f"{v.description or ''} {v.standard or ''}")
+              for v in bins]
+    if all(ranges):
+        lo = np.array([float(m.group(1)) for m in ranges])
+        up = np.array([float(m.group(2)) for m in ranges])
+        center = np.where(lo > 0, np.sqrt(np.maximum(lo, 1e-12) * up),
+                          0.5 * (lo + up))
+        return BinTable(names, center, lo, up,
+                        "size ranges in variable descriptions (centers "
+                        "geometric mean; arithmetic when the lower edge is 0)")
 
     return BinTable(names, np.full(len(names), np.nan),
                     np.full(len(names), np.nan), np.full(len(names), np.nan),

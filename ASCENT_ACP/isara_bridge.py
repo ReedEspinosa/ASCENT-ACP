@@ -183,6 +183,10 @@ def build_retr_kwargs(row, grid, cfg):
         "path_mopsmap_executable": cfg.paths.mopsmap_executable,
         "forward_engine": cfg.isara.forward_engine,
         "estimator": cfg.isara.estimator,
+        "kappa_fit": cfg.isara.kappa_objective,
+        # slightly-negative floor (see IsaraConfig.kappa_min); same upper
+        # edge/step as ISARA.default_kappa_grid
+        "kappa_p": np.arange(cfg.isara.kappa_min, 1.40, 0.001),
     }
     if cfg.isara.chi2_sigma in ("instrument", "instrument-cov"):
         kwargs.update(instrument_sigmas(row, cfg))
@@ -231,7 +235,8 @@ def observation_covariance(row, dndlogdp_weighted, grid, cfg):
         (cfg.psd.impactor_d50_aero_um, cfg.psd.impactor_gsd,
          cfg.psd.impactor_rho_gcm3),
         sca_meas, abs_meas, list(ch.dry_wvl_sca), list(ch.dry_wvl_abs),
-        wvls, float(cfg.window.window_s), regime, lnd_sigma=lnd_sigma)
+        wvls, float(cfg.window.window_s), regime, lnd_sigma=lnd_sigma,
+        n_scale_sigma=cfg.isara.n_scale_sigma)
     return S * 1e-12  # (Mm^-1)^2 -> (m^-1)^2
 
 

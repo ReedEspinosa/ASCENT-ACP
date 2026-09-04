@@ -1,9 +1,127 @@
-# ASCENT-ACP netCDF Output v2/v3/v4 + Single-Pass Driver — Design Spec
+# ASCENT-ACP netCDF Output v2–v5 + Single-Pass Driver — Design Spec
 
-Status: **implemented (v4)**. Supersedes the flat single-group v1 file formerly
-produced by `netcdf_export.py`, and adds a campaign-agnostic ICARTT→netCDF
-driver (`ASCENT_ACP.run`). All decisions in §2 are as-built; run
+Status: **implemented (v5 layout, 2026-09-02; no campaign reprocessed on v5
+yet)**. Supersedes the flat single-group v1 file formerly produced by
+`netcdf_export.py`, and adds a campaign-agnostic ICARTT→netCDF driver
+(`ASCENT_ACP.run`). All decisions in §2 are as-built; run
 `python -m ASCENT_ACP.run --config configs/activate_2021_full.json`.
+
+## v5 addendum (2026-09-02) — group-local axes + metadata fidelity
+
+1. **Group-local axes under `/observations`** (netCDF-idiomatic per-group
+   coordinates; xarray `open_dataset(..., group=...)` gets a self-contained
+   dataset). Each instrument family folds its per-wavelength variables onto
+   its own `wavelength` dimension holding exactly the wavelengths it
+   archives (PI-Neph 473/532/671; SEAC4RS optical 405–700 incl. CRDS and
+   Abs660, which the root union excluded). Size-bin dimensions
+   (`diameter_<tag>`) are created inside the owning family group. The root
+   `wavelength` union remains for the `/windowed*` retrieval products.
+2. **PI-Neph restructured**: `Real_*/Imag_*/SSA_*` → `refractive_index_real
+   / refractive_index_imag / ssa (flight, time, wavelength)`; the 15
+   `PSD-dNdlogr<N>` columns → `psd_dndlogr(flight, time, radius)` with the
+   GRASP radius grid (0.05–2.24 um, parsed from header descriptions) as a
+   coordinate.
+3. **Wavelength-suffixed scalars are never size bins**: names matching both
+   the `<TAG>_<NNN>nm` bin form and a per-wavelength quantity
+   (`ext_dry_405nm`, `SSA_dry_700nm`) fold by wavelength. (SEAC4RS v2 wrote
+   these as a bogus `dndlogd_dry` "size distribution" with 0.405–0.7 um
+   "diameters" — that variable was optical extinction/SSA, not a PSD.)
+4. **FCDP `cbinNN`/`nbinNN`** fold onto bin dimensions (edges parsed from
+   the header descriptions' `( lo - hi um)` ranges); bin series whose units
+   are not dN/dlogDp keep their own name/units instead of `dndlogd_*`.
+5. **Full instrument-title prefix stripping** (meta/header titles are now
+   prefix-match candidates), fixing `chemical_speciated_..._AMS_*`,
+   `CRDS__*`, `measurements_of_H2O_v__DLH_*` residues — and thereby
+   restoring ICARTT units/long_names for those variables (incl. SAGA
+   `*_ug/m3` via a slash-aware header lookup). 3-field ICARTT variable
+   lines promote their standardized-name prose to `long_name`.
+6. **Units normalized** to one CF/udunits spelling per quantity
+   (`none/unitless → 1`, `#/cm3 → cm-3`, `Percent → percent`, ...);
+   original spelling kept in `icartt_units` when it differed.
+7. **`/windowed/observations/window_index`**: sequential window id repeated
+   at native cadence (fill outside windows) so window blocks can be
+   recovered without run-length heuristics.
+8. **Families**: `aerosol_size_dist` merged into `microphysical` (CN counts
+   + size distributions are one family); optional `family_comment` map in
+   the family JSON becomes the group `comment` (used for DASH-SP long-format
+   semantics and the state_nav lat/lon provenance note).
+9. Start/stop/mid time-of-day bookkeeping columns are omitted and recorded
+   in the family group's `omitted_time_bookkeeping_columns` attribute.
+10. Upstream (icartt_read_and_merge): time-column detection now vetoes
+    name-only matches whose header units are not time-like — SEAC4RS
+    AMS-60S species (`*_lt_1um_*`: OA/SO4/NO3/NH4/Chl + prec/DL, 15
+    columns) were being dropped as "local time" columns and one of them
+    was picked as the AMS time base. SEAC4RS must be RE-MERGED before the
+    next pipeline run to recover AMS composition.
+11. Deferred (in todo_reed.txt): replacing the repeat-at-cadence windowed
+    representation with a true `window` dimension.
+12. **Ratio kappa objective (2026-09-03, code only — no campaign reprocessed
+    yet)**: `isara.kappa_objective = "ratio"` (new default) makes the kappa
+    stage fit the forward-modeled scattering ENHANCEMENT (wet/dry at the
+    retrieved CRI) to the synthesized-wet/measured-dry target instead of
+    the absolute wet coefficient. Under the old absolute fit, with the CRI
+    posterior bounded by its grid/prior, kappa was the only remaining
+    amplitude degree of freedom and absorbed the full dry-closure error:
+    SEAC4RS LAS closure ~0.61 inflated kappa to ~0.30 median while UHSAS
+    closure ~1.06 gave ~0.05 — the entire LAS/UHSAS kappa split. The ratio
+    framing is what the wet_sigma budget and the uncertainty module already
+    assumed (calibration and PSD nuisances cancel in the wet/dry pair), so
+    it also makes the retrieval self-consistent. New QC diagnostic
+    `/windowed/retrievals/scattering_dry_closure_ratio(flight, time,
+    wavelength)` = MOPSMAP-calculated/measured dry scattering; group attr
+    `kappa_objective` records which fit produced the file (derived from
+    bundle evidence, so old absolute bundles re-exported with new code are
+    labeled correctly). ISARA_code: `Retr_PSD(kappa_fit=...)`,
+    `Retr_kappa(dry_closure=...)`, output key
+    `kappa_dry_closure_{wvl}_unitless`.
+13. **Negative-kappa grid extension (2026-09-03, code only)**:
+    `isara.kappa_min = -0.10` (new default) extends the kappa search grid
+    slightly negative so windows whose synthesized wet/dry enhancement
+    target is < 1 (gamma noise around f~1; thick smoke) retrieve an
+    honest EFFECTIVE near-zero/negative kappa instead of hard-failing,
+    and so the chi2-wmean posterior is not truncated (biased high) at 0.
+    Negative kappa is statistical, not literal water loss: humidified-
+    state products (dndlogdp_wet/ambient, wet/ambient CRI, growth
+    factors) are computed only for kappa >= 0 (NaN otherwise, attempt
+    flag still 2), and ISARA excludes grid candidates whose kappa-Kohler
+    gf^3 falls below 0.3 at the fit RH (gf^3 <= 0 would be complex; small
+    gf^3 diverges in the water-volume-mixing RI). The kappa variable
+    carries a comment documenting the sign convention. 2-flight test:
+    kappa success 56 -> 133/133; 83 windows in [-0.032, 0), all with
+    E < 1; no pile-up at the -0.1 floor.
+14. **IRI posterior fix (2026-09-03, code only, ISARA_code)**: chi2-wmean
+    weights are corrected by the per-candidate grid cell width (uniform
+    quadrature measure) so the quasi-zero IRI decade points no longer act
+    as a density-spike prior; IRI is reported as the posterior MEDIAN
+    (boundary-robust for the one-sided IRI >= 0 axis); IRI ladder gains
+    2.5e-4/5e-4/7.5e-4. Diagnosed from absorption closure stratified by
+    IRI (ACTIVATE 2020: 0.56 low-IRI tercile vs 0.87 high — the pulled
+    mean under-forecast absorption in clean air; same truncation disease
+    as kappa-at-0). RRI/kappa stay posterior means (uniform grids,
+    no-op). 2-flight SEAC4RS: abs closure 0.558 -> 0.638, low-IRI
+    depression eliminated. Context: RRI posterior std per window is
+    0.0286 vs uniform-grid prior std 0.0287 — the per-window likelihood
+    is flat in RRI (nuisance-parallel), so the reported RRI is the grid
+    prior mean (rri_min+rri_max)/2 with ~±0.002 tilt; the SSA offsets in
+    the v4 files are the sca-vs-abs closure differential, not spectral-
+    flatness or IRI errors.
+15. **Sizer-specific N-scale prior + MAP-fit PSD outputs (2026-09-03,
+    code only)**: `isara.n_scale_sigma` (default 0.10 = the old hard-
+    coded value; LAS campaign configs — SEAC4RS submicron, ACTIVATE
+    2020/2021 — set 0.20 after the SEAC4RS LAS dry-closure ~0.6 finding;
+    UHSAS keeps 0.10). Threads into the CRI-stage obs_cov and the
+    uncertainty stage (whose nuisance secants previously hard-coded
+    10%). New /windowed/retrievals outputs from the uncertainty stage's
+    existing nuisance-MAP solve (theta_hat): `psd_scale_factor_fit`
+    (MAP multiplicative concentration factor, 1 + theta*sigma_N),
+    `scattering_dry_fit` and `absorption_dry_fit` (first-order forward
+    coefficients at the retrieved CRI and the MAP-adjusted PSD — the
+    "fit PSD" state; residual vs measured should be at instrument level
+    when the nuisance model is adequate). Makes the implicit joint
+    retrieval over (CRI, PSD amplitude, lnD shift, impactor params)
+    explicit; the archived dndlogdp is never modified. The lnD MAP was
+    already exported as /windowed_uncertainty/retrievals/
+    sizing_scale_shift.
 
 ## v4 addendum (2026-08) — layout + science changes on top of v3
 

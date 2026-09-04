@@ -203,6 +203,14 @@ class IsaraConfig:
     # geometry + convention residuals).
     sizing_correction: bool = False
     sizing_residual_lnd: float = 0.05
+    # 1-sigma of the correlated PSD concentration-scale nuisance (fraction
+    # of the forward coefficients). Sizer-specific: the LAS campaign
+    # configs set 0.20 (the SEAC4RS LAS dry closure of ~0.6 showed 0.10 is
+    # optimistic for LAS, though three campaigns cannot pin the true value
+    # and SEAC4RS may be a calibration outlier); UHSAS variants keep the
+    # 0.10 default. Feeds both the CRI-stage obs_cov and the uncertainty
+    # stage's nuisance MAP (psd_scale_factor_fit / *_dry_fit outputs).
+    n_scale_sigma: float = 0.10
     # nephelometer f_rel regime for sigma_scattering; "" = auto: "pm1" when
     # an impactor is configured (submicron variant), else "pm10".
     neph_regime: str = ""
@@ -212,6 +220,29 @@ class IsaraConfig:
     # scripts/estimator_study.py). 'linf-mean' = historical ISARA selection
     # (all channels inside tolerance / first-kappa-within-1%).
     estimator: str = "chi2-wmean"
+    # Kappa fit objective. 'ratio' (default) fits the forward-modeled
+    # scattering ENHANCEMENT (wet/dry at the retrieved CRI) to the
+    # synthesized-wet/measured-dry target, so PSD amplitude errors (sizer
+    # under/overcounting) cancel out of kappa. 'absolute' = pre-V3 behavior,
+    # fitting the wet coefficient directly: with the CRI bounded by its
+    # grid, kappa was the only remaining amplitude degree of freedom and
+    # absorbed the full dry-closure error (SEAC4RS 2026-09: LAS closure
+    # ~0.61 inflated kappa to ~0.30; UHSAS closure ~1.06 gave ~0.05).
+    # 'ratio' is also the framing the wet_sigma budget and the uncertainty
+    # module already assume (calibration/PSD nuisances cancel in the ratio).
+    kappa_objective: str = "ratio"
+    # Lower edge of the kappa search grid (upper edge 1.4, step 0.001).
+    # Slightly negative (default -0.10) so windows whose synthesized
+    # wet/dry enhancement target is < 1 (gamma noise around f~1; common in
+    # thick smoke) retrieve an honest near-zero/negative EFFECTIVE kappa
+    # instead of hard-failing, and so the chi2-wmean posterior is not
+    # truncated at 0 (truncation biases near-zero kappa high). Negative
+    # kappa is statistical, not literal water loss: humidified-state
+    # products (wet/ambient PSDs, CRI, growth factors) are only computed
+    # for kappa >= 0, and ISARA excludes grid candidates whose gf^3 would
+    # fall below 0.3 at the fit RH (complex/divergent growth). At the 80%
+    # fit RH, kappa = -0.1 gives gf^3 = 0.6 -- safely real.
+    kappa_min: float = -0.10
 
 
 @dataclass

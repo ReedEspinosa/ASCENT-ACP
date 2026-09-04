@@ -411,3 +411,55 @@ GENERAL
   LAS+UHSAS gated on (3). AMS-derived RI excluded (circular with the
   project's optical-vs-chemical comparison goal). Hierarchical
   common-vs-per-window error split HELD as an option, not implemented.
+
+- netCDF V5 LAYOUT SHIPPED IN CODE (2026-09-02, no files reprocessed yet):
+  group-local wavelength/size axes under /observations (PI-Neph
+  refractive_index_real/imag/ssa on a 473/532/671 axis + psd_dndlogr on a
+  GRASP radius axis), full instrument-title prefix stripping (restores
+  ICARTT units/descriptions for CRDS/AMS/SAGA/HDSP2/DLH), units
+  normalization (original kept in icartt_units), FCDP cbin/nbin folded
+  onto bin dims, aerosol_size_dist merged into microphysical, and
+  /windowed/observations/window_index for direct window-block recovery.
+  ALSO: icartt_read_and_merge fix — AMS-60S species (OA/SO4/NO3/NH4/Chl
+  *_lt_1um_* + prec/DL, 15 cols) were being silently dropped ('lt'
+  matched as Local Time) AND the AMS time base was garbage (a species
+  column picked as time); header-units veto + start/stop rescue fixed.
+  SEAC4RS requires a RE-MERGE, then rerun all campaigns -> V3/V11 files.
+- FUTURE (bigger windowed-layout option, deliberately deferred): replace
+  the repeat-at-native-cadence /windowed* representation with a true
+  'window' dimension (n_windows) carrying window_start/window_center
+  coordinates. Smaller files and direct window indexing, at the cost of
+  losing trivial second-by-second alignment with /observations (would
+  need an index variable mapping windows->time, and all downstream
+  readers/plots updated). Revisit at the next breaking format bump.
+- RATIO KAPPA OBJECTIVE SHIPPED IN CODE (2026-09-03, no files reprocessed
+  yet): isara.kappa_objective='ratio' (new default) fits the modeled
+  wet/dry scattering ENHANCEMENT to the synthesized-wet/measured-dry
+  target, so PSD amplitude errors cancel out of kappa (under 'absolute'
+  they leaked in whole: SEAC4RS LAS dry closure ~0.61 -> kappa ~0.30 vs
+  UHSAS ~1.06 -> ~0.05). 2-flight A/B (Aug 6+8, Rim Fire smoke): LAS and
+  UHSAS kappa now agree to |diff| ~0.001, r=1.000 (was 0.11, r=0.80).
+  New QC: /windowed/retrievals/scattering_dry_closure_ratio + group attr
+  kappa_objective. NOTE: kappa "success" counts DROP under 'ratio' —
+  windows whose synthesized target has E = wet/dry < 1 (negative gamma;
+  common in thick smoke) now honestly fail instead of being absorbed by
+  the amplitude gap. [RESOLVED 2026-09-03: isara.kappa_min = -0.10 grid
+  extension -- E<1 windows now retrieve an effective negative kappa
+  (2-flight test: 133/133 success, 83 windows kappa in [-0.032, 0), no
+  pile-up at the floor); humidified-state products gated at kappa >= 0;
+  gf^3 >= 0.3 candidate guard in ISARA excludes complex/divergent
+  growth at any RH.]
+- v5 REPROCESSED 2026-09-03: SEAC4RS V3 (both variants; re-merged V2
+  pickle WITH AMS species) + ACTIVATE 2020/2021 V11. Second merge bug
+  found during the rerun: the campaign merge prefixes columns with the
+  instrument title BEFORE time parsing, so the header-units veto/rescue
+  never fired (species eaten as Local Time again despite the single-file
+  fix verifying clean) -> suffix-aware units lookup + regression tests
+  (icartt_read_and_merge 3087a97). Campaign kappa: LAS 0.090 / UHSAS
+  0.084 medians; both vs DASH-SP r~0.4, common -0.10 offset (gamma-vs-GF
+  question, not retrieval). MINOR: run.py evaluates stage checkpoints up
+  front, so a fresh SEAC4RS merge in the same invocation force-runs the
+  align stage which crashes (KeyError 'peak_r' -- clock alignment was
+  never configured for SEAC4RS); workaround is a second plain
+  invocation. Consider an align-skip config flag or lazy checkpoint
+  re-evaluation.
