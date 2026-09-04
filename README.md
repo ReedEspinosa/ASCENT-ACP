@@ -20,6 +20,28 @@ ICARTT-based campaigns):
 6. **netCDF export** (CF-1.8 style) with full provenance: config JSON, git SHAs and
    ICARTT instrument metadata in the global attributes (`ASCENT_ACP/netcdf_export.py`).
 
+## Downloading campaign data
+
+`scripts/download_campaign_data.py` bulk-downloads a campaign's ICARTT files
+from NASA Earthdata/ASDC via the CMR search API (the same archive Earthdata
+Search's manual bulk scripts hit). Searching needs no login; downloading reads
+Earthdata credentials from `~/.netrc`
+(`machine urs.earthdata.nasa.gov login <user> password <pass>`, chmod 600 —
+never committed).
+
+```bash
+# discover a campaign's collections (ACTIVATE, SEAC4RS, KORUS-AQ, INTEXB, ...)
+python scripts/download_campaign_data.py list NAAMES
+
+# download by collection short_name substring; skips files already on disk
+python scripts/download_campaign_data.py fetch NAAMES \
+    --collections Aerosol_AircraftInSitu MetNav Cloud_AircraftInSitu \
+    [--outdir DIR] [--exclude REGEX] [--unzip] [--dry-run]
+```
+
+Default output directory is `~/Synced/ACMAP_Meloe/SuborbitalDataSets/<PROJECT>`.
+`--unzip` extracts zip-packaged granules (FCDP, 2DS) into the same directory.
+
 ## Running the pipeline
 
 ```bash
