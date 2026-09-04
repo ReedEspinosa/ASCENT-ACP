@@ -69,7 +69,7 @@ def find_collections(session, project, patterns):
     return keep
 
 
-def granule_urls(session, concept_id):
+def granule_urls(session, concept_id, temporal=None):
     """Direct archive URLs for every granule in a collection.
 
     Uses CMR's CSV response, which omits the per-granule spatial metadata
@@ -78,6 +78,8 @@ def granule_urls(session, concept_id):
     """
     urls, missing, headers = [], 0, {}
     params = {"collection_concept_id": concept_id, "page_size": PAGE_SIZE}
+    if temporal:
+        params["temporal"] = f"{temporal[0]}T00:00:00Z,{temporal[1]}T23:59:59Z"
     while True:
         r = session.get(f"{CMR}/granules.csv", params=params, headers=headers,
                         timeout=90)
@@ -191,7 +193,7 @@ def cmd_fetch(args):
 
     jobs = []
     for c in cols:
-        urls, missing = granule_urls(session, c["id"])
+        urls, missing = granule_urls(session, c["id"], args.temporal)
         if missing:
             print(f"  WARNING {c.get('short_name')}: {missing} granules have "
                   "no direct download link", file=sys.stderr)
@@ -249,6 +251,8 @@ def main():
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--clobber", action="store_true",
                    help="re-download files already on disk")
+    p.add_argument("--temporal", nargs=2, metavar=("START", "END"),
+                   help="granule date range, e.g. --temporal 2021-11-01 2022-12-31")
     p.add_argument("--unzip", action="store_true",
                    help="extract .zip granules (FCDP, 2DS, ...) after download")
     p.add_argument("--dry-run", action="store_true",
