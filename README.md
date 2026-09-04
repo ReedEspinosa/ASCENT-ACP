@@ -36,11 +36,14 @@ python scripts/download_campaign_data.py list NAAMES
 # download by collection short_name substring; skips files already on disk
 python scripts/download_campaign_data.py fetch NAAMES \
     --collections Aerosol_AircraftInSitu MetNav Cloud_AircraftInSitu \
-    [--outdir DIR] [--exclude REGEX] [--unzip] [--dry-run]
+    [--outdir DIR] [--exclude REGEX] [--unzip] [--by-year] [--dry-run]
 ```
 
 Default output directory is `~/Synced/ACMAP_Meloe/SuborbitalDataSets/<PROJECT>`.
 `--unzip` extracts zip-packaged granules (FCDP, 2DS) into the same directory.
+`--by-year` routes files into `<PROJECT>_<YYYY>` sibling dirs by the flight
+date in each filename — the layout multi-year campaigns (ACTIVATE) use;
+shared pipeline outputs stay in the year-less `ACTIVATE/` dir.
 
 ## Running the pipeline
 

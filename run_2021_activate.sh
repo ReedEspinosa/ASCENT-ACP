@@ -3,7 +3,8 @@
 set -u
 cd "$(dirname "$0")"
 
-DATA=/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE
+DATA=/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE   # shared outputs
+YDATA=/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2021  # per-year data
 LOGDIR=$DATA/processing_logs
 mkdir -p "$LOGDIR" "$DATA/isara_output"
 
@@ -12,7 +13,7 @@ python run_full_activate_merge.py --years 2021 --n-workers 6 \
   > "$LOGDIR/merge_2021.log" 2>&1
 echo "merge 2021 exit code: $?"
 
-PKL=$DATA/merged1sec_allInstruments_2021_V2.pkl
+PKL=$YDATA/merged1sec_allInstruments_2021_V2.pkl
 if [ ! -f "$PKL" ]; then
   echo "!! $PKL missing after merge; aborting 2021"
   echo "===== 2021 ABORTED $(date) ====="

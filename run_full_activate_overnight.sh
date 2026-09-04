@@ -4,7 +4,8 @@
 set -u
 cd "$(dirname "$0")"
 
-DATA=/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE
+BASE=/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets  # per-year data in $BASE/ACTIVATE_<year>
+DATA=$BASE/ACTIVATE   # shared outputs
 LOGDIR=$DATA/processing_logs
 mkdir -p "$LOGDIR" "$DATA/isara_output"
 
@@ -21,7 +22,7 @@ MERGE_RC=$?
 echo "merge exit code: $MERGE_RC"
 
 for Y in 2020 2021; do
-  PKL=$DATA/merged1sec_allInstruments_${Y}_V2.pkl
+  PKL=$BASE/ACTIVATE_${Y}/merged1sec_allInstruments_${Y}_V2.pkl
   if [ ! -f "$PKL" ]; then
     echo "!! $PKL missing, skipping year $Y"
     continue

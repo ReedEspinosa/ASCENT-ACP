@@ -146,12 +146,23 @@ def download_one(url, dest, clobber=False):
         return "failed", dest
 
 
-def unzip_all(outdir, jobs):
-    """Extract downloaded .zip granules (FCDP, 2DS, ...) into outdir,
+def dest_dir(base, filename, by_year):
+    """Directory for one file: base, or its <base>_<YYYY> sibling."""
+    if by_year:
+        m = re.search(r"_((?:19|20)\d{2})\d{4}_", filename)
+        if m:
+            return base.parent / f"{base.name}_{m.group(1)}"
+        print(f"  WARNING: no date in {filename}; keeping in {base.name}",
+              file=sys.stderr)
+    return base
+
+
+def unzip_all(jobs):
+    """Extract downloaded .zip granules (FCDP, 2DS, ...) beside each zip,
     skipping members already on disk."""
     import zipfile
     n = 0
-    for u in jobs:
+    for u, outdir in jobs:
         path = outdir / os.path.basename(u)
         if path.suffix != ".zip" or not path.exists():
             continue
@@ -188,8 +199,9 @@ def cmd_fetch(args):
     if not cols:
         sys.exit(f"No collections matched {args.collections} for "
                  f"project={args.project!r} -- run the 'list' command first.")
-    outdir = Path(args.outdir) if args.outdir else DEFAULT_BASE / args.project
-    print(f"{len(cols)} collections -> {outdir}")
+    base = Path(args.outdir) if args.outdir else DEFAULT_BASE / args.project
+    print(f"{len(cols)} collections -> "
+          f"{f'{base}_<year>' if args.by_year else base}")
 
     jobs = []
     for c in cols:
@@ -204,22 +216,24 @@ def cmd_fetch(args):
         print(f"  {c.get('short_name')}: {len(urls)} granules")
 
     # Same file can appear under several collections; keep one copy.
-    jobs = sorted(set(jobs))
+    jobs = [(u, dest_dir(base, os.path.basename(u), args.by_year))
+            for u in sorted(set(jobs))]
     print(f"{len(jobs)} unique files")
     if args.dry_run:
-        for u in jobs[:20]:
-            print("   ", os.path.basename(u))
+        for u, d in jobs[:20]:
+            print(f"    {d.name}/{os.path.basename(u)}")
         if len(jobs) > 20:
             print(f"    ... and {len(jobs) - 20} more")
         return
 
     check_netrc()
-    outdir.mkdir(parents=True, exist_ok=True)
+    for _, d in jobs:
+        d.mkdir(parents=True, exist_ok=True)
     counts = {"ok": 0, "skipped": 0, "failed": 0}
     with concurrent.futures.ThreadPoolExecutor(args.workers) as pool:
         futures = [pool.submit(download_one, u,
-                               outdir / os.path.basename(u), args.clobber)
-                   for u in jobs]
+                               d / os.path.basename(u), args.clobber)
+                   for u, d in jobs]
         for i, fut in enumerate(concurrent.futures.as_completed(futures), 1):
             status, dest = fut.result()
             counts[status] += 1
@@ -228,7 +242,7 @@ def cmd_fetch(args):
     print(f"done: {counts['ok']} downloaded, {counts['skipped']} already "
           f"present, {counts['failed']} failed")
     if args.unzip:
-        unzip_all(outdir, jobs)
+        unzip_all(jobs)
     if counts["failed"]:
         sys.exit(1)
 
@@ -251,6 +265,9 @@ def main():
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--clobber", action="store_true",
                    help="re-download files already on disk")
+    p.add_argument("--by-year", action="store_true",
+                   help="sort files into <outdir>_<YYYY> sibling dirs by the "
+                        "flight date in each filename (multi-year campaigns)")
     p.add_argument("--temporal", nargs=2, metavar=("START", "END"),
                    help="granule date range, e.g. --temporal 2021-11-01 2022-12-31")
     p.add_argument("--unzip", action="store_true",

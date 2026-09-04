@@ -2,8 +2,8 @@
   "campaign": "ACTIVATE",
   "year": "2020",
   "paths": {
-    "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE/merged1sec_allInstruments_2020_V2_timeShifted.pkl",
-    "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE/merged1sec_allInstruments_2020_V2_meta.pickle",
+    "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2020/merged1sec_allInstruments_2020_V2_timeShifted.pkl",
+    "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2020/merged1sec_allInstruments_2020_V2_meta.pickle",
     "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE/isara_output",
     "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
     "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
@@ -95,7 +95,7 @@
     "n_scale_sigma": 0.2
   },
   "merge": {
-    "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE",
+    "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2020",
     "instruments": [
       "ACTIVATE-DLH-H2O",
       "ACTIVATE-FCDP",

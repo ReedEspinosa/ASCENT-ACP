@@ -23,8 +23,12 @@ import pandas as pd
 import icartt_read_and_merge as ict
 from icartt_read_and_merge.icartt_read_and_merge import _merge_meta_dicts
 
-SOURCE_DIR = "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE"
-OUTPUT_DIR = SOURCE_DIR
+# ICARTT files and merged pickles live in per-year dirs: ACTIVATE_2020, ...
+DATA_BASE = "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets"
+
+
+def year_dir(year):
+    return os.path.join(DATA_BASE, f"ACTIVATE_{year}")
 STAGING_DIR = "/tmp/activate_merge_staging"
 
 # Same instrument set as the ACTIVATE_TEST merge (both filename case variants)
@@ -65,16 +69,15 @@ def stage_files(years):
         os.unlink(os.path.join(STAGING_DIR, f))
     dates_by_year = {y: set() for y in years}
     n_staged = 0
-    for fname in sorted(os.listdir(SOURCE_DIR)):
-        m = FILE_RE.match(fname)
-        if not m:
-            continue
-        year = m.group("date")[:4]
-        if year not in years:
-            continue
-        os.symlink(os.path.join(SOURCE_DIR, fname), os.path.join(STAGING_DIR, fname))
-        dates_by_year[year].add(m.group("date"))
-        n_staged += 1
+    for year in years:
+        src = year_dir(year)
+        for fname in sorted(os.listdir(src)):
+            m = FILE_RE.match(fname)
+            if not m or m.group("date")[:4] != year:
+                continue
+            os.symlink(os.path.join(src, fname), os.path.join(STAGING_DIR, fname))
+            dates_by_year[year].add(m.group("date"))
+            n_staged += 1
     print(f"Staged {n_staged} files into {STAGING_DIR}")
     for y in years:
         print(f"  {y}: {len(dates_by_year[y])} flight dates")
@@ -117,7 +120,7 @@ def merge_year(year, dates, n_workers):
         df_year = df_year[~df_year.index.duplicated(keep="first")]
     meta_year = _merge_meta_dicts(metas)
 
-    base = os.path.join(OUTPUT_DIR, f"merged1sec_allInstruments_{year}_V2")
+    base = os.path.join(year_dir(year), f"merged1sec_allInstruments_{year}_V2")
     df_year.to_pickle(base + ".pkl")
     with open(base + "_meta.pickle", "wb") as f:
         pickle.dump(meta_year, f)
