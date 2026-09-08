@@ -1075,8 +1075,9 @@ def _write_windowed_parent(w, results_df, grid, cfg, win_idx):
         ("n_inlet_bad", "samples rejected by inlet flag"),
         ("n_low_signal", "samples rejected by minimum dry Sc450 filter"),
         ("n_low_ssa", "samples rejected by minimum SSA filter"),
-        ("n_ambient", "QC-valid samples with usable ambient RH (DLH present, "
-                      "below the ambient RH ceiling)"),
+        ("n_ambient", "QC-valid samples with usable ambient RH (a configured "
+                      "RH source present, below the ambient RH ceiling; see "
+                      "rh_ambient for the source chain)"),
     ]:
         if col in results_df:
             vals = _broadcast(results_df[col].fillna(0).to_numpy(float), win_idx)
@@ -1149,18 +1150,27 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
             "long_name": (f"window-mean scattering at {wet_w} nm gamma-adjusted "
                           "to ambient RH (synthesized, not directly measured)"),
             "comment": ("per-second gamma adjustment of the dry scattering to the "
-                        "DLH ambient RH over liquid water, then window-averaged; "
+                        "ambient RH over liquid water, then window-averaged; "
                         f"seconds with RH above {cfg.filters.ambient_rh_max:.0f}% "
-                        "or without DLH data are excluded (see rh_ambient, "
-                        "n_ambient). Directly comparable to LARGE's "
-                        "Sc550_submicron_amb.")})
+                        "or without ambient RH data are excluded (see rh_ambient "
+                        "for the source chain, n_ambient). Directly comparable "
+                        "to LARGE's Sc550_submicron_amb.")})
 
+    from .filtering import ambient_rh_sources
+    rh_src = "; ".join(ambient_rh_sources(cfg.channels))
     for name, col, units, long_name in [
         ("rh_scattering", "RH_Sc_mean", "percent", "window-mean nephelometer sample RH"),
         ("rh_ambient", "RH_amb_mean", "percent",
-         "window-mean ambient RH over liquid water (DLH) used for the ambient state"),
+         "window-mean ambient RH over liquid water used for the ambient "
+         f"state (sources in priority order: {rh_src})"),
         ("rh_ambient_std", "RH_amb_std", "percent",
          "within-window standard deviation of ambient RH"),
+        ("psd_optical_fallback_fraction", "psd_fallback_mean", "1",
+         "fraction of the window's QC-valid seconds whose optical-sizer PSD "
+         f"bins came from the fallback instrument "
+         f"({cfg.psd.fallback_instrument_tag or 'none configured'}) instead "
+         f"of the primary ({cfg.psd.optical_instrument_tag}); windows above "
+         "0.5 use the fallback sizer's calibration RI and priors"),
         ("gamma550", "gamma_mean", "1", "window-mean scattering hygroscopic growth exponent"),
         ("f_rh_550", "fRH_mean", "1", "window-mean f(RH) 20->80% at 550 nm (LARGE)"),
         ("angstrom_exponent", "AE_mean", "1", "window-mean scattering Angstrom exponent 450-700 nm"),
@@ -1173,10 +1183,16 @@ def _write_retrievals(w, results_df, grid, cfg, win_idx):
             w.scatter2d(go, name, col_rows(col),
                         attrs={"units": units, "long_name": long_name, "cell_methods": cm})
 
+    psd_instr = "SMPS+" + cfg.psd.optical_instrument_tag + (
+        f" (with {cfg.psd.fallback_instrument_tag} filling windows where the "
+        f"{cfg.psd.optical_instrument_tag} is absent; see "
+        "psd_optical_fallback_fraction)"
+        if cfg.psd.fallback_instrument_tag else "")
     w.scatter3d(go, "dndlogdp",
                 (col_rows(psd_col_name(d)) for d in grid.dpg_um), "dp_mid", attrs={
         "units": "cm-3", "cell_methods": cm, "measurement_conditions": "STP",
-        "long_name": "window-mean dry number size distribution dN/dlogDp (SMPS+LAS)"})
+        "long_name": "window-mean dry number size distribution dN/dlogDp "
+                     f"({psd_instr})"})
 
     cri_note = ("the retrieval assumes a spectrally flat refractive index "
                 "(one value fit jointly to all channels)")
@@ -1476,6 +1492,20 @@ def _write_uncertainty(w, unc_df, grid, cfg, win_idx):
         "its residual vs the measured coefficient should be at instrument "
         "level when the nuisance model is adequate. The archived dndlogdp "
         "is NOT modified.")
+    if "reff_fit_um" in unc_df:
+        w.scatter2d(grt, "effective_radius_fit", col_rows("reff_fit_um"),
+                    attrs={
+            "units": "um", "cell_methods": cm,
+            "long_name": ("effective radius of the fit PSD: the sizing-"
+                          "remapped size distribution at the retrieved CRI "
+                          "with the MAP lnD shift applied"),
+            "comment": ("moment ratio <r^3>/<r^2> of the counts-conserving "
+                        "optical-sizer RI remapping of the archived PSD at "
+                        "the reported CRI, with bin diameters additionally "
+                        "scaled by exp(sizing_scale_shift); impactor "
+                        "penetration NOT applied, so this is directly "
+                        "comparable to the same moment of dndlogdp. The "
+                        "archived dndlogdp is never modified.")})
     if "psd_scale_factor_unitless" in unc_df:
         w.scatter2d(grt, "psd_scale_factor_fit",
                     col_rows("psd_scale_factor_unitless"), attrs={

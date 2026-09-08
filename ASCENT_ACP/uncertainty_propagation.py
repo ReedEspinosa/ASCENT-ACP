@@ -237,19 +237,22 @@ def _window_uncertainty_inner(it):
     sca_w = it["sca_wvls"]
     abs_w = it["abs_wvls"]
     y = np.empty((len(grid_cri), len(sca_w) + len(abs_w)))
+    from . import isara_bridge  # noqa: PLC0415
     from . import sizing_correction as szc  # noqa: PLC0415
+    sizing = isara_bridge.select_sizing(_SIZING, it.get("psd_source",
+                                                        "primary"))
     for k, (rr, ii) in enumerate(grid_cri):
-        if _SIZING is not None:
-            dpg_k, dnd_k = szc.apply(_SIZING, k, dpg, dnd, cols=cols_fin)
+        if sizing is not None:
+            dpg_k, dnd_k = szc.apply(sizing, k, dpg, dnd, cols=cols_fin)
         else:
             dpg_k, dnd_k = dpg, dnd
         c = _coeffs(dpg_k, dnd_k, rr, ii, wvls)
         y[k] = [c[w][0] for w in sca_w] + [c[w][1] for w in abs_w]
-    if _SIZING is not None:
+    if sizing is not None:
         # base/products/nuisances evaluated at the reported CRI's correction
-        kn = szc.nearest_candidate(_SIZING, rri, iri)
-        dpg, dnd = szc.apply(_SIZING, kn, dpg, dnd, cols=cols_fin)
-        raw_fin_corr = szc.apply(_SIZING, kn, dpg_all[fin], raw[fin],
+        kn = szc.nearest_candidate(sizing, rri, iri)
+        dpg, dnd = szc.apply(sizing, kn, dpg, dnd, cols=cols_fin)
+        raw_fin_corr = szc.apply(sizing, kn, dpg_all[fin], raw[fin],
                                  cols=cols_fin)[1]
     else:
         raw_fin_corr = raw[fin]
@@ -365,6 +368,17 @@ def _window_uncertainty_inner(it):
             out[f"Sc{wv}_dry_fit"] = float(y_fit[i2])
         for j2, wv in enumerate(abs_w):
             out[f"Abs{wv}_fit"] = float(y_fit[len(sca_w) + j2])
+        # effective radius of the fit PSD: the (impactor-unweighted,
+        # counts-conserving) sizing-remapped PSD at the reported CRI with
+        # the MAP lnD shift applied; the N-scale factor cancels in the
+        # moment ratio. Directly comparable to r_eff of the archived PSD.
+        dpg_fit = dpg * np.exp(theta_hat[0] * lnd_sigma)
+        r_fit = dpg_fit / 2.0
+        wq = raw_fin_corr * np.gradient(np.log10(dpg_fit))
+        s2f = np.nansum(wq * r_fit ** 2)
+        s3f = np.nansum(wq * r_fit ** 3)
+        if s2f > 0:
+            out["reff_fit_um"] = float(s3f / s2f)
     else:
         for (pp, pm) in pairs:
             tot = np.zeros_like(p0)
@@ -430,12 +444,18 @@ def run_all(results_df, grid, cfg, progress=True):
     pen = (grid.penetration if grid.penetration is not None
            else np.ones(len(grid)))
     sizing_state = isara_bridge.build_sizing_state(grid, cfg)
-    lnd_sigma = (cfg.isara.sizing_residual_lnd if sizing_state is not None
-                 else um.OPC_DLND)
 
     items = []
     for ts, row in results_df.iterrows():
+        source = isara_bridge.window_psd_source(row)
+        fb = source == "fallback"
+        if sizing_state is not None:
+            lnd_sigma = (cfg.isara.fallback_sizing_residual_lnd if fb
+                         else cfg.isara.sizing_residual_lnd)
+        else:
+            lnd_sigma = um.OPC_DLND
         items.append({
+            "psd_source": source,
             "ts": ts,
             "isara_dir": cfg.paths.isara_code_dir,
             "wvls": wvls,
@@ -466,7 +486,8 @@ def run_all(results_df, grid, cfg, progress=True):
             "rri_max": cfg.isara.rri_max,
             "marginalized": cfg.isara.chi2_sigma == "instrument-cov",
             "lnd_sigma": lnd_sigma,
-            "n_scale_sigma": cfg.isara.n_scale_sigma,
+            "n_scale_sigma": (cfg.isara.fallback_n_scale_sigma if fb
+                              else cfg.isara.n_scale_sigma),
             "d50": cfg.psd.impactor_d50_aero_um,
             "gsd": cfg.psd.impactor_gsd,
             "rho": cfg.psd.impactor_rho_gcm3,

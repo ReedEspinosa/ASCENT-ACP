@@ -12,6 +12,6 @@ def run_pipeline(*args, **kwargs):
 
     return _run(*args, **kwargs)
 
-__version__ = '0.1.0'
+__version__ = '0.6.0'  # v6 output layout (see NETCDF_OUTPUT_SPEC.md)
 
 

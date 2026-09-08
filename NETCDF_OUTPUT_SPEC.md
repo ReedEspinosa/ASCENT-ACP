@@ -1,7 +1,32 @@
-# ASCENT-ACP netCDF Output v2–v5 + Single-Pass Driver — Design Spec
+# ASCENT-ACP netCDF Output v2–v6 + Single-Pass Driver — Design Spec
 
-Status: **implemented (v5 layout, 2026-09-02; no campaign reprocessed on v5
-yet)**. Supersedes the flat single-group v1 file formerly produced by
+Status: **implemented (v6, 2026-09-08)**.
+
+## v6 addendum (2026-09-08) — optical-sizer fallback, RH source chain, fit r_eff
+
+- **Optical-sizer fallback** (`psd.fallback_instrument_tag/_bins_csv/_cal_ri/
+  _lambda_nm`): on 1 Hz rows where the primary sizer has no data in any grid
+  bin, a fallback sizer sharing the same nominal bin centers (LAS backing
+  UHSAS on the LARGE decade grid) fills the same grid slots
+  (`sizebins.apply_optical_fallback`; the merged DataFrame is never mutated).
+  New windowed var `psd_optical_fallback_fraction`; windows above 0.5 use the
+  fallback's calibration in the RI sizing correction (states are now a
+  {primary, fallback} pair selected per window) and the
+  `isara.fallback_sizing_residual_lnd` / `isara.fallback_n_scale_sigma`
+  priors. SEAC4RS recovers ~1380 windows on the 10 UHSAS-less flights.
+- **Ambient-RH source chain** (`channels.rh_ambient_fallback_suffixes`,
+  `rh_ambient_h2o_ppmv_suffix` + temp/press suffixes): direct RH columns in
+  priority order, then RH derived from an H2O mixing ratio with static T/P
+  (Alduchov-Eskridge es over liquid). `rh_ambient` long_name records the
+  chain; stale hardcoded "(DLH)" wording removed.
+- **`/windowed/retrievals/effective_radius_fit`**: r_eff of the
+  counts-conserving RI-remapped PSD at the reported CRI with the MAP lnD
+  shift applied (impactor-unweighted; directly comparable to dndlogdp
+  moments).
+- Outputs land in deployment-specific folders (ACTIVATE_2020/2021/2022, ...);
+  all campaigns reprocessed with uniform version tag **V6**.
+
+Previous status: v5 layout implemented 2026-09-02. Supersedes the flat single-group v1 file formerly produced by
 `netcdf_export.py`, and adds a campaign-agnostic ICARTT→netCDF driver
 (`ASCENT_ACP.run`). All decisions in §2 are as-built; run
 `python -m ASCENT_ACP.run --config configs/activate_2021_full.json`.

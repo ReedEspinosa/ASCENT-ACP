@@ -1,16 +1,16 @@
 {
  "campaign": "ACTIVATE",
- "year": "2021",
+ "year": "2022",
  "paths": {
-  "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2021/merged1sec_allInstruments_2021_V2_timeShifted.pkl",
-  "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2021/merged1sec_allInstruments_2021_V2_meta.pickle",
-  "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2021/isara_output",
+  "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2022/merged1sec_allInstruments_2022_V1_timeShifted.pkl",
+  "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2022/merged1sec_allInstruments_2022_V1_meta.pickle",
+  "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2022/isara_output",
   "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
   "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
   "optical_dataset_dir": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/",
   "scratch_dir": "/tmp/ascent_acp_scratch",
   "shift_table_csv": "clock_alignment_results/variable_shift_table.csv",
-  "shift_diagnostics_csv": "clock_alignment_results/shift_diagnostics_merged1sec_allInstruments_2021_V2.csv"
+  "shift_diagnostics_csv": "clock_alignment_results/shift_diagnostics_merged1sec_allInstruments_2022_V1.csv"
  },
  "channels": {
   "sca_suffixes": {
@@ -95,7 +95,7 @@
   "n_scale_sigma": 0.2
  },
  "merge": {
-  "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2021",
+  "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/ACTIVATE_2022",
   "instruments": [
    "ACTIVATE-DLH-H2O",
    "ACTIVATE-FCDP",

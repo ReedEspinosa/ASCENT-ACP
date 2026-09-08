@@ -86,9 +86,16 @@ def stage_retrieve(cfg, dates, max_windows):
         raise ValueError("No rows to process after date selection")
 
     grid = sizebins.build_grid(df, cfg.psd)
+    df_psd, fb_rows = sizebins.apply_optical_fallback(df, grid, cfg.psd)
     optical = filtering.derive_optical_columns(df, cfg)
+    if fb_rows is not None:
+        # windowed mean -> psd_fallback_mean = fraction of valid seconds
+        # whose PSD came from the fallback sizer
+        optical["psd_fallback"] = fb_rows.astype(float)
+        print(f"  optical-sizer fallback ({cfg.psd.fallback_instrument_tag}): "
+              f"{int(fb_rows.sum())} of {len(fb_rows)} rows", flush=True)
     masks = filtering.row_qc(df, optical, cfg)
-    wdf = windows.aggregate(df, optical, masks, grid, cfg)
+    wdf = windows.aggregate(df_psd, optical, masks, grid, cfg)
     n_good = int((wdf["window_qc_flag"] == 0).sum())
     print(f"  {n_good}/{len(wdf)} windows pass QC", flush=True)
     if max_windows is not None and n_good > max_windows:

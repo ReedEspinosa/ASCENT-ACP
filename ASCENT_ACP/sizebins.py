@@ -58,6 +58,52 @@ def impactor_penetration(dpg_um, psd_cfg):
     return 1.0 / (1.0 + (d_aero / psd_cfg.impactor_d50_aero_um) ** s)
 
 
+def apply_optical_fallback(df, grid, psd_cfg):
+    """Fill the grid's optical-sizer bins from the fallback instrument.
+
+    On 1 Hz rows where the primary optical sizer (``optical_instrument_tag``)
+    has no data in ANY grid bin, the fallback instrument's bins fill the same
+    grid slots. The two instruments must share nominal bin centers (e.g.
+    LAS backing UHSAS on the LARGE decade grid); every primary grid bin must
+    exist in the fallback bin table.
+
+    Returns ``(df_for_windows, fallback_rows)`` where ``df_for_windows`` is a
+    shallow copy with only the primary bin columns replaced (the input
+    DataFrame is never modified, so raw passthrough exports stay pristine)
+    and ``fallback_rows`` is a boolean Series marking substituted rows.
+    Returns ``(df, None)`` when no fallback instrument is configured.
+    """
+    tag = getattr(psd_cfg, "fallback_instrument_tag", "")
+    if not tag:
+        return df, None
+    fb_bins = load_bins(psd_cfg.fallback_bins_csv)
+    fb_cols = varmap.resolve_bins(df, tag)
+    if len(fb_cols) != len(fb_bins["dpg"]):
+        raise ValueError(
+            f"Fallback bin-table/DataFrame mismatch: {len(fb_bins['dpg'])} "
+            f"bins vs {len(fb_cols)} {tag} columns")
+    by_center = {round(d, 6): c for d, c in zip(fb_bins["dpg"], fb_cols)}
+    pairs = []  # (grid column, fallback column) for the optical bins
+    for gcol, dpg, instr in zip(grid.columns, grid.dpg_um, grid.instrument):
+        if instr != psd_cfg.optical_instrument_tag:
+            continue
+        fcol = by_center.get(round(dpg, 6))
+        if fcol is None:
+            raise ValueError(
+                f"No {tag} bin at {dpg} um backs the "
+                f"{psd_cfg.optical_instrument_tag} grid bin")
+        pairs.append((gcol, fcol))
+    primary_has = df[[g for g, _ in pairs]].notna().any(axis=1)
+    fallback_has = df[[f for _, f in pairs]].notna().any(axis=1)
+    fallback_rows = ~primary_has & fallback_has
+    out = df.copy(deep=False)
+    for gcol, fcol in pairs:
+        s = df[gcol].copy()
+        s[fallback_rows] = df[fcol][fallback_rows]
+        out[gcol] = s
+    return out, fallback_rows
+
+
 def build_grid(df, psd_cfg):
     """Concatenate SMPS and LAS bins (ascending) and truncate to the variant cut.
 

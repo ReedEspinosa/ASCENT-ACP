@@ -67,6 +67,16 @@ class ChannelConfig:
     rh_sc_suffix: str = "RH_Sc_submicron"
     rh_sc_assumed_percent: float = 30.0
     rh_ambient_suffix: str = "RHw_DLH"  # ambient RH over liquid water (DLH)
+    # Ambient-RH fallback chain: direct RH columns tried in order wherever
+    # the primary is missing, then (last resort) RH derived from a water
+    # vapor mixing ratio plus static temperature/pressure:
+    #   e = ppmv*1e-6 * P;  RH = 100 * e / es_liquid(T)  (Alduchov-Eskridge)
+    # All three derived suffixes must resolve for the derived source to be
+    # used. Empty strings/list disable the fallbacks.
+    rh_ambient_fallback_suffixes: list = field(default_factory=list)
+    rh_ambient_h2o_ppmv_suffix: str = ""
+    rh_ambient_temp_c_suffix: str = ""
+    rh_ambient_press_hpa_suffix: str = ""
     gamma_suffix: str = "gamma550"
     frh_suffix: str = "fRH550_RH20to80"
     ae_suffix: str = "AEscat_450to700nm"
@@ -158,6 +168,16 @@ class PSDConfig:
     optical_instrument_tag: str = "LAS"
     optical_cal_ri: float = 1.52     # AmmSO4 1.52; PSL 1.58 (Moore et al. 2021)
     optical_lambda_nm: float = 633.0  # LAS 633; UHSAS 1054
+    # Fallback optical sizer: on 1 Hz rows where the primary instrument has
+    # no data in any grid bin, the fallback's bins (which must share the
+    # primary's nominal bin centers, e.g. LAS backing UHSAS on the LARGE
+    # decade grid) fill the same grid slots. Windows dominated by fallback
+    # rows use fallback_cal_ri/fallback_lambda_nm for the RI sizing
+    # correction and the isara.fallback_* priors. "" disables.
+    fallback_instrument_tag: str = ""
+    fallback_bins_csv: str = ""
+    fallback_cal_ri: float = 1.58
+    fallback_lambda_nm: float = 633.0
     # Hand-off diameter when the SMPS and LAS bin ranges overlap (0 = the
     # instruments must not overlap, the ACTIVATE case). SMPS bins with
     # center <= stitch and LAS bins with center > stitch are kept.
@@ -211,6 +231,10 @@ class IsaraConfig:
     # 0.10 default. Feeds both the CRI-stage obs_cov and the uncertainty
     # stage's nuisance MAP (psd_scale_factor_fit / *_dry_fit outputs).
     n_scale_sigma: float = 0.10
+    # Priors applied to windows whose PSD came from the fallback optical
+    # sizer (psd.fallback_instrument_tag); the LAS values by default.
+    fallback_sizing_residual_lnd: float = 0.10
+    fallback_n_scale_sigma: float = 0.20
     # nephelometer f_rel regime for sigma_scattering; "" = auto: "pm1" when
     # an impactor is configured (submicron variant), else "pm10".
     neph_regime: str = ""

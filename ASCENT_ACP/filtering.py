@@ -51,12 +51,14 @@ def derive_optical_columns(df, cfg):
     wet_wvl = str(cfg.channels.wet_wvl_sca[0])
     sc_for_wet = df[varmap.resolve(df, ch.sca_suffixes[wet_wvl])]
     out[f"Sc{wet_wvl}_wet"] = gamma_adjust_scattering(sc_for_wet, gamma, rh, flt.wet_rh)
-    # Ambient-RH state from the DLH RH over liquid water; rows above
-    # ambient_rh_max (or with no DLH data) get NaN rather than a capped value
-    amb_col = varmap.resolve(df, ch.rh_ambient_suffix, required=False)
-    if amb_col is not None:
-        rh_amb = df[amb_col].where(
-            (df[amb_col] > 0) & (df[amb_col] <= flt.ambient_rh_max))
+    # Ambient-RH state: the configured primary RH column, filled where
+    # missing from the fallback chain (direct RH columns in priority order,
+    # then RH derived from an H2O mixing ratio + static T/P). Rows above
+    # ambient_rh_max (or with no source at all) get NaN, never a capped value.
+    rh_amb_raw = ambient_rh_chain(df, ch)
+    if rh_amb_raw is not None:
+        rh_amb = rh_amb_raw.where(
+            (rh_amb_raw > 0) & (rh_amb_raw <= flt.ambient_rh_max))
         out["RH_amb"] = rh_amb
         out[f"Sc{wet_wvl}_amb"] = gamma_adjust_scattering(sc_for_wet, gamma, rh, rh_amb)
 
@@ -70,6 +72,48 @@ def derive_optical_columns(df, cfg):
     out["lon"] = df[varmap.resolve(df, ch.lon_suffix)]
     out["alt"] = df[varmap.resolve(df, ch.alt_suffix)]
     return out
+
+
+def ambient_rh_chain(df, ch):
+    """Ambient RH (%) coalesced over the configured source chain, or None.
+
+    Sources, in priority order: ``rh_ambient_suffix``, each entry of
+    ``rh_ambient_fallback_suffixes``, then RH derived from the H2O mixing
+    ratio (ppmv) with static temperature (degC) and pressure (hPa) via
+    e = ppmv*1e-6*P and the Alduchov & Eskridge (1996) saturation vapor
+    pressure over liquid water. Missing columns are skipped silently.
+    """
+    rh = None
+    for sfx in [ch.rh_ambient_suffix, *ch.rh_ambient_fallback_suffixes]:
+        if not sfx:
+            continue
+        col = varmap.resolve(df, sfx, required=False)
+        if col is None:
+            continue
+        rh = df[col] if rh is None else rh.fillna(df[col])
+    if ch.rh_ambient_h2o_ppmv_suffix:
+        cols = [varmap.resolve(df, s, required=False)
+                for s in (ch.rh_ambient_h2o_ppmv_suffix,
+                          ch.rh_ambient_temp_c_suffix,
+                          ch.rh_ambient_press_hpa_suffix)]
+        if all(c is not None for c in cols):
+            e_hpa = df[cols[0]] * 1e-6 * df[cols[2]]
+            t_c = df[cols[1]]
+            es_hpa = 6.1094 * np.exp(17.625 * t_c / (t_c + 243.04))
+            derived = 100.0 * e_hpa / es_hpa
+            rh = derived if rh is None else rh.fillna(derived)
+    return rh
+
+
+def ambient_rh_sources(ch):
+    """Human-readable list of the configured ambient-RH sources (provenance)."""
+    srcs = [s for s in [ch.rh_ambient_suffix, *ch.rh_ambient_fallback_suffixes]
+            if s]
+    if ch.rh_ambient_h2o_ppmv_suffix:
+        srcs.append(f"derived from {ch.rh_ambient_h2o_ppmv_suffix} with "
+                    f"{ch.rh_ambient_temp_c_suffix}/"
+                    f"{ch.rh_ambient_press_hpa_suffix}")
+    return srcs
 
 
 def cloud_mask(df, cfg):

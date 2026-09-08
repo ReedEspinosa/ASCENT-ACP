@@ -42,7 +42,12 @@ def run_pipeline(cfg, dates=None, max_windows=None, write_nc=True, make_plots=Fa
 
     print("[2/5] Row-level QC and RH adjustment")
     grid = sizebins.build_grid(df, cfg.psd)
+    df_psd, fb_rows = sizebins.apply_optical_fallback(df, grid, cfg.psd)
     optical = filtering.derive_optical_columns(df, cfg)
+    if fb_rows is not None:
+        optical["psd_fallback"] = fb_rows.astype(float)
+        print(f"      optical-sizer fallback ({cfg.psd.fallback_instrument_tag}):"
+              f" {int(fb_rows.sum())} of {len(fb_rows)} rows")
     masks = filtering.row_qc(df, optical, cfg)
     print(
         f"      {int(masks['valid'].sum())}/{len(masks)} 1 Hz rows valid "
@@ -51,7 +56,7 @@ def run_pipeline(cfg, dates=None, max_windows=None, write_nc=True, make_plots=Fa
     )
 
     print(f"[3/5] Averaging into {cfg.window.window_s} s windows")
-    wdf = windows.aggregate(df, optical, masks, grid, cfg)
+    wdf = windows.aggregate(df_psd, optical, masks, grid, cfg)
     n_good = int((wdf["window_qc_flag"] == 0).sum())
     print(f"      {n_good}/{len(wdf)} windows pass QC")
     if max_windows is not None and n_good > max_windows:

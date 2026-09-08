@@ -24,13 +24,43 @@ _SIZING = None  # sizing_correction state dict (or None)
 
 
 def build_sizing_state(grid, cfg):
-    """Per-run optical-sizer RI correction state (None when disabled)."""
+    """Per-run optical-sizer RI correction states (None when disabled).
+
+    Returns {"primary": state, "fallback": state-or-None}: the same grid
+    bins carry the primary sizer's data on most windows and the fallback
+    sizer's on fallback windows (see sizebins.apply_optical_fallback), so
+    each needs its own calibration-RI/wavelength threshold mapping.
+    """
     if not cfg.isara.sizing_correction:
         return None
     mask = grid.instrument == cfg.psd.optical_instrument_tag
-    return szc.build_state(cfg.paths.isara_code_dir, grid.dpl_um, grid.dpg_um,
-                           grid.dpu_um, mask, cfg.psd.optical_lambda_nm,
-                           cfg.psd.optical_cal_ri, _cri_grid(cfg))
+    states = {"primary": szc.build_state(
+        cfg.paths.isara_code_dir, grid.dpl_um, grid.dpg_um, grid.dpu_um,
+        mask, cfg.psd.optical_lambda_nm, cfg.psd.optical_cal_ri,
+        _cri_grid(cfg)), "fallback": None}
+    if cfg.psd.fallback_instrument_tag:
+        states["fallback"] = szc.build_state(
+            cfg.paths.isara_code_dir, grid.dpl_um, grid.dpg_um, grid.dpu_um,
+            mask, cfg.psd.fallback_lambda_nm, cfg.psd.fallback_cal_ri,
+            _cri_grid(cfg))
+    return states
+
+
+def window_psd_source(row):
+    """"primary" or "fallback": which sizer dominates this window's PSD."""
+    frac = row.get("psd_fallback_mean", 0.0)
+    try:
+        frac = float(frac)
+    except (TypeError, ValueError):
+        frac = 0.0
+    return "fallback" if np.isfinite(frac) and frac > 0.5 else "primary"
+
+
+def select_sizing(states, source):
+    """The sizing state for one window (falls back to primary; None-safe)."""
+    if states is None:
+        return None
+    return states.get(source) or states["primary"]
 
 
 def import_isara(isara_code_dir):
@@ -220,23 +250,29 @@ def observation_covariance(row, dndlogdp_weighted, grid, cfg):
     dpg_f = grid.dpg_um[fin]
     dnd_f = dndlogdp_weighted[fin]
     raw_f = raw[fin]
+    source = window_psd_source(row)
+    fb = source == "fallback"
     lnd_sigma = um.OPC_DLND
-    if _SIZING is not None:
+    n_scale = (cfg.isara.fallback_n_scale_sigma if fb
+               else cfg.isara.n_scale_sigma)
+    state = select_sizing(_SIZING, source)
+    if state is not None:
         # evaluate S with the correction applied at the reference CRI and
         # with the smaller post-correction sizing residual
-        k = szc.nearest_candidate(_SIZING, 1.52, 0.005)
+        k = szc.nearest_candidate(state, 1.52, 0.005)
         cols = np.where(fin)[0]
-        dpg_f, dnd_f = szc.apply(_SIZING, k, dpg_f, dnd_f, cols=cols)
-        _, raw_f = szc.apply(_SIZING, k, grid.dpg_um[fin], raw_f, cols=cols)
+        dpg_f, dnd_f = szc.apply(state, k, dpg_f, dnd_f, cols=cols)
+        _, raw_f = szc.apply(state, k, grid.dpg_um[fin], raw_f, cols=cols)
         raw_f = raw_f  # counts-conserving rescale only
-        lnd_sigma = cfg.isara.sizing_residual_lnd
+        lnd_sigma = (cfg.isara.fallback_sizing_residual_lnd if fb
+                     else cfg.isara.sizing_residual_lnd)
     S = up.build_obs_cov(
         dpg_f, dnd_f, raw_f,
         (cfg.psd.impactor_d50_aero_um, cfg.psd.impactor_gsd,
          cfg.psd.impactor_rho_gcm3),
         sca_meas, abs_meas, list(ch.dry_wvl_sca), list(ch.dry_wvl_abs),
         wvls, float(cfg.window.window_s), regime, lnd_sigma=lnd_sigma,
-        n_scale_sigma=cfg.isara.n_scale_sigma)
+        n_scale_sigma=n_scale)
     return S * 1e-12  # (Mm^-1)^2 -> (m^-1)^2
 
 
@@ -276,10 +312,11 @@ def instrument_sigmas(row, cfg):
 
 def _retrieve_one(item):
     """Run one retrieval; never raises (failures become attempt flags of 0)."""
-    timestamp, kwargs, lut_key = item
+    timestamp, kwargs, lut_key, psd_source = item
     lut = _LUTS.get(lut_key)
     try:
-        result = _ISARA.Retr_PSD(**kwargs, lut=lut, sizing_corr=_SIZING)
+        result = _ISARA.Retr_PSD(**kwargs, lut=lut,
+                                 sizing_corr=select_sizing(_SIZING, psd_source))
     except ValueError as err:  # e.g. <2 valid PSD bins
         result = {
             "attempt_flag_CRI_unitless": 0,
@@ -324,7 +361,8 @@ def run_all_windows(windows_df, grid, cfg, progress=True):
     items = []
     for ts, row in good.iterrows():
         kwargs = build_retr_kwargs(row, grid, cfg)
-        items.append((ts, kwargs, _pattern_key(kwargs["dndlogdp_cm3"])))
+        items.append((ts, kwargs, _pattern_key(kwargs["dndlogdp_cm3"]),
+                      window_psd_source(row)))
 
     results = {}
     n_workers = cfg.isara.n_workers
