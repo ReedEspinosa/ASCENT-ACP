@@ -1,0 +1,45 @@
+{
+ "_comment": "DISCOVER-AQ (P-3B, 2011/2013CA/2013TX/2014) shared family map; longest-prefix match of column names.",
+ "family_order": [
+  "optical",
+  "microphysical",
+  "aerosol_composition",
+  "ccn",
+  "trace_gas",
+  "state_nav"
+ ],
+ "family_long_name": {
+  "optical": "In-situ aerosol optical measurements (TSI-3563 nephelometer, PSAP; ambient extinction)",
+  "microphysical": "In-situ aerosol microphysics: number concentrations and dry size distributions (LARGE CPCs; SMPS, DMT UHSAS [PSL], TSI APS/OPC)",
+  "aerosol_composition": "In-situ aerosol composition (PILS ions and WSOC, SP2 black carbon)",
+  "ccn": "Cloud condensation nuclei concentrations (LARGE CCN counter)",
+  "trace_gas": "Trace-gas and water-vapor measurements (DLH H2O)",
+  "state_nav": "Aircraft state and navigation (P3-B Data System)",
+  "other": "Unclassified instruments"
+ },
+ "family_comment": {
+  "microphysical": "2013CA quirk: the LARGE-SCAT and LARGE-ABS ICARTT files reuse the CNC title 'Particle Number Density Measurements', so their scattering/absorption columns land in this family."
+ },
+ "title_to_family": {
+  "In-situ_optical_aerosol_measurements_from_the_NASA_P-3B": "optical",
+  "In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_P-3B": "microphysical",
+  "In-situ_Submicron_Particle_Size_Distributions_from_the_DMT_UHSAS_on_the_NASA_P-3B": "microphysical",
+  "In-situ_Particle_Size_Distributions_from_the_TSI_APS_on_the_NASA_P-3B": "microphysical",
+  "In-situ_Particle_Size_Distributions": "microphysical",
+  "Particle_Number_Density_Measurements": "microphysical",
+  "CCN_Counter": "ccn",
+  "Inorganic_Particulate_Mass_Measurements_with_a_PILS": "aerosol_composition",
+  "Water-Soluble_Organic_Carbon_Mass_Measurements_with_a_PILS": "aerosol_composition",
+  "Black_Carbon_Mass_Concentration_with_an_SP2": "aerosol_composition",
+  "DLH": "trace_gas",
+  "P3-B_Data_System": "state_nav",
+  "In-situ_aerosol_intensive_calculations_from_the_NASA_P-3B": "optical",
+  "In-situ_ambient_aerosol_extinction_from_the_NASA_P-3B": "optical",
+  "Scattering_of_light_by_aerosol_particles_at_different_humidities_on_the_NASA_P-3B": "optical",
+  "P3-B_Data_Acquisition_and_Distribution": "state_nav",
+  "In-situ_aerosol_scattering_measurements_from_the_NASA_P-3B": "optical",
+  "In-situ_aerosol_absorption_measurements_from_the_NASA_P-3B": "optical",
+  "In-situ_Submicron_Optical_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_P-3B": "microphysical",
+  "In-situ_Submicron_Particle_Size_Distributions_from_a_SMPS_on_the_NASA_P-3B": "microphysical"
+ }
+}

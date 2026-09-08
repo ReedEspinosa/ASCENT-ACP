@@ -50,16 +50,24 @@ def stage_files(cfg, year):
         os.unlink(os.path.join(staging, f))
 
     regex = re.compile(cfg.merge.filename_regex)
-    keep_instr = set(cfg.merge.instruments)
+    # case-insensitive instrument match: some archives mix filename case
+    # for the same instrument (DISCOVER-AQ 2011 discoveraq-large-scat vs
+    # DISCOVERAQ-LARGE-SCAT are different flights of one instrument)
+    keep_instr = {i.upper() for i in cfg.merge.instruments}
+    # deployment labels may carry a suffix beyond the calendar year
+    # (DISCOVER-AQ "2013TX"/"2013CA"); match on the 4-digit prefix -- the
+    # per-deployment icartt_dir already scopes which files are visible
+    ym = re.match(r"\d{4}", str(year))
+    target_year = ym.group(0) if ym else str(year)
     dates, n = set(), 0
     for fname in sorted(os.listdir(cfg.merge.icartt_dir)):
         m = regex.match(fname)
         if not m:
             continue
-        if keep_instr and m.group("instr") not in keep_instr:
+        if keep_instr and m.group("instr").upper() not in keep_instr:
             continue
         dt = pd.to_datetime(m.group("date"), format=cfg.merge.date_format)
-        if f"{dt.year}" != str(year):
+        if f"{dt.year}" != target_year:
             continue
         os.symlink(os.path.join(cfg.merge.icartt_dir, fname),
                    os.path.join(staging, fname))

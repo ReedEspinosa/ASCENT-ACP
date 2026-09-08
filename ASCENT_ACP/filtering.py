@@ -70,7 +70,7 @@ def derive_optical_columns(df, cfg):
     out["fRH"] = df[varmap.resolve(df, ch.frh_suffix)]
     out["lat"] = df[varmap.resolve(df, ch.lat_suffix)]
     out["lon"] = df[varmap.resolve(df, ch.lon_suffix)]
-    out["alt"] = df[varmap.resolve(df, ch.alt_suffix)]
+    out["alt"] = df[varmap.resolve(df, ch.alt_suffix)] * ch.alt_scale_to_m
     return out
 
 
@@ -135,6 +135,12 @@ def cloud_mask(df, cfg):
         col = varmap.resolve(df, suffix, required=False)
         if col is not None:
             cloudy |= df[col] * scale > thresh
+    # campaigns without archived cloud probes may provide a PI cloud flag
+    # (e.g. KORUS-AQ LARGE-CLOUDFLAG: 0 clear, >=1 cloud, missing unknown)
+    if ch.cloud_flag_suffix:
+        col = varmap.resolve(df, ch.cloud_flag_suffix, required=False)
+        if col is not None:
+            cloudy |= df[col] >= 1
     if flt.cloud_pad_s > 0:
         w = 2 * flt.cloud_pad_s + 1
         cloudy = cloudy.rolling(w, center=True, min_periods=1).max().astype(bool)
@@ -151,8 +157,11 @@ def row_qc(df, optical, cfg):
         masks["inlet_bad"] = (inlet != 0) | inlet.isna()  # unknown inlet = bad
     else:
         masks["inlet_bad"] = False
-    # NaN dry scattering also fails: the row is unusable for retrieval
-    masks["low_signal"] = ~(optical["Sc450_dry"] > flt.min_dry_sc450_Mm)
+    # NaN dry scattering also fails: the row is unusable for retrieval.
+    # The threshold applies to the bluest archived scattering channel
+    # (450 nm normally; KORUS-AQ archived no blue channel, so 550 nm there).
+    blue = min(ch.sca_suffixes, key=int)
+    masks["low_signal"] = ~(optical[f"Sc{blue}_dry"] > flt.min_dry_sc450_Mm)
     ssa = optical[f"SSA{flt.ssa_filter_wvl}"]
     masks["low_ssa"] = ssa <= flt.min_ssa  # NaN passes (SSA needs Abs > 1 Mm-1)
     masks["valid"] = ~masks[["cloudy", "inlet_bad", "low_signal", "low_ssa"]].any(axis=1)

@@ -33,7 +33,9 @@ def resolve_bins(df, instrument):
     required contiguous) and center-diameter ``<instrument>_<NNN>nm``
     (SEAC4RS LARGE; ordered by the nm value).
     """
-    pat = re.compile(rf"_{instrument}_Bin(\d+)$")
+    # ordinal names may carry a trailing qualifier and lowercase "bin"
+    # (KORUS-AQ: SMPS_Bin01_stdPT, LAS_bin01_stdPT)
+    pat = re.compile(rf"_{instrument}_[Bb]in(\d+)(?:_[A-Za-z0-9]+)?$")
     found = []
     for c in df.columns:
         m = pat.search(c)
@@ -48,9 +50,28 @@ def resolve_bins(df, instrument):
     pat = re.compile(rf"_{instrument}_(\d+)nm(?:_[A-Za-z0-9]+)?$")
     found = sorted((int(m.group(1)), c) for c in df.columns
                    for m in [pat.search(c)] if m)
+    if found:
+        return [c for _, c in found]
+    # diameter-before-tag schemes (DISCOVER-AQ: dNdlogDp_PSL_100nm_LAS and
+    # dNdlogDp_11nm_PSL_SMPS)
+    pat = re.compile(
+        rf"dNdlogDp_(?:[A-Za-z0-9]+_(\d+)nm|(\d+)nm_[A-Za-z0-9]+)_{instrument}$",
+        re.IGNORECASE)
+    found = sorted((int(m.group(1) or m.group(2)), c) for c in df.columns
+                   for m in [pat.search(c)] if m)
+    if found:
+        return [c for _, c in found]
+    # bare diameter-named columns, instrument only in the title prefix
+    # (DISCOVER-AQ 2011: '..._DMT_UHSAS_..._61nm', '..._TSI_LAS_..._0.1006um')
+    pat = re.compile(r"_(\d+(?:\.\d+)?)(nm|um)$")
+    found = sorted((float(m.group(1)) * (1e3 if m.group(2) == "um" else 1.0), c)
+                   for c in df.columns
+                   for m in [pat.search(c)]
+                   if m and instrument in c)
     if not found:
-        raise KeyError(f"No '{instrument}_BinNN' or '{instrument}_<NNN>nm' "
-                       "columns found")
+        raise KeyError(f"No '{instrument}_BinNN', '{instrument}_<NNN>nm', "
+                       f"'dNdlogDp_*_<NNN>nm_{instrument}' or "
+                       f"diameter-named '{instrument}' columns found")
     return [c for _, c in found]
 
 

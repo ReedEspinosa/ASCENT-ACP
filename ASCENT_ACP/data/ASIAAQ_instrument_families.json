@@ -1,0 +1,36 @@
+{
+ "_comment": "ASIA-AQ (2024, NASA DC-8) family map; longest-prefix match of column names.",
+ "family_order": [
+  "optical",
+  "microphysical",
+  "aerosol_composition",
+  "ccn",
+  "cloud_probes",
+  "trace_gas",
+  "state_nav"
+ ],
+ "family_long_name": {
+  "optical": "In-situ aerosol optical measurements (TSI-3563 nephelometer, PSAP)",
+  "microphysical": "In-situ aerosol microphysics: number concentrations and dry size distributions (LARGE CPCs; SMPS, DMT UHSAS [AmmSO4], TSI APS)",
+  "aerosol_composition": "In-situ aerosol composition (AMS 60 s PM1.5, SAGA bulk ions)",
+  "ccn": "Cloud condensation nuclei concentrations (DMT CCN counter)",
+  "cloud_probes": "Cloud particle measurements (DMT CDP)",
+  "trace_gas": "Trace-gas and water-vapor measurements (DLH H2O)",
+  "state_nav": "Aircraft state and navigation (DC-8 MetNav)",
+  "other": "Unclassified instruments"
+ },
+ "family_comment": {},
+ "title_to_family": {
+  "In-situ_optical_aerosol_measurements_from_the_NASA_DC8": "optical",
+  "In-situ_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_DC8": "microphysical",
+  "In-situ_Particle_Size_Distributions_from_the_DMT_UHSAS_on_the_NASA_DC8": "microphysical",
+  "In-situ_Particle_Size_Distributions_from_the_TSI_APS_on_the_NASA_DC8": "microphysical",
+  "In-situ_microphysical_aerosol_measurements_from_the_NASA_DC8": "microphysical",
+  "Chemically_speciated_PM1.5_non-refractory_particulate_mass": "aerosol_composition",
+  "Bulk_aerosol_ionic_composition_from_NASA_DC-8": "aerosol_composition",
+  "In-situ_Cloud_Condensation_Nuclei": "ccn",
+  "In-situ_Cloud_Size_Distributions_From_the_DMT_Cloud_Droplet_Probe": "cloud_probes",
+  "DLH": "trace_gas",
+  "N817NA_Meteorological_and_Navigation_Facility_Instrumentation": "state_nav"
+ }
+}

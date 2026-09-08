@@ -583,7 +583,11 @@ def _write_root(w, df, cfg, fgrid, meta):
     ]:
         col = varmap.resolve(df, suffix, required=False)
         if col is not None:
-            w.scatter2d("", name, df[col].to_numpy(float), attrs={
+            vals = df[col].to_numpy(float)
+            if name == "altitude":
+                # feet-reporting archives (DISCOVER-AQ PDS GPS_ALT)
+                vals = vals * ch.alt_scale_to_m
+            w.scatter2d("", name, vals, attrs={
                 "units": units, "standard_name": std,
                 "long_name": f"aircraft {name} at native cadence"})
 

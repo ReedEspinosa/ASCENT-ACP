@@ -1,0 +1,110 @@
+{
+ "campaign": "DISCOVERAQ",
+ "year": "2014",
+ "paths": {
+  "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/DISCOVER-AQ_2014/merged1sec_DISCOVERAQ_2014_V1.pkl",
+  "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/DISCOVER-AQ_2014/merged1sec_DISCOVERAQ_2014_V1_meta.pickle",
+  "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/DISCOVER-AQ_2014/isara_output",
+  "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
+  "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
+  "optical_dataset_dir": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/",
+  "scratch_dir": "/tmp/ascent_acp_scratch"
+ },
+ "channels": {
+  "sca_suffixes": {
+   "450": "Sc450_sub",
+   "550": "Sc550_sub",
+   "700": "Sc700_sub"
+  },
+  "abs_suffixes": {
+   "470": "Abs470_total",
+   "532": "Abs532_total",
+   "660": "Abs660_total"
+  },
+  "ssa_suffixes": {
+   "450": "SSA_dry_450nm",
+   "550": "SSA_dry_550nm",
+   "700": "SSA_dry_700nm"
+  },
+  "rh_sc_suffix": "",
+  "rh_sc_assumed_percent": 30.0,
+  "rh_ambient_suffix": "C_RelHumidity",
+  "rh_ambient_h2o_ppmv_suffix": "H2O_ppmv",
+  "rh_ambient_temp_c_suffix": "C_StatTempDegC",
+  "rh_ambient_press_hpa_suffix": "C_StaticPressure",
+  "gamma_suffix": "gamma550",
+  "frh_suffix": "fRH550_RH20to80",
+  "ae_suffix": "AEscatDRY_450to700nm",
+  "inlet_flag_suffix": "",
+  "lat_suffix": "FMS_LAT",
+  "lon_suffix": "FMS_LON",
+  "alt_suffix": "GPS_ALT",
+  "dry_wvl_sca": [
+   450,
+   550,
+   700
+  ],
+  "dry_wvl_abs": [
+   470,
+   532,
+   660
+  ],
+  "wet_wvl_sca": [
+   550
+  ],
+  "val_wvl": [
+   532
+  ],
+  "alt_scale_to_m": 0.3048
+ },
+ "filters": {
+  "use_fcdp": false,
+  "require_inlet_flag_zero": false
+ },
+ "psd": {
+  "variant_name": "submicron",
+  "smps_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/DISCOVERAQ_SMPS30_10to282_bins.csv",
+  "las_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/DISCOVERAQ_UHSAS25_bins.csv",
+  "stitch_dp_um": 0.095,
+  "psd_max_um": 2.0,
+  "inlet_cutoff_um": 5.0,
+  "impactor_d50_aero_um": 1.0,
+  "optical_cal_ri": 1.58,
+  "optical_instrument_tag": "UHSAS",
+  "optical_lambda_nm": 1054.0,
+  "impactor_gsd": 1.15,
+  "impactor_rho_gcm3": 1.77,
+  "fallback_instrument_tag": "LAS",
+  "fallback_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/DISCOVERAQ_LAS28_bins.csv",
+  "fallback_cal_ri": 1.58,
+  "fallback_lambda_nm": 633.0
+ },
+ "isara": {
+  "sizing_correction": true,
+  "fallback_sizing_residual_lnd": 0.1,
+  "fallback_n_scale_sigma": 0.2
+ },
+ "merge": {
+  "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/DISCOVER-AQ_2014",
+  "instruments": [
+   "LARGE-OPTICAL",
+   "LARGE-SMPS",
+   "LARGE-UHSAS",
+   "LARGE-LAS",
+   "LARGE-APS",
+   "LARGE-CNC",
+   "LARGE-CCN",
+   "LARGE-PILSIC",
+   "LARGE-PILSTOC",
+   "LARGE-SP2",
+   "DLH",
+   "PDS"
+  ],
+  "filename_regex": "^DISCOVERAQ-(?P<instr>[A-Za-z0-9\\-]+)_P3B_(?P<date>\\d{8})_R\\d+(_L\\d+)?\\.ict$",
+  "flight_marker_instrument": "PDS",
+  "n_workers": 6
+ },
+ "output": {
+  "version": "V6"
+ }
+}

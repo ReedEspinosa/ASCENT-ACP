@@ -85,9 +85,15 @@ class ChannelConfig:
     lwc_cdp_suffix: str = "LWC_CDP"
     n_fcdp_suffix: str = "N_FCDP"
     lwc_fcdp_suffix: str = "LWC_FCDP"
+    # PI-provided cloud flag column (0 = clear, >=1 = cloud, NaN = unknown);
+    # "" disables. Used alongside/in place of the probe thresholds.
+    cloud_flag_suffix: str = ""
     lat_suffix: str = "Latitude"
     lon_suffix: str = "Longitude"
     alt_suffix: str = "GPS_altitude"
+    # multiply the altitude column by this to get meters (0.3048 for
+    # feet-reporting archives like the DISCOVER-AQ P-3B PDS GPS_ALT)
+    alt_scale_to_m: float = 1.0
     # Wind pair for vector averaging in the 60 s raw statistics; direction is
     # meteorological (degrees the wind blows FROM, clockwise from north).
     wind_speed_suffix: str = "Wind_Speed"

@@ -1,0 +1,100 @@
+{
+ "campaign": "KORUSAQ",
+ "year": "2016",
+ "paths": {
+  "input_pkl": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/KORUS-AQ_2016/merged1sec_KORUSAQ_2016_V1.pkl",
+  "meta_pickle": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/KORUS-AQ_2016/merged1sec_KORUSAQ_2016_V1_meta.pickle",
+  "output_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/KORUS-AQ_2016/isara_output",
+  "isara_code_dir": "/Users/wrespino/Synced/Local_Code_MacBook/ISARA_code",
+  "mopsmap_executable": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/mopsmap",
+  "optical_dataset_dir": "/Users/wrespino/Synced/Resources/GeneralSoftware/MOPSMAP/mopsmap/optical_dataset/",
+  "scratch_dir": "/tmp/ascent_acp_scratch"
+ },
+ "channels": {
+  "sca_suffixes": {
+   "550": "drySC550_stdPT",
+   "700": "drySC700_stdPT"
+  },
+  "abs_suffixes": {
+   "532": "Abs532_stdPT",
+   "660": "Abs660_stdPT"
+  },
+  "ssa_suffixes": {
+   "550": "drySSA_550",
+   "700": "drySSA_700"
+  },
+  "rh_sc_suffix": "",
+  "rh_sc_assumed_percent": 30.0,
+  "rh_ambient_suffix": "RHw_pct",
+  "rh_ambient_fallback_suffixes": [
+   "Relative_Humidity"
+  ],
+  "rh_ambient_h2o_ppmv_suffix": "H2O_ppmv",
+  "rh_ambient_temp_c_suffix": "Static_Air_Temp",
+  "rh_ambient_press_hpa_suffix": "Static_Pressure",
+  "gamma_suffix": "gamma550",
+  "frh_suffix": "fRH550_RH20to80",
+  "ae_suffix": "dryAEscat_550to700",
+  "inlet_flag_suffix": "",
+  "cloud_flag_suffix": "Cloud_Flag",
+  "lat_suffix": "Latitude",
+  "lon_suffix": "Longitude",
+  "alt_suffix": "MSL_GPS_Altitude",
+  "dry_wvl_sca": [
+   550,
+   700
+  ],
+  "dry_wvl_abs": [
+   532,
+   660
+  ],
+  "wet_wvl_sca": [
+   550
+  ],
+  "val_wvl": []
+ },
+ "filters": {
+  "use_fcdp": false,
+  "require_inlet_flag_zero": false
+ },
+ "psd": {
+  "variant_name": "total",
+  "smps_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/KORUSAQ_SMPS_bins.csv",
+  "las_bins_csv": "/Users/wrespino/Synced/Local_Code_MacBook/ASCENT-ACP/ASCENT_ACP/data/KORUSAQ_LAS_bins.csv",
+  "stitch_dp_um": 0.095,
+  "psd_max_um": 5.0,
+  "inlet_cutoff_um": 5.0,
+  "impactor_d50_aero_um": 0.0,
+  "optical_cal_ri": 1.58,
+  "optical_instrument_tag": "LAS",
+  "optical_lambda_nm": 633.0
+ },
+ "isara": {
+  "sizing_correction": true,
+  "sizing_residual_lnd": 0.1,
+  "n_scale_sigma": 0.2
+ },
+ "merge": {
+  "icartt_dir": "/Users/wrespino/Synced/ACMAP_Meloe/SuborbitalDataSets/KORUS-AQ_2016",
+  "instruments": [
+   "LARGE-OPTICAL",
+   "LARGE-SMPS",
+   "LARGE-LAS",
+   "LARGE-APS",
+   "LARGE-CNC",
+   "LARGE-CLOUDFLAG",
+   "AMS-60S",
+   "DLH",
+   "HSKPING",
+   "SAGA-AERO",
+   "HDSP2-BCMMR",
+   "KCCN-CCN"
+  ],
+  "filename_regex": "^KORUSAQ-(?P<instr>[A-Za-z0-9\\-]+)_DC8_(?P<date>\\d{8})_R\\d+(_L\\d)?\\.ict$",
+  "flight_marker_instrument": "HSKPING",
+  "n_workers": 6
+ },
+ "output": {
+  "version": "V6"
+ }
+}

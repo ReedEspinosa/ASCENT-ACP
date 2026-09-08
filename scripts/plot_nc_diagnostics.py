@@ -265,8 +265,17 @@ def build_panels(nb):
                    lambda f: nb.get(
                        "windowed/observations/scattering_humidified_synthesized", f),
                    C_TEAL),
-                 S(lbl("wet fit", ch_sca),
-                   wl_get("windowed/retrievals/scattering_wet_calculated", ch_sca),
+                 # kappa fits the wet/dry ENHANCEMENT ratio (kappa_objective=
+                 # 'ratio'), so the comparable fit quantity is the modeled
+                 # enhancement applied to the measured dry scattering; the raw
+                 # absolute wet_calculated inherits the dry amplitude-closure
+                 # error and sits below synth by exactly that factor.
+                 S(lbl("wet fit (enh x dry meas)", ch_sca),
+                   (lambda f, c=ch_sca:
+                    nb.get("windowed/retrievals/scattering_wet_calculated", f)[:, c]
+                    / nb.get("windowed/retrievals/scattering_dry_calculated", f)[:, c]
+                    * nb.get("windowed/observations/scattering_dry_measured", f)[:, c])
+                   if ch_sca is not None else None,
                    "#e39aa5"),
                  S(lbl("ambient model", ch_sca),
                    wl_get("windowed/retrievals/scattering_ambient_calculated",
@@ -355,6 +364,9 @@ def pick_flight(nb):
     counts = []
     for f in range(nb.nflight):
         rri = nb.get("windowed/retrievals/refractive_index_real", f)
+        if rri is None:
+            counts.append(0)
+            continue
         keep = nb.window_firsts(f, rri)
         counts.append(int(keep.sum()))
     return int(np.argmax(counts)), counts
@@ -480,7 +492,8 @@ def plot_timeseries(nb, flight, panels, out_dir):
 
     # valid-retrieval tick marks along the bottom panel
     rri = nb.get("windowed/retrievals/refractive_index_real", flight)
-    keep = nb.window_firsts(flight, rri)
+    keep = nb.window_firsts(flight, rri) if rri is not None \
+        else np.zeros(len(nb.time_s), bool)
     if keep.any():
         base_axes[-1].eventplot(
             hours[keep], lineoffsets=base_axes[-1].get_ylim()[0],

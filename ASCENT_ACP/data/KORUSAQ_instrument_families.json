@@ -1,0 +1,37 @@
+{
+ "_comment": "KORUS-AQ (2016, NASA DC-8) family map; longest-prefix match of column names (ICARTT line-4 titles, underscored).",
+ "family_order": [
+  "optical",
+  "microphysical",
+  "aerosol_composition",
+  "ccn",
+  "cloud_probes",
+  "trace_gas",
+  "state_nav"
+ ],
+ "family_long_name": {
+  "optical": "In-situ aerosol optical measurements (TSI-3563 nephelometer, PSAP)",
+  "microphysical": "In-situ aerosol microphysics: number concentrations and dry size distributions (LARGE CPCs; SMPS, TSI LAS [PSL], TSI APS)",
+  "aerosol_composition": "In-situ aerosol composition (AMS 60 s, SAGA bulk ions, HDSP2 black carbon)",
+  "ccn": "Cloud condensation nuclei concentrations (CCN-100)",
+  "cloud_probes": "Cloud presence flag (LARGE CLOUDFLAG from CPSPD + RH)",
+  "trace_gas": "Trace-gas and water-vapor measurements (DLH H2O)",
+  "state_nav": "Aircraft state and navigation (DC-8 housekeeping)",
+  "other": "Unclassified instruments"
+ },
+ "family_comment": {},
+ "title_to_family": {
+  "In-situ_optical_aerosol_measurements_from_the_NASA_DC-8": "optical",
+  "In-situ_Particle_Size_Distributions_from_the_TSI_LAS_on_the_NASA_DC-8": "microphysical",
+  "In-situ_Submicron_Particle_Size_Distributions_from_the_SMPS_on_the_NASA_DC-8": "microphysical",
+  "In-situ_Particle_Size_Distributions_from_the_TSI_APS_on_the_NASA_DC-8": "microphysical",
+  "Particle_Number_Density_Measurements": "microphysical",
+  "Cloud_Flag_for_the_NASA_DC-8": "cloud_probes",
+  "Chemically_speciated_submicron_non-refractory_particulate_mass": "aerosol_composition",
+  "Bulk_aerosol_ionic_composition_from_NASA_DC-8": "aerosol_composition",
+  "NOAA": "aerosol_composition",
+  "CCN-100": "ccn",
+  "DLH": "trace_gas",
+  "N817NA_Housekeeping": "state_nav"
+ }
+}
